@@ -15,13 +15,13 @@ async function connectBridge() {
   const status = document.getElementById('bridge-status');
   try {
     await bridge.connect();
-    status.textContent = 'Bridge connected — ready for battle';
+    status.textContent = 'Sword sharpened — ready for battle';
     status.className = 'connected';
-    addLog('Bridge connected');
+    addLog('Arms readied');
   } catch (err) {
-    status.textContent = 'Bridge offline — start the server first';
+    status.textContent = 'The gate is sealed — start the server';
     status.className = 'error';
-    addLog('ERROR: Bridge connection failed');
+    addLog('ERROR: Gate sealed');
   }
 }
 
@@ -30,8 +30,8 @@ function launchGame(domain, projectPath) {
   document.getElementById('title-screen').style.display = 'none';
   document.getElementById('game-container').style.display = 'block';
 
-  addLog(`Audit target: ${domain}`);
-  addLog(`Project: ${projectPath}`);
+  addLog(`Target realm: ${domain}`);
+  addLog(`Armory: ${projectPath}`);
   showLoadingIndicator();
 
   const config = {
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initActivityLog();
   initKnightSprite();
 
-  addLog('System initialized');
+  addLog('The dungeon awaits');
 
   const domainInput = document.getElementById('domain-input');
   const pathInput = document.getElementById('path-input');
