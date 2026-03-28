@@ -1,7 +1,6 @@
 /**
  * Character select sprites for the title screen.
- * Loads idle sprite sheets for 3 characters, animates each on its own canvas,
- * and stores the selected character config on window.selectedCharacter.
+ * Crops out transparent padding and displays characters at proper size.
  */
 
 const CHARACTERS = {
@@ -10,46 +9,44 @@ const CHARACTERS = {
     idlePath: 'assets/luizmelo/warrior/sprites/Idle.png',
     runPath: 'assets/luizmelo/warrior/sprites/Run.png',
     attackPath: 'assets/luizmelo/warrior/sprites/Attack1.png',
-    frameW: 162,
-    frameH: 162,
-    idleFrames: 10,
-    runFrames: 8,
-    attackFrames: 7
+    hitPath: 'assets/luizmelo/warrior/sprites/Take Hit.png',
+    deathPath: 'assets/luizmelo/warrior/sprites/Death.png',
+    frameW: 162, frameH: 162,
+    idleFrames: 10, runFrames: 8, attackFrames: 7, hitFrames: 3, deathFrames: 7,
+    // Crop rect: where the actual character pixels are within the frame
+    cropX: 40, cropY: 30, cropW: 90, cropH: 120
   },
   samurai: {
     name: 'samurai',
     idlePath: 'assets/luizmelo/samurai/sprites/Idle.png',
     runPath: 'assets/luizmelo/samurai/sprites/Run.png',
     attackPath: 'assets/luizmelo/samurai/sprites/Attack1.png',
-    frameW: 200,
-    frameH: 200,
-    idleFrames: 8,
-    runFrames: 8,
-    attackFrames: 6
+    hitPath: 'assets/luizmelo/samurai/sprites/Take Hit.png',
+    deathPath: 'assets/luizmelo/samurai/sprites/Death.png',
+    frameW: 200, frameH: 200,
+    idleFrames: 8, runFrames: 8, attackFrames: 6, hitFrames: 4, deathFrames: 6,
+    cropX: 55, cropY: 30, cropW: 100, cropH: 140
   },
   knight: {
     name: 'knight',
     idlePath: 'assets/luizmelo/warrior-pack-2/player1/Idle.png',
     runPath: 'assets/luizmelo/warrior-pack-2/player1/Run.png',
     attackPath: 'assets/luizmelo/warrior-pack-2/player1/Attack2.png',
-    frameW: 180,
-    frameH: 180,
-    idleFrames: 11,
-    runFrames: 8,
-    attackFrames: 7
+    hitPath: 'assets/luizmelo/warrior-pack-2/player1/Take Hit.png',
+    deathPath: 'assets/luizmelo/warrior-pack-2/player1/Death.png',
+    frameW: 180, frameH: 180,
+    idleFrames: 11, runFrames: 8, attackFrames: 7, hitFrames: 4, deathFrames: 11,
+    cropX: 40, cropY: 20, cropW: 110, cropH: 140
   }
 };
 
-const CANVAS_SIZE = 300;
+const DISPLAY_H = 280; // Fixed display height for all characters
 const FPS = 8;
 
-// Track animation state per character
 const animState = {};
 
 function setSelected(charKey) {
   window.selectedCharacter = { ...CHARACTERS[charKey] };
-
-  // Update DOM classes
   document.querySelectorAll('.char-option').forEach(el => {
     el.classList.toggle('selected', el.dataset.char === charKey);
   });
@@ -60,8 +57,14 @@ function setupCharCanvas(charKey) {
   const canvas = document.getElementById(`char-${charKey}`);
   if (!canvas) return;
 
-  canvas.width = CANVAS_SIZE;
-  canvas.height = CANVAS_SIZE;
+  // Calculate display width to maintain aspect ratio
+  const aspect = char.cropW / char.cropH;
+  const displayW = Math.round(DISPLAY_H * aspect);
+
+  canvas.width = displayW;
+  canvas.height = DISPLAY_H;
+  canvas.style.width = displayW + 'px';
+  canvas.style.height = DISPLAY_H + 'px';
 
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
@@ -69,11 +72,8 @@ function setupCharCanvas(charKey) {
   const img = new Image();
   img.src = char.idlePath;
 
-  animState[charKey] = { img, ctx, loaded: false, frame: 0, tick: 0 };
-
-  img.onload = () => {
-    animState[charKey].loaded = true;
-  };
+  animState[charKey] = { img, ctx, loaded: false, frame: 0, tick: 0, displayW };
+  img.onload = () => { animState[charKey].loaded = true; };
 }
 
 function animateAll() {
@@ -90,17 +90,13 @@ function animateAll() {
       state.frame = (state.frame + 1) % char.idleFrames;
     }
 
-    const scale = 6;
-    const dw = char.frameW * scale;
-    const dh = char.frameH * scale;
-    state.ctx.canvas.width = dw;
-    state.ctx.canvas.height = dh;
-    state.ctx.imageSmoothingEnabled = false;
-    state.ctx.clearRect(0, 0, dw, dh);
+    state.ctx.clearRect(0, 0, state.displayW, DISPLAY_H);
+
+    // Draw ONLY the cropped character area, scaled up to fill the canvas
     state.ctx.drawImage(
       state.img,
-      state.frame * char.frameW, 0, char.frameW, char.frameH,
-      0, 0, dw, dh
+      state.frame * char.frameW + char.cropX, char.cropY, char.cropW, char.cropH,
+      0, 0, state.displayW, DISPLAY_H
     );
   }
 
@@ -108,21 +104,17 @@ function animateAll() {
 }
 
 export function initKnightSprite() {
-  // Set default selection
   setSelected('warrior');
 
-  // Setup each character canvas
   for (const charKey of Object.keys(CHARACTERS)) {
     setupCharCanvas(charKey);
   }
 
-  // Click handlers for selection
   document.querySelectorAll('.char-option').forEach(el => {
     el.addEventListener('click', () => {
       setSelected(el.dataset.char);
     });
   });
 
-  // Start animation loop
   animateAll();
 }
