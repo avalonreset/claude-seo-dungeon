@@ -40,7 +40,7 @@ const CHARACTERS = {
   }
 };
 
-const CANVAS_SIZE = 120;
+const CANVAS_SIZE = 200;
 const FPS = 8;
 
 // Track animation state per character
