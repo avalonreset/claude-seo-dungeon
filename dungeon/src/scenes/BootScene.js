@@ -1,7 +1,8 @@
 import { PixelArt } from '../sprites/PixelArt.js';
 
 /**
- * Boot scene — generates all pixel art textures, then transitions to Title.
+ * Boot scene — generates pixel art, then goes straight to Summoning.
+ * Title screen is handled by HTML before Phaser starts.
  */
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -9,13 +10,14 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
-    // Generate all sprites programmatically
     PixelArt.generateAll(this);
 
-    // Quick flash then go to title
     this.cameras.main.fadeIn(500, 0, 0, 0);
-    this.time.delayedCall(600, () => {
-      this.scene.start('Title');
+    this.time.delayedCall(400, () => {
+      this.scene.start('Summoning', {
+        domain: this.game.domain,
+        projectPath: this.game.projectPath
+      });
     });
   }
 }
