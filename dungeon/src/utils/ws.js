@@ -48,22 +48,38 @@ export class BridgeClient {
   /**
    * Run an SEO audit on a domain.
    */
-  audit(domain, onStream) {
+  audit(domain, projectPath, onStream) {
     return new Promise((resolve, reject) => {
       const id = ++this.requestId;
       this.handlers.set(id, { resolve, reject, onStream });
-      this.ws.send(JSON.stringify({ id, type: 'audit', command: domain }));
+      this.ws.send(JSON.stringify({ id, type: 'audit', command: domain, projectPath }));
     });
   }
 
   /**
-   * Fix a specific SEO issue.
+   * Fix a specific SEO issue in the project.
    */
-  fix(issue, onStream) {
+  fix(issue, projectPath, onStream) {
     return new Promise((resolve, reject) => {
       const id = ++this.requestId;
       this.handlers.set(id, { resolve, reject, onStream });
-      this.ws.send(JSON.stringify({ id, type: 'fix', command: `${issue.title}: ${issue.description}` }));
+      this.ws.send(JSON.stringify({
+        id,
+        type: 'fix',
+        command: `${issue.title}: ${issue.description}`,
+        projectPath
+      }));
+    });
+  }
+
+  /**
+   * Commit the current fix to git.
+   */
+  commit(message, projectPath, onStream) {
+    return new Promise((resolve, reject) => {
+      const id = ++this.requestId;
+      this.handlers.set(id, { resolve, reject, onStream });
+      this.ws.send(JSON.stringify({ id, type: 'commit', command: message, projectPath }));
     });
   }
 

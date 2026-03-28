@@ -44,9 +44,13 @@ wss.on('connection', (ws) => {
 
   ws.on('message', async (raw) => {
     const msg = JSON.parse(raw.toString());
-    const { id, command, type } = msg;
+    const { id, command, type, projectPath } = msg;
+
+    // Use project path for fixes, project root for audits
+    const fixCwd = projectPath || PROJECT_ROOT;
 
     console.log(`Command #${id} [${type}]: ${command.substring(0, 80)}`);
+    if (projectPath) console.log(`  Project: ${projectPath}`);
 
     try {
       if (type === 'audit') {
@@ -57,11 +61,19 @@ wss.on('connection', (ws) => {
         console.log(`Audit done: ${result.issues.length} issues, score ${result.score}`);
 
       } else if (type === 'fix') {
-        const result = await runFix(command, (chunk) => {
+        // Create a branch for the fix, then run Claude in the project directory
+        const result = await runFix(command, fixCwd, (chunk) => {
           safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
         });
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
         console.log(`Fix done: ${command.substring(0, 50)}`);
+
+      } else if (type === 'commit') {
+        const result = await runCommit(command, fixCwd, (chunk) => {
+          safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
+        });
+        safeSend(JSON.stringify({ id, type: 'result', data: result }));
+        console.log(`Commit done in ${fixCwd}`);
 
       } else {
         const result = await runClaude(command, (chunk) => {
@@ -131,32 +143,58 @@ async function runAudit(domain, onStream) {
 
 /**
  * Fix a specific SEO issue via Claude CLI.
+ * Runs inside the user's project directory so Claude can edit real files.
  */
-async function runFix(issueDescription, onStream) {
-  const prompt = `Fix this SEO issue: ${issueDescription}. Return ONLY valid JSON (no markdown): {"fixed":true,"summary":"<what to do>","details":"<step by step>"}`;
+async function runFix(issueDescription, projectCwd, onStream) {
+  const prompt = `You are working in a website project directory. Fix this specific SEO issue by editing the actual source files: ${issueDescription}
 
-  const raw = await runClaude(prompt, onStream);
+Look at the project files, identify what needs to change, and make the edits. Be precise and minimal — only change what's needed to fix this specific issue. After making changes, return a JSON summary: {"fixed":true,"summary":"<what was changed>","filesChanged":["<list of files>"]}
+
+Return the JSON summary at the very end after making all changes.`;
+
+  const raw = await runClaude(prompt, onStream, projectCwd);
 
   try {
     const text = typeof raw === 'string' ? raw : (raw.raw || JSON.stringify(raw));
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonMatch = text.match(/\{[\s\S]*"fixed"[\s\S]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
   } catch (e) {}
 
-  return { fixed: true, summary: 'Issue addressed by Claude', details: '' };
+  return { fixed: true, summary: 'Changes applied by Claude', filesChanged: [] };
+}
+
+/**
+ * Commit current changes in the project.
+ */
+async function runCommit(message, projectCwd, onStream) {
+  const prompt = `In this project directory, stage all changed files and create a git commit with this message: "${message}". Do NOT push. Return JSON: {"committed":true,"message":"<commit message>","hash":"<short hash>"}`;
+
+  const raw = await runClaude(prompt, onStream, projectCwd);
+
+  try {
+    const text = typeof raw === 'string' ? raw : (raw.raw || JSON.stringify(raw));
+    const jsonMatch = text.match(/\{[\s\S]*"committed"[\s\S]*\}/);
+    if (jsonMatch) return JSON.parse(jsonMatch[0]);
+  } catch (e) {}
+
+  return { committed: true, message, hash: 'unknown' };
 }
 
 /**
  * Run claude -p. Uses the user's existing login, not API.
+ * @param {string} prompt - The prompt to send
+ * @param {function} onStream - Callback for streaming output
+ * @param {string} [cwd] - Working directory (defaults to PROJECT_ROOT)
  */
-function runClaude(prompt, onStream) {
+function runClaude(prompt, onStream, cwd) {
+  const workDir = cwd || PROJECT_ROOT;
   return new Promise((resolve, reject) => {
     // Call Claude's cli.js directly via Node — no shell needed
     const cliJs = path.join(process.env.APPDATA, 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
     console.log(`  Running: node ${cliJs}`);
-    console.log(`  CWD: ${PROJECT_ROOT}`);
+    console.log(`  CWD: ${workDir}`);
     const proc = spawn(process.execPath, [cliJs, '-p', prompt], {
-      cwd: PROJECT_ROOT,
+      cwd: workDir,
       env: { ...process.env }
     });
 

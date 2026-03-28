@@ -2,8 +2,7 @@ import { COLORS, FONTS } from '../utils/colors.js';
 import { bridge } from '../utils/ws.js';
 
 /**
- * Title screen — SNES-style with domain input.
- * "Enter thy domain, warrior."
+ * Title screen — SNES-style with domain + project path inputs.
  */
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -11,45 +10,41 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create() {
-    const cx = 400, cy = 300;
+    const cx = 400;
 
-    // Dark background with subtle atmosphere
     this.cameras.main.setBackgroundColor(COLORS.bg);
     this.cameras.main.fadeIn(1000, 0, 0, 0);
 
     // Title
-    this.add.text(cx, 100, 'CLAUDE SEO', {
+    this.add.text(cx, 80, 'CLAUDE SEO', {
       ...FONTS.title, fontSize: '48px'
     }).setOrigin(0.5);
 
-    this.add.text(cx, 155, '⚔  D U N G E O N  ⚔', {
+    this.add.text(cx, 130, '⚔  D U N G E O N  ⚔', {
       ...FONTS.title, fontSize: '28px', color: COLORS.red
     }).setOrigin(0.5);
 
     // Knight sprite
-    this.add.image(cx, 260, 'knight').setScale(2.5);
+    this.add.image(cx, 220, 'knight').setScale(2);
 
-    // Subtitle
-    this.add.text(cx, 350, 'Enter thy domain, warrior.', {
-      ...FONTS.subtitle, color: COLORS.gold
+    // Domain label + input
+    this.add.text(cx, 300, 'Domain to audit:', {
+      ...FONTS.body, color: COLORS.gold
     }).setOrigin(0.5);
 
-    // Domain input (HTML overlay for real text input)
-    this.domainValue = '';
-    this.createDomainInput(cx, cy);
-
-    // Blinking cursor effect on the prompt text
-    this.promptText = this.add.text(cx, 480, '[ Press ENTER to descend ]', {
-      ...FONTS.body, color: COLORS.gray
+    // Project path label + input
+    this.add.text(cx, 390, 'Project source folder:', {
+      ...FONTS.body, color: COLORS.cyan
     }).setOrigin(0.5);
 
-    this.tweens.add({
-      targets: this.promptText,
-      alpha: 0.3,
-      duration: 800,
-      yoyo: true,
-      repeat: -1
-    });
+    // Safety note
+    this.add.text(cx, 475, 'Fixes are applied on a new git branch — your main branch is never touched.', {
+      ...FONTS.small, color: COLORS.gray, wordWrap: { width: 500 }
+    }).setOrigin(0.5);
+
+    // Create HTML inputs
+    this.htmlElements = [];
+    this.createInputs();
 
     // Floating particles
     this.addAtmosphere();
@@ -62,24 +57,15 @@ export class TitleScene extends Phaser.Scene {
     this.connectToBridge();
   }
 
-  createDomainInput(cx, cy) {
-    // Create an HTML input element overlaid on the canvas
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.id = 'domain-input';
-    input.value = 'rankenstein.pro';
-    input.placeholder = 'example.com';
-    input.autocomplete = 'off';
-    input.spellcheck = false;
-    Object.assign(input.style, {
+  createInputs() {
+    const inputStyle = {
       position: 'absolute',
       left: '50%',
-      top: '68%',
-      transform: 'translate(-50%, -50%)',
-      width: '360px',
-      padding: '12px 20px',
+      transform: 'translateX(-50%)',
+      width: '400px',
+      padding: '10px 16px',
       fontFamily: 'monospace',
-      fontSize: '20px',
+      fontSize: '16px',
       color: '#f0c040',
       backgroundColor: '#1a1a2e',
       border: '2px solid #4a4a6e',
@@ -87,35 +73,61 @@ export class TitleScene extends Phaser.Scene {
       textAlign: 'center',
       outline: 'none',
       zIndex: '10',
-      letterSpacing: '2px',
-      imageRendering: 'pixelated'
-    });
+      letterSpacing: '1px'
+    };
 
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && input.value.trim()) {
-        this.launchAudit(input.value.trim());
+    // Domain input
+    const domainInput = document.createElement('input');
+    domainInput.type = 'text';
+    domainInput.id = 'domain-input';
+    domainInput.value = 'claude-github.com';
+    domainInput.placeholder = 'example.com';
+    domainInput.autocomplete = 'off';
+    domainInput.spellcheck = false;
+    Object.assign(domainInput.style, { ...inputStyle, top: '53%' });
+    domainInput.addEventListener('focus', () => domainInput.style.borderColor = '#f0c040');
+    domainInput.addEventListener('blur', () => domainInput.style.borderColor = '#4a4a6e');
+    document.body.appendChild(domainInput);
+    this.domainInput = domainInput;
+    this.htmlElements.push(domainInput);
+
+    // Project path input
+    const pathInput = document.createElement('input');
+    pathInput.type = 'text';
+    pathInput.id = 'path-input';
+    pathInput.value = 'E:\\claude-github-website';
+    pathInput.placeholder = 'C:\\path\\to\\your\\project';
+    pathInput.autocomplete = 'off';
+    pathInput.spellcheck = false;
+    Object.assign(pathInput.style, {
+      ...inputStyle,
+      top: '68%',
+      color: '#40c0c0',
+      fontSize: '14px'
+    });
+    pathInput.addEventListener('focus', () => pathInput.style.borderColor = '#40c0c0');
+    pathInput.addEventListener('blur', () => pathInput.style.borderColor = '#4a4a6e');
+    document.body.appendChild(pathInput);
+    this.pathInput = pathInput;
+    this.htmlElements.push(pathInput);
+
+    // Enter key on either input launches
+    const launch = () => {
+      if (domainInput.value.trim() && pathInput.value.trim()) {
+        this.launchAudit(domainInput.value.trim(), pathInput.value.trim());
       }
-    });
+    };
+    domainInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') launch(); });
+    pathInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') launch(); });
 
-    input.addEventListener('focus', () => {
-      input.style.borderColor = '#f0c040';
-    });
-
-    input.addEventListener('blur', () => {
-      input.style.borderColor = '#4a4a6e';
-    });
-
-    document.body.appendChild(input);
-    this.domainInput = input;
-
-    // Launch button
+    // DESCEND button
     const btn = document.createElement('button');
     btn.textContent = '⚔ DESCEND ⚔';
     Object.assign(btn.style, {
       position: 'absolute',
       left: '50%',
-      top: '76%',
-      transform: 'translate(-50%, -50%)',
+      top: '80%',
+      transform: 'translateX(-50%)',
       padding: '10px 40px',
       fontFamily: 'monospace',
       fontSize: '18px',
@@ -136,26 +148,17 @@ export class TitleScene extends Phaser.Scene {
       btn.style.backgroundColor = '#f0c040';
       btn.style.borderColor = '#f0c040';
     });
-    btn.addEventListener('click', () => {
-      if (input.value.trim()) {
-        this.launchAudit(input.value.trim());
-      }
-    });
+    btn.addEventListener('click', launch);
     document.body.appendChild(btn);
-    this.launchBtn = btn;
+    this.htmlElements.push(btn);
 
-    // Clean up button on scene shutdown too
+    // Clean up all HTML elements on scene shutdown
     this.events.on('shutdown', () => {
-      btn.remove();
+      this.htmlElements.forEach(el => el.remove());
     });
 
-    // Clean up on scene shutdown
-    this.events.on('shutdown', () => {
-      input.remove();
-    });
-
-    // Focus after a short delay
-    this.time.delayedCall(500, () => input.focus());
+    // Focus domain input
+    this.time.delayedCall(500, () => domainInput.focus());
   }
 
   async connectToBridge() {
@@ -166,27 +169,25 @@ export class TitleScene extends Phaser.Scene {
     } catch (err) {
       this.statusText.setText('Bridge offline — start server with: npm run server');
       this.statusText.setColor(COLORS.red);
-      // Still allow demo mode
     }
   }
 
-  launchAudit(domain) {
-    // Remove input and button
-    if (this.domainInput) this.domainInput.remove();
-    if (this.launchBtn) this.launchBtn.remove();
+  launchAudit(domain, projectPath) {
+    // Remove all HTML elements
+    this.htmlElements.forEach(el => el.remove());
 
-    // Store domain
+    // Store both domain and project path globally
     this.game.domain = domain;
+    this.game.projectPath = projectPath;
 
-    // Transition to summoning scene
+    // Transition
     this.cameras.main.fadeOut(800, 0, 0, 0);
     this.time.delayedCall(800, () => {
-      this.scene.start('Summoning', { domain });
+      this.scene.start('Summoning', { domain, projectPath });
     });
   }
 
   addAtmosphere() {
-    // Floating dust particles
     for (let i = 0; i < 20; i++) {
       const x = Phaser.Math.Between(0, 800);
       const y = Phaser.Math.Between(0, 600);

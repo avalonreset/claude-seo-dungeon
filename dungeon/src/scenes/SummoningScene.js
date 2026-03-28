@@ -13,6 +13,7 @@ export class SummoningScene extends Phaser.Scene {
 
   init(data) {
     this.domain = data.domain;
+    this.projectPath = data.projectPath;
   }
 
   create() {
@@ -174,7 +175,7 @@ export class SummoningScene extends Phaser.Scene {
     });
 
     try {
-      const result = await bridge.audit(this.domain, (streamData) => {
+      const result = await bridge.audit(this.domain, this.projectPath, (streamData) => {
         this.streamChunks++;
         const clean = streamData.replace(/[\n\r]+/g, ' ').trim();
         if (clean.length > 0) {

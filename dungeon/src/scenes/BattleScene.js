@@ -168,7 +168,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Try real fix via bridge, fall back to demo
     try {
-      const result = await bridge.fix(this.issue, (stream) => {
+      const result = await bridge.fix(this.issue, this.game.projectPath, (stream) => {
         const clean = stream.replace(/[\n\r]+/g, ' ').trim();
         if (clean.length > 0) {
           this.streamText.setText(clean.substring(0, 90) + '...');
