@@ -92,18 +92,8 @@ export class SummoningScene extends Phaser.Scene {
       repeat: -1
     });
 
-    // ── Knight Character (centered, real pixel art sprite) ────────
-    this.knight = this.add.image(400, 300, 'knight_real').setScale(4).setDepth(10);
-
-    // Subtle idle bob tween (2px up/down, slow)
-    this.tweens.add({
-      targets: this.knight,
-      y: 302,
-      duration: 1800,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
+    // ── Knight Character (centered, animated warrior sprite) ────────
+    this.knight = this.add.sprite(400, 300, 'warrior_run').setScale(2.5).setDepth(10).play('warrior_run_anim');
 
     // Warm glow circle underneath the knight
     this.knightGlow = this.add.circle(400, 320, 70, 0xff8833, 0.08).setDepth(9);
