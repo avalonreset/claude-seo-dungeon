@@ -14,7 +14,7 @@ const CHARACTERS = {
     frameW: 162, frameH: 162,
     idleFrames: 10, runFrames: 8, attackFrames: 7, hitFrames: 3, deathFrames: 7,
     // Crop rect: where the actual character pixels are within the frame
-    cropX: 30, cropY: 50, cropW: 100, cropH: 110
+    cropX: 30, cropY: 25, cropW: 105, cropH: 130
   },
   samurai: {
     name: 'samurai',
