@@ -11,13 +11,13 @@ const LIST_TOP = 94;
 const LIST_BOTTOM = 518;
 const LIST_VISIBLE = LIST_BOTTOM - LIST_TOP; // 424px
 
-// Demon sprite scales per severity (bigger = scarier)
+// Demon sprite scales per severity (real 32x32 PNGs scaled up)
 const SPRITE_SCALES = {
-  critical: 1.6,
-  high: 1.3,
-  medium: 1.1,
-  low: 0.95,
-  info: 0.85
+  critical: 4,
+  high: 3.5,
+  medium: 3,
+  low: 2.5,
+  info: 2
 };
 
 /**
@@ -371,36 +371,13 @@ export class DungeonHallScene extends Phaser.Scene {
     footerBg.lineBetween(30, LIST_BOTTOM + 1, 30, LIST_BOTTOM + 14);
     footerBg.lineBetween(770, LIST_BOTTOM + 1, 770, LIST_BOTTOM + 14);
 
-    // Knight
-    const knight = this.add.image(90, 558, 'knight').setScale(2.0).setDepth(101);
-    const sword = this.add.image(118, 546, 'sword').setScale(1.3).setAngle(-30).setDepth(101);
-    const shield = this.add.image(62, 551, 'shield').setScale(1.3).setDepth(101);
+    // Knight (real pixel art sprite)
+    const knight = this.add.image(90, 558, 'knight_real').setScale(2.5).setDepth(101);
 
     // Knight idle bob
     this.tweens.add({
       targets: knight,
       y: 554,
-      duration: 1800,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-
-    // Sword sway
-    this.tweens.add({
-      targets: sword,
-      angle: -25,
-      y: 542,
-      duration: 1800,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-
-    // Shield sway
-    this.tweens.add({
-      targets: shield,
-      y: 547,
       duration: 1800,
       yoyo: true,
       repeat: -1,
@@ -462,7 +439,7 @@ export class DungeonHallScene extends Phaser.Scene {
   materializeDemon(issue, index) {
     const y = LIST_TOP + index * ROW_TOTAL;
     const centerY = y + ROW_HEIGHT * 0.5;
-    const severitySprite = `demon_${issue.severity}`;
+    const severitySprite = `demon_${issue.severity}_real`;
 
     const sevPalette = {
       critical: { text: '#ff2040', hex: 0xff2040, glow: '#ff2040', bgTint: 0x2a0810, barStart: 0xff2040, barEnd: 0xcc1030 },

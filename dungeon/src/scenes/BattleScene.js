@@ -176,7 +176,9 @@ export class BattleScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════
 
   createDemon() {
-    const demonKey = `demon_${this.issue.severity}`;
+    const demonKey = `demon_${this.issue.severity}_real`;
+    const demonScales = { critical: 4, high: 3.5, medium: 3, low: 2.5, info: 2 };
+    const demonScale = demonScales[this.issue.severity] || 3;
     const sevColor = this.getSeverityHexColor();
 
     // Pulsing shadow beneath demon
@@ -208,8 +210,8 @@ export class BattleScene extends Phaser.Scene {
       delay: 200
     });
 
-    // Demon sprite
-    this.demon = this.add.image(580, 240, demonKey).setScale(3);
+    // Demon sprite (real pixel art, scaled by severity)
+    this.demon = this.add.image(580, 240, demonKey).setScale(demonScale);
     this.demon.setAlpha(0); // for entrance anim
 
     // Demon idle hover
@@ -238,8 +240,8 @@ export class BattleScene extends Phaser.Scene {
     // Knight shadow
     this.knightShadow = this.add.ellipse(180, 380, 80, 18, 0x000000, 0.4);
 
-    // Knight + equipment
-    this.knight = this.add.image(180, 320, 'knight').setScale(2.5).setAlpha(0);
+    // Knight (real pixel art sprite at 4x scale)
+    this.knight = this.add.image(180, 320, 'knight_real').setScale(4).setAlpha(0);
     this.sword = this.add.image(215, 310, 'sword').setScale(1.5).setAngle(-30).setAlpha(0);
     this.shield = this.add.image(145, 325, 'shield').setScale(1.5).setAlpha(0);
 
@@ -300,15 +302,16 @@ export class BattleScene extends Phaser.Scene {
       delay: 400
     });
 
-    // Demon materializes with flash
+    // Demon materializes with flash (scale to severity-based size)
+    const finalDemonScale = this.demon.scaleX;
     this.demon.setScale(0.5);
     this.time.delayedCall(600, () => {
       this.cameras.main.flash(200, 80, 20, 20);
       this.tweens.add({
         targets: this.demon,
         alpha: 1,
-        scaleX: 3,
-        scaleY: 3,
+        scaleX: finalDemonScale,
+        scaleY: finalDemonScale,
         duration: 500,
         ease: 'Back.easeOut'
       });
