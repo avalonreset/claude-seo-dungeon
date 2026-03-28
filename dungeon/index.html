@@ -215,7 +215,12 @@
     #log-content::-webkit-scrollbar-track { background: #0c0c16; }
     #log-content::-webkit-scrollbar-thumb { background: #1e1e38; border-radius: 2px; }
 
-    .log-line { padding: 2px 0; word-break: break-word; }
+    .log-line {
+      padding: 3px 0;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      hyphens: auto;
+    }
     .log-line.tool { color: #7dd8e8; }
     .log-line.text { color: #c8d0c8; }
     .log-line.error { color: #f06060; }

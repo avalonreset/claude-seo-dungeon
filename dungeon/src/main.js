@@ -14,9 +14,11 @@ function addLog(msg) {
   if (!msg) return;
   let clean = msg.replace(/[\n\r]+/g, ' ').trim();
   if (!clean || clean.length < 3) return;
-  if (clean.startsWith('{') || clean.startsWith('[') || clean.startsWith('"')) return;
-  if (clean.includes('":"') && clean.includes('","')) return;
   if (clean === '[working...]') return;
+
+  // Filter raw JSON blobs but keep tool call lines like [WebFetch]
+  if (clean.startsWith('{') || clean.startsWith('"')) return;
+  if (clean.includes('":"') && clean.includes('","')) return;
 
   let cls = 'text';
   if (clean.startsWith('ERROR')) cls = 'error';
