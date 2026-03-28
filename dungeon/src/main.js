@@ -15,13 +15,13 @@ async function connectBridge() {
   const status = document.getElementById('bridge-status');
   try {
     await bridge.connect();
-    status.textContent = 'Blood will be spilled tonight.';
+    status.textContent = 'Ready.';
     status.className = 'connected';
-    addLog('Something stirs in the dark');
+    addLog('Ready to kill');
   } catch (err) {
     status.textContent = 'The dungeon is unreachable. Start the server.';
     status.className = 'error';
-    addLog('The darkness does not answer');
+    addLog('Server offline');
   }
 }
 
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initActivityLog();
   initKnightSprite();
 
-  addLog('Torches flicker in the deep');
+  addLog('Waiting');
 
   const domainInput = document.getElementById('domain-input');
   const pathInput = document.getElementById('path-input');
