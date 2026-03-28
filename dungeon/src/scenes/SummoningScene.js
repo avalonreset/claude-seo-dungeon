@@ -2,8 +2,9 @@ import { COLORS, FONTS } from '../utils/colors.js';
 import { bridge } from '../utils/ws.js';
 
 /**
- * Summoning scene — knight marches down a torchlit dungeon corridor while audit runs.
- * AAA indie pixel art aesthetic: scrolling stone walls, flickering torches, rising embers.
+ * Summoning scene — Castlevania-style side-scroller.
+ * Knight runs RIGHT through a torchlit stone corridor while the audit runs.
+ * Parallax scrolling: far wall, main wall with torch brackets, cobblestone floor.
  * Transitions to DungeonHall once audit completes.
  */
 export class SummoningScene extends Phaser.Scene {
@@ -24,82 +25,55 @@ export class SummoningScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(0x05050f);
     this.cameras.main.fadeIn(800, 0, 0, 0);
 
-    // ── Scrolling Stone Brick Wall Background ───────────────────
-    this._generateWallTexture(W);
-    this.wallTile = this.add.tileSprite(0, 0, W, H, 'stonewall_tile')
+    // Scroll speeds (pixels per second) — leftward
+    this.farWallSpeed = 30;
+    this.mainWallSpeed = 60;
+    this.floorSpeed = 80;
+
+    // ── Far Wall (darkest, slowest parallax layer) ─────────────
+    this._generateFarWallTexture();
+    this.farWallTile = this.add.tileSprite(0, 0, W, 440, 'farwall_tile')
       .setOrigin(0, 0)
       .setDepth(0);
-    this.scrollSpeed = 40; // pixels per second
 
-    // ── Corridor Darkness Gradient (depth illusion) ──────────────
-    this._drawCorridorDepth(cx, W, H);
+    // ── Main Wall with Torch Brackets ──────────────────────────
+    this._generateMainWallTexture();
+    this.mainWallTile = this.add.tileSprite(0, 0, W, 440, 'mainwall_tile')
+      .setOrigin(0, 0)
+      .setDepth(1);
 
-    // ── Torch Brackets & Flames (fixed screen positions) ─────────
-    this._createTorches(W, H);
+    // ── Stone Floor (fastest scroll, cobblestone) ──────────────
+    this._generateFloorTexture();
+    this.floorTile = this.add.tileSprite(0, 440, W, 160, 'floor_tile')
+      .setOrigin(0, 0)
+      .setDepth(2);
 
-    // ── Floating Embers (30 orange/red rising from bottom) ───────
+    // Floor top edge — dark line separating wall from floor
+    const floorEdge = this.add.graphics().setDepth(3);
+    floorEdge.fillStyle(0x000000, 0.7);
+    floorEdge.fillRect(0, 438, W, 4);
+    floorEdge.fillStyle(0x1a1a0e, 0.5);
+    floorEdge.fillRect(0, 436, W, 2);
+
+    // ── Torch Glow Circles (fixed screen positions, pulse) ─────
+    this._createTorchGlows(W);
+
+    // ── Embers drifting LEFT and UP ────────────────────────────
     this._createEmbers(W, H);
 
-    // ── Dust Motes (15 gray dots, gentle drift) ─────────────────
+    // ── Dust Motes ─────────────────────────────────────────────
     this._createDustMotes(W, H);
 
-    // ── Title Text ───────────────────────────────────────────────
-    const titleText = this.add.text(cx, 38, 'DESCENDING INTO THE DUNGEON', {
-      fontFamily: 'JetBrains Mono, monospace',
-      fontWeight: '600',
-      fontSize: '20px',
-      color: '#d4af37',
-      letterSpacing: 4
-    }).setOrigin(0.5).setAlpha(0).setDepth(55);
+    // ── Knight (centered, faces right, running) ────────────────
+    this.knight = this.add.sprite(300, 380, 'warrior_run')
+      .setScale(2.5)
+      .setDepth(10)
+      .play('warrior_run_anim');
 
-    this.tweens.add({
-      targets: titleText,
-      alpha: 1,
-      duration: 1500,
-      ease: 'Sine.easeIn'
-    });
+    // Warm glow underneath the knight
+    this.knightGlow = this.add.circle(300, 400, 70, 0xff8833, 0.08).setDepth(9);
+    this.knightGlowInner = this.add.circle(300, 400, 35, 0xffaa44, 0.12).setDepth(9);
 
-    // Subtle gold glow underneath title
-    const titleGlow = this.add.text(cx, 38, 'DESCENDING INTO THE DUNGEON', {
-      fontFamily: 'JetBrains Mono, monospace',
-      fontWeight: '600',
-      fontSize: '20px',
-      color: '#ff9900',
-      letterSpacing: 4
-    }).setOrigin(0.5).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD).setDepth(54);
-
-    this.tweens.add({
-      targets: titleGlow,
-      alpha: { from: 0, to: 0.25 },
-      duration: 2000,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-
-    // ── Domain Name Display ──────────────────────────────────────
-    const domainText = this.add.text(cx, 70, this.domain, {
-      fontFamily: 'JetBrains Mono, monospace',
-      fontSize: '16px',
-      color: '#88bbff',
-    }).setOrigin(0.5).setDepth(55);
-
-    this.tweens.add({
-      targets: domainText,
-      alpha: { from: 0.7, to: 1 },
-      duration: 2000,
-      yoyo: true,
-      repeat: -1
-    });
-
-    // ── Knight Character (centered, animated warrior sprite) ────────
-    this.knight = this.add.sprite(400, 300, 'warrior_run').setScale(2.5).setDepth(10).play('warrior_run_anim');
-
-    // Warm glow circle underneath the knight
-    this.knightGlow = this.add.circle(400, 320, 70, 0xff8833, 0.08).setDepth(9);
-    this.knightGlowInner = this.add.circle(400, 320, 35, 0xffaa44, 0.12).setDepth(9);
-
-    // Knight glow breathing
     this.tweens.add({
       targets: this.knightGlow,
       scaleX: 1.4, scaleY: 1.4, alpha: 0.04,
@@ -113,47 +87,96 @@ export class SummoningScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    // ── Atmospheric Status Message ───────────────────────────────
-    this.messageText = this.add.text(cx, 430, 'Summoning the audit spirits...', {
-      fontFamily: 'JetBrains Mono, monospace',
-      fontSize: '14px',
+    // ── Title Text ─────────────────────────────────────────────
+    const titleText = this.add.text(cx, 38, 'DESCENDING INTO THE DUNGEON', {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontStyle: '600',
+      fontSize: '22px',
+      color: '#d4af37',
+      letterSpacing: 6
+    }).setOrigin(0.5).setAlpha(0).setDepth(55);
+
+    this.tweens.add({
+      targets: titleText,
+      alpha: 1,
+      duration: 1500,
+      ease: 'Sine.easeIn'
+    });
+
+    // Subtle gold glow underneath title
+    const titleGlow = this.add.text(cx, 38, 'DESCENDING INTO THE DUNGEON', {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontStyle: '600',
+      fontSize: '22px',
+      color: '#ff9900',
+      letterSpacing: 6
+    }).setOrigin(0.5).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD).setDepth(54);
+
+    this.tweens.add({
+      targets: titleGlow,
+      alpha: { from: 0, to: 0.25 },
+      duration: 2000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    // ── Domain Name Display ────────────────────────────────────
+    const domainText = this.add.text(cx, 70, this.domain, {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '16px',
+      color: '#88bbff',
+    }).setOrigin(0.5).setDepth(55);
+
+    this.tweens.add({
+      targets: domainText,
+      alpha: { from: 0.7, to: 1 },
+      duration: 2000,
+      yoyo: true,
+      repeat: -1
+    });
+
+    // ── Status Message ─────────────────────────────────────────
+    this.messageText = this.add.text(cx, 470, 'Summoning the audit spirits...', {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '15px',
       color: '#66cccc',
       letterSpacing: 1
     }).setOrigin(0.5).setDepth(55);
 
-    this.messageGlow = this.add.text(cx, 430, 'Summoning the audit spirits...', {
-      fontFamily: 'JetBrains Mono, monospace',
-      fontSize: '14px',
+    this.messageGlow = this.add.text(cx, 470, 'Summoning the audit spirits...', {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '15px',
       color: '#44aaaa',
       letterSpacing: 1
     }).setOrigin(0.5).setDepth(54).setAlpha(0.3).setBlendMode(Phaser.BlendModes.ADD);
 
-    // ── Stream / Activity Text ───────────────────────────────────
-    this.streamText = this.add.text(cx, 458, '', {
-      fontFamily: 'JetBrains Mono, monospace',
-      fontSize: '12px',
+    // ── Stream / Activity Text ─────────────────────────────────
+    this.streamText = this.add.text(cx, 495, '', {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '13px',
       color: '#7766aa',
       wordWrap: { width: 650 }
     }).setOrigin(0.5).setDepth(55).setAlpha(0.8);
 
-    // ── Demon Counter ────────────────────────────────────────────
-    this.demonCounter = this.add.text(cx, 482, '', {
-      fontFamily: 'JetBrains Mono, monospace',
-      fontSize: '12px',
+    // ── Demon Counter ──────────────────────────────────────────
+    this.demonCounter = this.add.text(cx, 516, '', {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '13px',
       color: '#cc4444'
     }).setOrigin(0.5).setDepth(55);
 
-    // ── Log area ─────────────────────────────────────────────────
+    // ── Log area ───────────────────────────────────────────────
     this.logTexts = [];
-    this.logY = 510;
+    this.logY = 535;
 
-    // ── Progress Bar ─────────────────────────────────────────────
+    // ── Progress Bar ───────────────────────────────────────────
     this._createProgressBar(cx);
 
-    // ── Vignette Overlay (darkened edges all 4 sides) ────────────
+    // ── Vignette Overlay ───────────────────────────────────────
     this._drawVignette(W, H);
 
-    // ── Atmospheric Messages ─────────────────────────────────────
+    // ── Atmospheric Messages ───────────────────────────────────
     this.flavorMessages = [
       'Scanning the dark corridors...',
       'Detecting hostile entities...',
@@ -196,46 +219,84 @@ export class SummoningScene extends Phaser.Scene {
     // Track stream activity
     this.streamChunks = 0;
 
-    // ── Torch Flame Flicker Timer (redraw every 100ms) ───────────
-    this.time.addEvent({
-      delay: 100,
-      callback: () => this._flickerTorchFlames(),
-      loop: true
-    });
-
     // Start audit
     this.runAudit();
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // VISUAL CONSTRUCTION HELPERS
+  // TEXTURE GENERATION
   // ═══════════════════════════════════════════════════════════════
 
   /**
-   * Generate a tileable stone wall texture with color-varied bricks
-   * and thin dark mortar lines. Uses dark blue palette.
+   * Seeded pseudo-random for consistent tile generation.
    */
-  _generateWallTexture(W) {
-    const TILE_H = 300;
+  _seededRand(seed) {
+    let x = Math.sin(seed * 127.1 + 311.7) * 43758.5453123;
+    return x - Math.floor(x);
+  }
+
+  /**
+   * Far wall — very dark, subtle bricks, no detail. Provides depth behind main wall.
+   */
+  _generateFarWallTexture() {
+    const TW = 400;
+    const TH = 440;
+    const g = this.make.graphics({ add: false });
+
+    // Very dark base
+    g.fillStyle(0x08081a, 1);
+    g.fillRect(0, 0, TW, TH);
+
+    const brickW = 48;
+    const brickH = 24;
+    const rows = Math.ceil(TH / brickH) + 1;
+    const cols = Math.ceil(TW / brickW) + 1;
+
+    for (let row = 0; row < rows; row++) {
+      const offset = (row % 2) * (brickW / 2);
+      for (let col = -1; col < cols; col++) {
+        const bx = col * brickW + offset;
+        const by = row * brickH;
+        if (by >= TH) continue;
+
+        const seed = row * 100 + col;
+        const variation = Math.floor((this._seededRand(seed) - 0.5) * 4);
+        const base = 0x0a + variation;
+        const finalColor = (Math.max(4, base) << 16) | (Math.max(4, base) << 8) | Math.max(8, base + 6);
+
+        g.fillStyle(finalColor, 0.6);
+        g.fillRect(bx + 1, by + 1, brickW - 2, brickH - 2);
+
+        // Mortar
+        g.fillStyle(0x040410, 0.5);
+        g.fillRect(bx, by, brickW, 1);
+        g.fillRect(bx, by, 1, brickH);
+      }
+    }
+
+    g.generateTexture('farwall_tile', TW, TH);
+    g.destroy();
+  }
+
+  /**
+   * Main wall — stone bricks with torch brackets baked in every ~180px.
+   * 400px wide tile, torches at x=90 and x=270 (so every 180px when tiled).
+   */
+  _generateMainWallTexture() {
+    const TW = 400;
+    const TH = 440;
     const g = this.make.graphics({ add: false });
 
     // Base dark fill
     g.fillStyle(0x0e0e1c, 1);
-    g.fillRect(0, 0, W, TILE_H);
+    g.fillRect(0, 0, TW, TH);
 
     // Draw stone bricks
     const brickW = 64;
     const brickH = 32;
-    const rows = Math.ceil(TILE_H / brickH) + 1;
-    const cols = Math.ceil(W / brickW) + 1;
+    const rows = Math.ceil(TH / brickH) + 1;
+    const cols = Math.ceil(TW / brickW) + 1;
 
-    // Seeded pseudo-random for consistent tile
-    const seededRand = (seed) => {
-      let x = Math.sin(seed * 127.1 + 311.7) * 43758.5453123;
-      return x - Math.floor(x);
-    };
-
-    // Brick base colors (dark blues)
     const brickColors = [0x0e0e1c, 0x121228, 0x161630];
 
     for (let row = 0; row < rows; row++) {
@@ -243,168 +304,199 @@ export class SummoningScene extends Phaser.Scene {
       for (let col = -1; col < cols; col++) {
         const bx = col * brickW + offset;
         const by = row * brickH;
-        if (by >= TILE_H) continue;
+        if (by >= TH) continue;
 
         const seed = row * 100 + col;
-        const baseColor = brickColors[Math.floor(seededRand(seed) * 3)];
+        const baseColor = brickColors[Math.floor(this._seededRand(seed) * 3)];
 
-        // Extract RGB and add slight per-brick variation
-        const br = ((baseColor >> 16) & 0xff) + Math.floor((seededRand(seed + 1) - 0.5) * 6);
-        const bg = ((baseColor >> 8) & 0xff) + Math.floor((seededRand(seed + 2) - 0.5) * 6);
-        const bb = (baseColor & 0xff) + Math.floor((seededRand(seed + 3) - 0.5) * 8);
+        const br = ((baseColor >> 16) & 0xff) + Math.floor((this._seededRand(seed + 1) - 0.5) * 6);
+        const bg = ((baseColor >> 8) & 0xff) + Math.floor((this._seededRand(seed + 2) - 0.5) * 6);
+        const bb = (baseColor & 0xff) + Math.floor((this._seededRand(seed + 3) - 0.5) * 8);
         const finalColor = (Math.max(0, br) << 16) | (Math.max(0, bg) << 8) | Math.max(0, bb);
 
-        // Brick face
         g.fillStyle(finalColor, 0.95);
         g.fillRect(bx + 1, by + 1, brickW - 2, brickH - 2);
 
-        // Thin dark mortar lines
+        // Mortar
         g.fillStyle(0x060610, 0.9);
-        g.fillRect(bx, by, brickW, 1);       // horizontal mortar
-        g.fillRect(bx, by, 1, brickH);       // vertical mortar
+        g.fillRect(bx, by, brickW, 1);
+        g.fillRect(bx, by, 1, brickH);
 
-        // Subtle highlight on top-left edge of each brick
+        // Highlight
         g.fillStyle(0x1e1e38, 0.35);
         g.fillRect(bx + 2, by + 2, brickW - 4, 1);
         g.fillRect(bx + 2, by + 2, 1, brickH - 4);
 
-        // Random surface imperfections
-        if (seededRand(seed + 10) < 0.15) {
+        // Random imperfections
+        if (this._seededRand(seed + 10) < 0.15) {
           g.fillStyle(0x08080e, 0.5);
-          const dx = 4 + Math.floor(seededRand(seed + 11) * (brickW - 14));
-          const dy = 4 + Math.floor(seededRand(seed + 12) * (brickH - 14));
-          const dw = 3 + Math.floor(seededRand(seed + 13) * 6);
-          const dh = 2 + Math.floor(seededRand(seed + 14) * 3);
+          const dx = 4 + Math.floor(this._seededRand(seed + 11) * (brickW - 14));
+          const dy = 4 + Math.floor(this._seededRand(seed + 12) * (brickH - 14));
+          const dw = 3 + Math.floor(this._seededRand(seed + 13) * 6);
+          const dh = 2 + Math.floor(this._seededRand(seed + 14) * 3);
           g.fillRect(bx + dx, by + dy, dw, dh);
         }
       }
     }
 
-    g.generateTexture('stonewall_tile', W, TILE_H);
+    // Bake torch brackets into the wall at x=90 and x=270 (every ~180px)
+    const torchXPositions = [90, 270];
+    const torchY = 240; // wall-height for brackets
+
+    torchXPositions.forEach((tx) => {
+      // Iron mounting plate
+      g.fillStyle(0x2a2018, 1);
+      g.fillRect(tx - 6, torchY + 10, 12, 22);
+      g.fillStyle(0x3a3028, 1);
+      g.fillRect(tx - 5, torchY + 11, 10, 20);
+
+      // Bracket arm extending outward
+      g.fillStyle(0x3a3028, 1);
+      g.fillRect(tx - 3, torchY + 6, 6, 6);
+
+      // Cup/holder at top
+      g.fillStyle(0x4a3828, 1);
+      g.fillRect(tx - 7, torchY + 2, 14, 6);
+      g.fillStyle(0x3a2818, 1);
+      g.fillRect(tx - 6, torchY + 3, 12, 4);
+
+      // Mounting bolts
+      g.fillStyle(0x606050, 1);
+      g.fillRect(tx - 4, torchY + 14, 2, 2);
+      g.fillRect(tx + 2, torchY + 14, 2, 2);
+
+      // Flame shape baked into tile (orange/yellow)
+      // Outer flame glow
+      g.fillStyle(0xff4400, 0.15);
+      g.fillEllipse(tx, torchY - 8, 18, 22);
+
+      // Mid flame
+      g.fillStyle(0xff8822, 0.3);
+      g.fillEllipse(tx, torchY - 10, 11, 15);
+
+      // Inner bright core
+      g.fillStyle(0xffcc44, 0.5);
+      g.fillEllipse(tx, torchY - 8, 6, 9);
+
+      // Tip
+      g.fillStyle(0xffee88, 0.4);
+      g.fillEllipse(tx, torchY - 16, 3, 6);
+
+      // Warm light cast on nearby wall bricks
+      g.fillStyle(0xff6622, 0.04);
+      g.fillCircle(tx, torchY - 4, 60);
+      g.fillStyle(0xff8833, 0.03);
+      g.fillCircle(tx, torchY - 4, 40);
+    });
+
+    g.generateTexture('mainwall_tile', TW, TH);
     g.destroy();
   }
 
-  _drawCorridorDepth(cx, W, H) {
-    const g = this.add.graphics().setDepth(1);
+  /**
+   * Floor texture — dark cobblestone, horizontally tileable.
+   */
+  _generateFloorTexture() {
+    const TW = 400;
+    const TH = 160;
+    const g = this.make.graphics({ add: false });
 
-    // Central corridor lighter area
-    const corridorW = 320;
-    g.fillStyle(0x14142a, 0.25);
-    g.fillRect(cx - corridorW / 2, 0, corridorW, H);
+    // Dark base
+    g.fillStyle(0x0c0c0a, 1);
+    g.fillRect(0, 0, TW, TH);
 
-    // Gradient darkening on sides (left wall)
-    for (let i = 0; i < 8; i++) {
-      g.fillStyle(0x000008, 0.06);
-      g.fillRect(0, 0, 100 + i * 20, H);
-    }
-    // Right wall
-    for (let i = 0; i < 8; i++) {
-      g.fillStyle(0x000008, 0.06);
-      g.fillRect(W - 100 - i * 20, 0, 100 + i * 20, H);
+    // Cobblestones — irregular rounded rectangles
+    const stoneW = 40;
+    const stoneH = 36;
+    const rows = Math.ceil(TH / stoneH) + 1;
+    const cols = Math.ceil(TW / stoneW) + 1;
+
+    for (let row = 0; row < rows; row++) {
+      const offset = (row % 2) * (stoneW / 2);
+      for (let col = -1; col < cols; col++) {
+        const seed = row * 50 + col + 7777;
+        const bx = col * stoneW + offset + Math.floor((this._seededRand(seed + 5) - 0.5) * 6);
+        const by = row * stoneH + Math.floor((this._seededRand(seed + 6) - 0.5) * 4);
+        if (by >= TH) continue;
+
+        const variation = Math.floor(this._seededRand(seed) * 6);
+        const base = 0x10 + variation;
+        const finalColor = (base << 16) | (base << 8) | (base - 2);
+
+        // Stone face
+        g.fillStyle(finalColor, 0.9);
+        g.fillRect(bx + 2, by + 2, stoneW - 4, stoneH - 4);
+
+        // Dark gap between stones
+        g.fillStyle(0x060604, 0.8);
+        g.fillRect(bx, by, stoneW, 2);
+        g.fillRect(bx, by, 2, stoneH);
+
+        // Subtle top highlight
+        g.fillStyle(0x1e1e1a, 0.25);
+        g.fillRect(bx + 3, by + 3, stoneW - 6, 1);
+
+        // Wear marks
+        if (this._seededRand(seed + 20) < 0.2) {
+          g.fillStyle(0x080806, 0.4);
+          const dx = 5 + Math.floor(this._seededRand(seed + 21) * (stoneW - 12));
+          const dy = 5 + Math.floor(this._seededRand(seed + 22) * (stoneH - 12));
+          g.fillRect(bx + dx, by + dy, 4, 2);
+        }
+      }
     }
 
-    // Floor gradient at bottom
-    for (let i = 0; i < 6; i++) {
-      g.fillStyle(0x000005, 0.08);
-      g.fillRect(0, H - 120 + i * 20, W, 20);
-    }
+    // Top edge of floor — slightly lighter line for definition
+    g.fillStyle(0x1a1a14, 0.6);
+    g.fillRect(0, 0, TW, 2);
+
+    g.generateTexture('floor_tile', TW, TH);
+    g.destroy();
   }
 
-  /**
-   * Create torch brackets at fixed screen positions (2 left, 2 right)
-   * with warm glow circles and animated flame graphics.
-   */
-  _createTorches(W, H) {
-    const cx = W / 2;
+  // ═══════════════════════════════════════════════════════════════
+  // VISUAL HELPERS
+  // ═══════════════════════════════════════════════════════════════
 
-    // 4 torch positions: 2 on left wall, 2 on right wall
-    this.torchData = [
-      { x: cx - 200, y: 150 },  // left top
-      { x: cx - 200, y: 380 },  // left bottom
-      { x: cx + 200, y: 220 },  // right top
-      { x: cx + 200, y: 450 },  // right bottom
+  /**
+   * Torch glow circles at fixed screen positions that pulse.
+   * Placed at wall-height (y: ~250), spaced across the screen.
+   * Since the wall scrolls behind them, it creates the illusion of passing torches.
+   */
+  _createTorchGlows(W) {
+    const glowPositions = [
+      { x: 160, y: 250 },
+      { x: 450, y: 250 },
+      { x: 740, y: 250 },
     ];
 
-    this.torchData.forEach((pos, idx) => {
-      // Iron bracket graphic
-      const bracket = this.add.graphics().setDepth(5);
-      bracket.fillStyle(0x3a3028, 1);
-      bracket.fillRect(pos.x - 5, pos.y + 8, 10, 18);
-      bracket.fillStyle(0x2a2018, 1);
-      bracket.fillRect(pos.x - 4, pos.y + 9, 8, 16);
-      // Mounting bolts
-      bracket.fillStyle(0x505040, 1);
-      bracket.fillRect(pos.x - 3, pos.y + 11, 2, 2);
-      bracket.fillRect(pos.x + 1, pos.y + 11, 2, 2);
+    glowPositions.forEach((pos, idx) => {
+      const glowOuter = this.add.circle(pos.x, pos.y, 90, 0xff6622, 0.04).setDepth(4);
+      const glowMid = this.add.circle(pos.x, pos.y, 55, 0xff8833, 0.06).setDepth(4);
+      const glowInner = this.add.circle(pos.x, pos.y, 28, 0xffaa44, 0.1).setDepth(4);
 
-      // Warm glow circles (layered semi-transparent orange)
-      const glowOuter = this.add.circle(pos.x, pos.y - 4, 90, 0xff6622, 0.03).setDepth(2);
-      const glowMid = this.add.circle(pos.x, pos.y - 4, 55, 0xff8833, 0.05).setDepth(2);
-      const glowInner = this.add.circle(pos.x, pos.y - 4, 30, 0xffaa44, 0.08).setDepth(2);
-
-      // Glow breathing animation
       [glowOuter, glowMid, glowInner].forEach((glow, gi) => {
         this.tweens.add({
           targets: glow,
-          alpha: glow.alpha * 1.6,
-          scaleX: { from: 0.9, to: 1.15 },
-          scaleY: { from: 0.9, to: 1.15 },
-          duration: 400 + idx * 80 + gi * 60,
+          alpha: glow.alpha * 1.8,
+          scaleX: { from: 0.85, to: 1.2 },
+          scaleY: { from: 0.85, to: 1.2 },
+          duration: 350 + idx * 90 + gi * 70,
           yoyo: true,
           repeat: -1,
           ease: 'Sine.easeInOut'
         });
       });
-
-      // Store flame graphics object for redrawing in flicker
-      pos.flameGfx = this.add.graphics().setDepth(7);
     });
   }
 
   /**
-   * Called every 100ms to redraw torch flames with slight random variation.
-   * Orange/yellow ellipses that shift position and size each frame.
-   */
-  _flickerTorchFlames() {
-    if (!this.torchData) return;
-
-    this.torchData.forEach((pos) => {
-      const g = pos.flameGfx;
-      g.clear();
-
-      const fx = pos.x;
-      const fy = pos.y;
-
-      // Random offsets for flicker
-      const ox = Phaser.Math.FloatBetween(-1.5, 1.5);
-      const oy = Phaser.Math.FloatBetween(-1, 1);
-      const sizeVar = Phaser.Math.FloatBetween(0.85, 1.15);
-
-      // Outer flame glow (deep orange)
-      g.fillStyle(0xff4400, 0.12);
-      g.fillEllipse(fx + ox, fy - 6 + oy, 20 * sizeVar, 24 * sizeVar);
-
-      // Mid flame (orange)
-      g.fillStyle(0xff8822, 0.28);
-      g.fillEllipse(fx + ox * 0.7, fy - 8 + oy * 0.8, 12 * sizeVar, 16 * sizeVar);
-
-      // Inner bright core (yellow)
-      g.fillStyle(0xffcc44, 0.5);
-      g.fillEllipse(fx + ox * 0.4, fy - 6 + oy * 0.5, 7 * sizeVar, 10 * sizeVar);
-
-      // Tip (bright yellow-white)
-      g.fillStyle(0xffee88, 0.4);
-      g.fillEllipse(fx + ox * 0.5, fy - 14 + oy, 4 * sizeVar, 7 * sizeVar);
-    });
-  }
-
-  /**
-   * 30 embers rising from bottom — orange/red circles, 2-3px, drift upward and sideways.
+   * Embers drift LEFT and UP — matching the side-scroll direction.
    */
   _createEmbers(W, H) {
     for (let i = 0; i < 30; i++) {
-      const startX = Phaser.Math.Between(60, W - 60);
-      const startY = Phaser.Math.Between(H + 10, H + 100);
+      const startX = Phaser.Math.Between(0, W + 100);
+      const startY = Phaser.Math.Between(200, H - 50);
       const size = Phaser.Math.FloatBetween(1, 1.5);
       const isRed = Phaser.Math.Between(0, 2) === 0;
       const color = isRed ? 0xff3322 : 0xf08020;
@@ -412,18 +504,18 @@ export class SummoningScene extends Phaser.Scene {
 
       this.tweens.add({
         targets: ember,
-        y: Phaser.Math.Between(-30, H * 0.15),
-        x: startX + Phaser.Math.Between(-80, 80),
+        x: startX - Phaser.Math.Between(200, 500),
+        y: startY - Phaser.Math.Between(60, 200),
         alpha: 0,
         scaleX: { from: 1, to: 0.3 },
         scaleY: { from: 1, to: 0.3 },
-        duration: Phaser.Math.Between(3000, 6000),
+        duration: Phaser.Math.Between(2500, 5500),
         repeat: -1,
-        delay: Phaser.Math.Between(0, 5000),
+        delay: Phaser.Math.Between(0, 4000),
         ease: 'Sine.easeOut',
         onRepeat: (tween, target) => {
-          target.x = Phaser.Math.Between(60, W - 60);
-          target.y = Phaser.Math.Between(H + 10, H + 100);
+          target.x = Phaser.Math.Between(W, W + 200);
+          target.y = Phaser.Math.Between(200, H - 50);
           target.alpha = 0.7;
         }
       });
@@ -431,18 +523,18 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   /**
-   * 15 dust motes — 1px gray dots, slow gentle drift.
+   * Dust motes — slow gentle drift.
    */
   _createDustMotes(W, H) {
     for (let i = 0; i < 15; i++) {
       const x = Phaser.Math.Between(0, W);
-      const y = Phaser.Math.Between(0, H);
+      const y = Phaser.Math.Between(80, 420);
       const mote = this.add.circle(x, y, 0.5, 0x888888, 0.15).setDepth(12);
 
       this.tweens.add({
         targets: mote,
-        x: x + Phaser.Math.Between(-50, 50),
-        y: y + Phaser.Math.Between(-30, 30),
+        x: x + Phaser.Math.Between(-80, -20),
+        y: y + Phaser.Math.Between(-25, 25),
         alpha: { from: 0.05, to: 0.2 },
         duration: Phaser.Math.Between(5000, 9000),
         yoyo: true,
@@ -454,16 +546,15 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   /**
-   * Progress bar at bottom (y: 550), 600px wide, centered.
-   * Dark track with subtle border. Blue-to-gold gradient fill. Shimmer streak.
+   * Progress bar at bottom — dark track, blue-to-gold gradient fill, shimmer, centered percentage.
    */
   _createProgressBar(cx) {
-    const barY = 550;
+    const barY = 570;
     const barW = 600;
     const barH = 18;
     const barX = cx - barW / 2;
 
-    // Outer border (subtle stone frame)
+    // Outer border
     const frame = this.add.graphics().setDepth(55);
     frame.fillStyle(0x2a2a3a, 1);
     frame.fillRoundedRect(barX - 4, barY - barH / 2 - 4, barW + 8, barH + 8, 4);
@@ -484,8 +575,9 @@ export class SummoningScene extends Phaser.Scene {
 
     // Percentage text centered on bar
     this.progressPctText = this.add.text(cx, barY, '0%', {
-      fontFamily: 'JetBrains Mono, monospace',
-      fontSize: '13px',
+      fontFamily: '"JetBrains Mono", monospace',
+      fontStyle: 'bold',
+      fontSize: '14px',
       color: '#ffffff',
     }).setOrigin(0.5).setDepth(58).setAlpha(0.9);
   }
@@ -503,9 +595,9 @@ export class SummoningScene extends Phaser.Scene {
     for (let i = 0; i < steps; i++) {
       const t = i / Math.max(steps - 1, 1);
       const r = Math.floor(0x1a + (0xd4 - 0x1a) * t);
-      const g = Math.floor(0x33 + (0xaf - 0x33) * t);
+      const gv = Math.floor(0x33 + (0xaf - 0x33) * t);
       const b = Math.floor(0x88 + (0x37 - 0x88) * t);
-      const col = (r << 16) | (g << 8) | b;
+      const col = (r << 16) | (gv << 8) | b;
       this.progressGfx.fillStyle(col, 1);
       const sx = x + i * 4;
       const sw = Math.min(4, fillW - i * 4);
@@ -516,7 +608,7 @@ export class SummoningScene extends Phaser.Scene {
     this.progressGfx.fillStyle(0xffffff, 0.12);
     this.progressGfx.fillRect(x, y - h / 2 + 1, fillW, 3);
 
-    // Animated shimmer streak sweeping across filled area
+    // Animated shimmer streak
     const shimmerPos = x + (this.shimmerX % (w + 80)) - 40;
     if (shimmerPos < x + fillW) {
       for (let s = 0; s < 50; s++) {
@@ -535,7 +627,7 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   /**
-   * Subtle vignette darkening at all 4 edges.
+   * Vignette darkening at all 4 edges.
    */
   _drawVignette(W, H) {
     const g = this.add.graphics().setDepth(50);
@@ -561,24 +653,20 @@ export class SummoningScene extends Phaser.Scene {
       g.fillRect(W - 50 + i * 4, 0, 50 - i * 4, H);
     }
 
-    // Corner vignettes (extra darkening)
+    // Corner vignettes
     const vignetteSize = 180;
-    // Top-left
     for (let i = 0; i < 8; i++) {
       g.fillStyle(0x000000, 0.03);
       g.fillTriangle(0, 0, vignetteSize - i * 18, 0, 0, vignetteSize - i * 18);
     }
-    // Top-right
     for (let i = 0; i < 8; i++) {
       g.fillStyle(0x000000, 0.03);
       g.fillTriangle(W, 0, W - vignetteSize + i * 18, 0, W, vignetteSize - i * 18);
     }
-    // Bottom-left
     for (let i = 0; i < 8; i++) {
       g.fillStyle(0x000000, 0.03);
       g.fillTriangle(0, H, vignetteSize - i * 18, H, 0, H - vignetteSize + i * 18);
     }
-    // Bottom-right
     for (let i = 0; i < 8; i++) {
       g.fillStyle(0x000000, 0.03);
       g.fillTriangle(W, H, W - vignetteSize + i * 18, H, W, H - vignetteSize + i * 18);
@@ -586,13 +674,25 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // UPDATE LOOP — scroll background + animate shimmer
+  // UPDATE LOOP — scroll all parallax layers LEFT + animate shimmer
   // ═══════════════════════════════════════════════════════════════
 
   update(time, delta) {
-    // Scroll the stone wall upward continuously (~40px/sec)
-    if (this.wallTile) {
-      this.wallTile.tilePositionY += (this.scrollSpeed * delta) / 1000;
+    const dt = delta / 1000;
+
+    // Scroll far wall LEFT (slowest)
+    if (this.farWallTile) {
+      this.farWallTile.tilePositionX += this.farWallSpeed * dt;
+    }
+
+    // Scroll main wall LEFT (medium)
+    if (this.mainWallTile) {
+      this.mainWallTile.tilePositionX += this.mainWallSpeed * dt;
+    }
+
+    // Scroll floor LEFT (fastest)
+    if (this.floorTile) {
+      this.floorTile.tilePositionX += this.floorSpeed * dt;
     }
 
     // Keep knight glow following the knight
@@ -609,7 +709,7 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // LOGIC (preserved from original)
+  // AUDIT LOGIC (preserved from original)
   // ═══════════════════════════════════════════════════════════════
 
   addLog(msg) {
@@ -618,8 +718,8 @@ export class SummoningScene extends Phaser.Scene {
       const old = this.logTexts.shift();
       old.destroy();
     }
-    const text = this.add.text(300, this.logY, `> ${msg}`, {
-      fontFamily: 'JetBrains Mono, monospace',
+    const text = this.add.text(400, this.logY, `> ${msg}`, {
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '12px',
       color: '#667788'
     }).setOrigin(0.5).setDepth(55).setAlpha(0.7);

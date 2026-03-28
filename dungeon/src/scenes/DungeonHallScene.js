@@ -1,6 +1,7 @@
 import { COLORS } from '../utils/colors.js';
+import { HALL_MESSAGES } from '../utils/flavor-text.js';
 
-const HEADER_FONT = '"Press Start 2P", monospace';
+const HEADER_FONT = '"JetBrains Mono", monospace';
 const BODY_FONT = 'monospace';
 
 // Row geometry
@@ -387,8 +388,9 @@ export class DungeonHallScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    // Instruction text
-    const instruction = this.add.text(460, 555, 'SELECT A DEMON TO ENGAGE', {
+    // Flavor text that cycles through HALL_MESSAGES
+    const randomHall = () => HALL_MESSAGES[Math.floor(Math.random() * HALL_MESSAGES.length)];
+    const instruction = this.add.text(460, 555, randomHall(), {
       fontFamily: HEADER_FONT,
       fontSize: '10px',
       color: '#f0c040',
@@ -396,6 +398,23 @@ export class DungeonHallScene extends Phaser.Scene {
         offsetX: 0, offsetY: 0, color: '#f0c040', blur: 8, fill: true, stroke: true
       }
     }).setOrigin(0.5).setDepth(101);
+
+    // Cycle flavor text every 4 seconds with fade
+    this.time.addEvent({
+      delay: 4000,
+      loop: true,
+      callback: () => {
+        this.tweens.add({
+          targets: instruction,
+          alpha: 0,
+          duration: 400,
+          onComplete: () => {
+            instruction.setText(randomHall());
+            this.tweens.add({ targets: instruction, alpha: 1, duration: 400 });
+          }
+        });
+      }
+    });
 
     this.tweens.add({
       targets: instruction,

@@ -1,5 +1,6 @@
 import { COLORS, FONTS } from '../utils/colors.js';
 import { bridge } from '../utils/ws.js';
+import { ENCOUNTER_MESSAGES, VICTORY_MESSAGES } from '../utils/flavor-text.js';
 
 /**
  * Battle scene — Final Fantasy style turn-based combat.
@@ -339,7 +340,7 @@ export class BattleScene extends Phaser.Scene {
     namePanel.strokeRoundedRect(demonPanelX + 2, demonPanelY + 2, 276, 74, 3);
 
     this.add.text(demonPanelX + 10, demonPanelY + 6, this.issue.title, {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '10px',
       color: COLORS.white,
       wordWrap: { width: 260 }
@@ -347,7 +348,7 @@ export class BattleScene extends Phaser.Scene {
 
     const sevColor = COLORS[this.issue.severity] || COLORS.red;
     this.add.text(demonPanelX + 10, demonPanelY + 24, this.issue.severity.toUpperCase(), {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '10px',
       color: sevColor
     });
@@ -359,7 +360,7 @@ export class BattleScene extends Phaser.Scene {
     const barH = 16;
 
     this.add.text(barX, barY + 1, 'HP', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '10px',
       color: COLORS.gray
     });
@@ -388,7 +389,7 @@ export class BattleScene extends Phaser.Scene {
 
     // HP text
     this.demonHpText = this.add.text(barStartX + actualBarW + 8, barY + 1, `${this.demonHp}/${this.demonMaxHp}`, {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '10px',
       color: COLORS.red
     });
@@ -406,7 +407,7 @@ export class BattleScene extends Phaser.Scene {
     kPanel.strokeRoundedRect(knightPanelX + 2, knightPanelY + 2, 246, 44, 3);
 
     this.add.text(knightPanelX + 10, knightPanelY + 5, 'SEO KNIGHT', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '12px',
       color: COLORS.cyan
     });
@@ -417,7 +418,7 @@ export class BattleScene extends Phaser.Scene {
     const kBarH = 16;
 
     this.add.text(kBarX, kBarY + 1, 'HP', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '10px',
       color: COLORS.gray
     });
@@ -443,7 +444,7 @@ export class BattleScene extends Phaser.Scene {
     this.drawBarShimmer(this.knightHpShimmer, this.knightHpBarX, this.knightHpBarY, this.knightHpBarWidth, this.knightHpBarH);
 
     this.knightHpText = this.add.text(kBarStartX + kActualBarW + 8, kBarY + 1, `${this.knightHp}/100`, {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '10px',
       color: COLORS.green
     });
@@ -529,7 +530,7 @@ export class BattleScene extends Phaser.Scene {
     logGfx.fillRect(logX + 6, logY + logH - 9, 3, 3);
     logGfx.fillRect(logX + logW - 9, logY + logH - 9, 3, 3);
 
-    this.battleLog = this.add.text(logX + 14, logY + 12, 'A wild SEO demon appears!', {
+    this.battleLog = this.add.text(logX + 14, logY + 12, ENCOUNTER_MESSAGES[Math.floor(Math.random() * ENCOUNTER_MESSAGES.length)], {
       fontFamily: 'monospace',
       fontSize: '12px',
       color: COLORS.white,
@@ -539,7 +540,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Blinking indicator
     this.logIndicator = this.add.text(logX + logW - 22, logY + logH - 20, '\u25BC', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '10px',
       color: COLORS.gold
     });
@@ -594,7 +595,7 @@ export class BattleScene extends Phaser.Scene {
     this.menuItems = commands.map((cmd, i) => {
       const itemY = menuY + 14 + i * 22;
       const text = this.add.text(menuX + 40, itemY, cmd.label, {
-        fontFamily: '"Press Start 2P", monospace',
+        fontFamily: '"JetBrains Mono", monospace',
         fontSize: '12px',
         color: COLORS.white
       }).setInteractive({ useHandCursor: true });
@@ -642,7 +643,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Bouncing arrow cursor
     this.cursor = this.add.text(menuX + 10, menuY + 14, '\u25B6', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '10px',
       color: COLORS.gold
     });
@@ -712,7 +713,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Category badge
     const catText = this.add.text(detX + 10, detY + 4, this.issue.category, {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '10px',
       color: COLORS.cyan
     });
@@ -969,7 +970,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Damage number - dramatic float with scale
     const dmgText = this.add.text(580, 200, `-${amount}`, {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '22px',
       color: '#ff4040',
       stroke: '#000000',
@@ -1079,7 +1080,7 @@ export class BattleScene extends Phaser.Scene {
 
         // Damage popup on knight
         const dmgText = this.add.text(180, 280, `-${damage}`, {
-          fontFamily: '"Press Start 2P", monospace',
+          fontFamily: '"JetBrains Mono", monospace',
           fontSize: '18px',
           color: '#ff8040',
           stroke: '#000000',
@@ -1206,7 +1207,7 @@ export class BattleScene extends Phaser.Scene {
 
     // +10 heal text
     const healText = this.add.text(180, 300, '+10', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '16px',
       color: '#40e080',
       stroke: '#000000',
@@ -1307,7 +1308,7 @@ export class BattleScene extends Phaser.Scene {
     // Mark issue as defeated in game data
     this.issue.defeated = true;
 
-    this.setLog(`${this.issue.title} has been vanquished!`);
+    this.setLog(VICTORY_MESSAGES[Math.floor(Math.random() * VICTORY_MESSAGES.length)]);
 
     // Big screen flash
     this.cameras.main.flash(600, 255, 220, 80);
@@ -1402,7 +1403,7 @@ export class BattleScene extends Phaser.Scene {
 
       // Victory text
       const victoryText = this.add.text(400, 200, 'VICTORY!', {
-        fontFamily: '"Press Start 2P", monospace',
+        fontFamily: '"JetBrains Mono", monospace',
         fontSize: '32px',
         color: COLORS.gold,
         stroke: '#000000',

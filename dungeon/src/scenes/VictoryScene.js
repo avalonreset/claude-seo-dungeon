@@ -1,4 +1,5 @@
 import { COLORS, FONTS } from '../utils/colors.js';
+import { VICTORY_MESSAGES } from '../utils/flavor-text.js';
 
 /**
  * Victory scene — epic loot screen after defeating a demon.
@@ -122,28 +123,28 @@ export class VictoryScene extends Phaser.Scene {
   addVictoryTitle(cx) {
     // Deep shadow for depth
     const shadow = this.add.text(cx + 3, 50, 'VICTORY', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '48px',
       color: '#000000'
     }).setOrigin(0.5).setAlpha(0).setDepth(8);
 
     // Warm outer glow layer (large, soft)
     const outerGlow = this.add.text(cx, 48, 'VICTORY', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '52px',
       color: '#d4af37'
     }).setOrigin(0.5).setScale(3).setAlpha(0).setDepth(8);
 
     // Inner bright glow layer
     const titleGlow = this.add.text(cx, 48, 'VICTORY', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '50px',
       color: '#ffe680'
     }).setOrigin(0.5).setScale(3).setAlpha(0).setDepth(9);
 
     // Main title
     const title = this.add.text(cx, 48, 'VICTORY', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '48px',
       color: '#d4af37'
     }).setOrigin(0.5).setScale(3).setAlpha(0).setDepth(10);
@@ -346,9 +347,17 @@ export class VictoryScene extends Phaser.Scene {
 
     // "DEMON VANQUISHED" header with swords
     const vanquishedText = this.add.text(cx, panelY - 25, '\u2694  DEMON VANQUISHED  \u2694', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '14px',
       color: '#e04040'
+    }).setOrigin(0.5).setAlpha(0).setDepth(7);
+
+    // Flavor subtitle from VICTORY_MESSAGES
+    const flavorText = this.add.text(cx, panelY - 8, VICTORY_MESSAGES[Math.floor(Math.random() * VICTORY_MESSAGES.length)], {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: '#a08060',
+      fontStyle: 'italic'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // Issue title
@@ -373,7 +382,7 @@ export class VictoryScene extends Phaser.Scene {
 
     // "Spoils of War" header
     const spoilsHeader = this.add.text(cx, panelY + 72, '\u2500\u2500  Spoils of War  \u2500\u2500', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '12px',
       color: '#d4af37'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
@@ -385,25 +394,25 @@ export class VictoryScene extends Phaser.Scene {
 
     // XP display with count-up
     const xpLabel = this.add.text(cx - 110, panelY + 98, 'EXP:', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '13px',
       color: '#40c0c0'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     const xpValue = this.add.text(cx - 45, panelY + 98, '+0', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '13px',
       color: '#40c0c0'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     const bonusLabel = this.add.text(cx + 65, panelY + 98, 'Bonus:', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '13px',
       color: '#e88020'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     const bonusValue = this.add.text(cx + 150, panelY + 98, '+0', {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '13px',
       color: '#e88020'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
@@ -414,13 +423,13 @@ export class VictoryScene extends Phaser.Scene {
     };
     const sevColor = sevColors[this.issue.severity] || '#808090';
     const sevBadge = this.add.text(cx, panelY + 126, `[ ${(this.issue.severity || 'medium').toUpperCase()} ]`, {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '11px',
       color: sevColor
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // Staggered content reveal
-    const contentItems = [vanquishedText, issueTitle, issueDesc, separator, spoilsHeader, xpLabel, xpValue, bonusLabel, bonusValue, sevBadge];
+    const contentItems = [vanquishedText, flavorText, issueTitle, issueDesc, separator, spoilsHeader, xpLabel, xpValue, bonusLabel, bonusValue, sevBadge];
     contentItems.forEach((item, idx) => {
       this.tweens.add({
         targets: item,
@@ -451,7 +460,7 @@ export class VictoryScene extends Phaser.Scene {
 
     // Progress text
     const progText = this.add.text(cx, progressY, `Demons defeated: ${defeated} / ${total}`, {
-      fontFamily: '"Press Start 2P", monospace',
+      fontFamily: '"JetBrains Mono", monospace',
       fontSize: '12px',
       color: allClear ? '#d4af37' : '#e8e8e8'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
@@ -531,7 +540,7 @@ export class VictoryScene extends Phaser.Scene {
     // Percentage text at end of bar
     const pctText = this.add.text(cx + barW / 2 + 20, progressY + 26,
       Math.round((defeated / total) * 100) + '%', {
-        fontFamily: '"Press Start 2P", monospace',
+        fontFamily: '"JetBrains Mono", monospace',
         fontSize: '11px',
         color: '#d4af37'
       }).setOrigin(0, 0.5).setAlpha(0).setDepth(7);
@@ -547,19 +556,19 @@ export class VictoryScene extends Phaser.Scene {
     if (allClear) {
       // Big gold "DUNGEON CLEARED" as the hero text
       const clearShadow = this.add.text(cx + 2, progressY + 58, '\u2605  DUNGEON CLEARED  \u2605', {
-        fontFamily: '"Press Start 2P", monospace',
+        fontFamily: '"JetBrains Mono", monospace',
         fontSize: '18px',
         color: '#000000'
       }).setOrigin(0.5).setAlpha(0).setDepth(9);
 
       const clearText = this.add.text(cx, progressY + 56, '\u2605  DUNGEON CLEARED  \u2605', {
-        fontFamily: '"Press Start 2P", monospace',
+        fontFamily: '"JetBrains Mono", monospace',
         fontSize: '18px',
         color: '#d4af37'
       }).setOrigin(0.5).setAlpha(0).setDepth(10);
 
       const clearGlow = this.add.text(cx, progressY + 56, '\u2605  DUNGEON CLEARED  \u2605', {
-        fontFamily: '"Press Start 2P", monospace',
+        fontFamily: '"JetBrains Mono", monospace',
         fontSize: '20px',
         color: '#ffe680'
       }).setOrigin(0.5).setAlpha(0).setDepth(9);
@@ -601,7 +610,7 @@ export class VictoryScene extends Phaser.Scene {
       });
 
       const subClear = this.add.text(cx, progressY + 82, 'ALL DEMONS VANQUISHED', {
-        fontFamily: '"Press Start 2P", monospace',
+        fontFamily: '"JetBrains Mono", monospace',
         fontSize: '11px',
         color: '#40c040'
       }).setOrigin(0.5).setAlpha(0).setDepth(10);
@@ -628,7 +637,7 @@ export class VictoryScene extends Phaser.Scene {
       const btnBg = this.add.rectangle(cx, btnY, 380, 42, 0x1a1a2e, 0.95).setDepth(10);
       btnBg.setStrokeStyle(2, 0xd4af37);
       const btnText = this.add.text(cx, btnY, 'Return to the Surface', {
-        fontFamily: '"Press Start 2P", monospace',
+        fontFamily: '"JetBrains Mono", monospace',
         fontSize: '12px',
         color: '#d4af37'
       }).setOrigin(0.5).setDepth(11);
@@ -688,7 +697,7 @@ export class VictoryScene extends Phaser.Scene {
       const btnBg = this.add.rectangle(cx, btnY, 420, 42, 0x1a1a2e, 0.95).setDepth(10);
       btnBg.setStrokeStyle(2, 0xd4af37);
       const btnText = this.add.text(cx, btnY - 2, `${remaining} demon${remaining > 1 ? 's' : ''} remain`, {
-        fontFamily: '"Press Start 2P", monospace',
+        fontFamily: '"JetBrains Mono", monospace',
         fontSize: '12px',
         color: '#d4af37'
       }).setOrigin(0.5).setDepth(11);

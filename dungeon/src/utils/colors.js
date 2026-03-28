@@ -33,10 +33,10 @@ export const COLORS = {
 };
 
 export const FONTS = {
-  title: { fontFamily: 'monospace', fontSize: '32px', color: COLORS.gold },
-  subtitle: { fontFamily: 'monospace', fontSize: '18px', color: COLORS.white },
-  body: { fontFamily: 'monospace', fontSize: '14px', color: COLORS.white },
-  small: { fontFamily: 'monospace', fontSize: '12px', color: COLORS.gray },
-  battle: { fontFamily: 'monospace', fontSize: '16px', color: COLORS.white },
-  damage: { fontFamily: 'monospace', fontSize: '24px', color: COLORS.red, fontStyle: 'bold' }
+  title: { fontFamily: '"JetBrains Mono", monospace', fontSize: '32px', color: '#d4af37', fontStyle: '600', letterSpacing: 4 },
+  subtitle: { fontFamily: '"JetBrains Mono", monospace', fontSize: '18px', color: '#c0c8d0', fontStyle: '400' },
+  body: { fontFamily: '"JetBrains Mono", monospace', fontSize: '14px', color: '#c0c8d0', fontStyle: '400' },
+  small: { fontFamily: '"JetBrains Mono", monospace', fontSize: '12px', color: COLORS.gray, fontStyle: '400' },
+  battle: { fontFamily: '"JetBrains Mono", monospace', fontSize: '16px', color: '#c0c8d0', fontStyle: '400' },
+  damage: { fontFamily: '"JetBrains Mono", monospace', fontSize: '24px', color: COLORS.red, fontStyle: 'bold' }
 };
