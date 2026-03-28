@@ -65,10 +65,10 @@ export class SummoningScene extends Phaser.Scene {
     this._createDustMotes(W, H);
 
     // ── Knight (centered, faces right, running) ────────────────
-    this.knight = this.add.sprite(300, 380, 'warrior_run')
+    this.knight = this.add.sprite(300, 380, 'char_run')
       .setScale(2.5)
       .setDepth(10)
-      .play('warrior_run_anim');
+      .play('char_run_anim');
 
     // Warm glow underneath the knight
     this.knightGlow = this.add.circle(300, 400, 70, 0xff8833, 0.08).setDepth(9);

@@ -242,7 +242,7 @@ export class BattleScene extends Phaser.Scene {
     this.knightShadow = this.add.ellipse(180, 380, 80, 18, 0x000000, 0.4);
 
     // Knight (animated warrior sprite)
-    this.knight = this.add.sprite(180, 320, 'warrior_idle').setScale(2.5).setAlpha(0).play('warrior_idle_anim');
+    this.knight = this.add.sprite(180, 320, 'char_idle').setScale(2.5).setAlpha(0).play('char_idle_anim');
     this.sword = this.add.image(215, 310, 'sword').setScale(1.5).setAngle(-30).setAlpha(0);
     this.shield = this.add.image(145, 325, 'shield').setScale(1.5).setAlpha(0);
 
@@ -814,7 +814,7 @@ export class BattleScene extends Phaser.Scene {
   async slashAnimation() {
     return new Promise(resolve => {
       // Play attack animation
-      this.knight.play('warrior_attack_anim');
+      this.knight.play('char_attack_anim');
 
       // Knight lunges forward dramatically
       this.tweens.add({
@@ -858,7 +858,7 @@ export class BattleScene extends Phaser.Scene {
               duration: 300,
               ease: 'Power2',
               onComplete: () => {
-                this.knight.play('warrior_idle_anim');
+                this.knight.play('char_idle_anim');
                 resolve();
               }
             });
@@ -1056,9 +1056,9 @@ export class BattleScene extends Phaser.Scene {
         });
 
         // Knight hit animation then return to idle
-        this.knight.play('warrior_hit_anim');
+        this.knight.play('char_hit_anim');
         this.knight.once('animationcomplete', () => {
-          this.knight.play('warrior_idle_anim');
+          this.knight.play('char_idle_anim');
         });
 
         // Knight red flash

@@ -52,6 +52,7 @@ function launchGame(domain, projectPath) {
   game = new Phaser.Game(config);
   game.domain = domain;
   game.projectPath = projectPath;
+  game.characterConfig = window.selectedCharacter || null;
   game.addLog = addLog;
   game.showLoading = showLoadingIndicator;
   game.hideLoading = hideLoadingIndicator;

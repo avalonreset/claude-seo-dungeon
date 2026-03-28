@@ -18,23 +18,41 @@ export class BootScene extends Phaser.Scene {
     this.load.image('demon_low_real', 'assets/monsters/demon_low.png');
     this.load.image('demon_info_real', 'assets/monsters/demon_info.png');
 
-    // Load warrior sprite sheets (luizmelo, 162x162 per frame)
-    this.load.spritesheet('warrior_idle', 'assets/luizmelo/warrior/sprites/Idle.png', { frameWidth: 162, frameHeight: 162 });
-    this.load.spritesheet('warrior_run', 'assets/luizmelo/warrior/sprites/Run.png', { frameWidth: 162, frameHeight: 162 });
-    this.load.spritesheet('warrior_attack', 'assets/luizmelo/warrior/sprites/Attack1.png', { frameWidth: 162, frameHeight: 162 });
-    this.load.spritesheet('warrior_hit', 'assets/luizmelo/warrior/sprites/Take Hit.png', { frameWidth: 162, frameHeight: 162 });
-    this.load.spritesheet('warrior_death', 'assets/luizmelo/warrior/sprites/Death.png', { frameWidth: 162, frameHeight: 162 });
+    // Load character sprite sheets dynamically based on selection
+    const cfg = this.game.characterConfig || {
+      name: 'warrior',
+      idlePath: 'assets/luizmelo/warrior/sprites/Idle.png',
+      runPath: 'assets/luizmelo/warrior/sprites/Run.png',
+      attackPath: 'assets/luizmelo/warrior/sprites/Attack1.png',
+      hitPath: 'assets/luizmelo/warrior/sprites/Take Hit.png',
+      deathPath: 'assets/luizmelo/warrior/sprites/Death.png',
+      frameW: 162,
+      frameH: 162,
+      idleFrames: 10,
+      runFrames: 8,
+      attackFrames: 7,
+      hitFrames: 3,
+      deathFrames: 7
+    };
+    this.game.characterConfig = cfg;
+
+    this.load.spritesheet('char_idle', cfg.idlePath, { frameWidth: cfg.frameW, frameHeight: cfg.frameH });
+    this.load.spritesheet('char_run', cfg.runPath, { frameWidth: cfg.frameW, frameHeight: cfg.frameH });
+    this.load.spritesheet('char_attack', cfg.attackPath, { frameWidth: cfg.frameW, frameHeight: cfg.frameH });
+    this.load.spritesheet('char_hit', cfg.hitPath, { frameWidth: cfg.frameW, frameHeight: cfg.frameH });
+    this.load.spritesheet('char_death', cfg.deathPath, { frameWidth: cfg.frameW, frameHeight: cfg.frameH });
   }
 
   create() {
     PixelArt.generateAll(this);
 
-    // Create warrior animations
-    this.anims.create({ key: 'warrior_idle_anim', frames: this.anims.generateFrameNumbers('warrior_idle', { start: 0, end: 9 }), frameRate: 8, repeat: -1 });
-    this.anims.create({ key: 'warrior_run_anim', frames: this.anims.generateFrameNumbers('warrior_run', { start: 0, end: 7 }), frameRate: 10, repeat: -1 });
-    this.anims.create({ key: 'warrior_attack_anim', frames: this.anims.generateFrameNumbers('warrior_attack', { start: 0, end: 6 }), frameRate: 12, repeat: 0 });
-    this.anims.create({ key: 'warrior_hit_anim', frames: this.anims.generateFrameNumbers('warrior_hit', { start: 0, end: 2 }), frameRate: 8, repeat: 0 });
-    this.anims.create({ key: 'warrior_death_anim', frames: this.anims.generateFrameNumbers('warrior_death', { start: 0, end: 6 }), frameRate: 8, repeat: 0 });
+    // Create character animations from selected character config
+    const cfg = this.game.characterConfig;
+    this.anims.create({ key: 'char_idle_anim', frames: this.anims.generateFrameNumbers('char_idle', { start: 0, end: cfg.idleFrames - 1 }), frameRate: 8, repeat: -1 });
+    this.anims.create({ key: 'char_run_anim', frames: this.anims.generateFrameNumbers('char_run', { start: 0, end: cfg.runFrames - 1 }), frameRate: 10, repeat: -1 });
+    this.anims.create({ key: 'char_attack_anim', frames: this.anims.generateFrameNumbers('char_attack', { start: 0, end: cfg.attackFrames - 1 }), frameRate: 12, repeat: 0 });
+    this.anims.create({ key: 'char_hit_anim', frames: this.anims.generateFrameNumbers('char_hit', { start: 0, end: cfg.hitFrames - 1 }), frameRate: 8, repeat: 0 });
+    this.anims.create({ key: 'char_death_anim', frames: this.anims.generateFrameNumbers('char_death', { start: 0, end: cfg.deathFrames - 1 }), frameRate: 8, repeat: 0 });
 
     this.cameras.main.fadeIn(500, 0, 0, 0);
     this.time.delayedCall(400, () => {

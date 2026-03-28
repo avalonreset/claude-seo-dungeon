@@ -1,64 +1,122 @@
 /**
- * Animated warrior sprite for the title screen.
- * Uses the luizmelo warrior idle sprite sheet (10 frames, 162x162 each).
+ * Character select sprites for the title screen.
+ * Loads idle sprite sheets for 3 characters, animates each on its own canvas,
+ * and stores the selected character config on window.selectedCharacter.
  */
 
-const FRAME_COUNT = 10;
-const FRAME_W = 162;
-const FRAME_H = 162;
-const DISPLAY_SCALE = 1.8;
+const CHARACTERS = {
+  warrior: {
+    name: 'warrior',
+    idlePath: 'assets/luizmelo/warrior/sprites/Idle.png',
+    runPath: 'assets/luizmelo/warrior/sprites/Run.png',
+    attackPath: 'assets/luizmelo/warrior/sprites/Attack1.png',
+    frameW: 162,
+    frameH: 162,
+    idleFrames: 10,
+    runFrames: 8,
+    attackFrames: 7
+  },
+  samurai: {
+    name: 'samurai',
+    idlePath: 'assets/luizmelo/samurai/sprites/Idle.png',
+    runPath: 'assets/luizmelo/samurai/sprites/Run.png',
+    attackPath: 'assets/luizmelo/samurai/sprites/Attack1.png',
+    frameW: 200,
+    frameH: 200,
+    idleFrames: 8,
+    runFrames: 8,
+    attackFrames: 6
+  },
+  knight: {
+    name: 'knight',
+    idlePath: 'assets/luizmelo/warrior-pack-2/player1/Idle.png',
+    runPath: 'assets/luizmelo/warrior-pack-2/player1/Run.png',
+    attackPath: 'assets/luizmelo/warrior-pack-2/player1/Attack2.png',
+    frameW: 180,
+    frameH: 180,
+    idleFrames: 11,
+    runFrames: 8,
+    attackFrames: 7
+  }
+};
+
+const CANVAS_SIZE = 120;
 const FPS = 8;
 
-let spriteSheet = null;
-let loaded = false;
+// Track animation state per character
+const animState = {};
 
-export function initKnightSprite() {
-  const container = document.getElementById('knight-canvas');
-  if (!container) return;
+function setSelected(charKey) {
+  window.selectedCharacter = { ...CHARACTERS[charKey] };
 
-  // Make container bigger for the new sprite
-  container.style.width = `${FRAME_W * DISPLAY_SCALE}px`;
-  container.style.height = `${FRAME_H * DISPLAY_SCALE}px`;
+  // Update DOM classes
+  document.querySelectorAll('.char-option').forEach(el => {
+    el.classList.toggle('selected', el.dataset.char === charKey);
+  });
+}
 
-  const canvas = document.createElement('canvas');
-  canvas.width = FRAME_W * DISPLAY_SCALE;
-  canvas.height = FRAME_H * DISPLAY_SCALE;
-  canvas.style.imageRendering = 'pixelated';
-  container.appendChild(canvas);
+function setupCharCanvas(charKey) {
+  const char = CHARACTERS[charKey];
+  const canvas = document.getElementById(`char-${charKey}`);
+  if (!canvas) return;
+
+  canvas.width = CANVAS_SIZE;
+  canvas.height = CANVAS_SIZE;
 
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
 
-  // Load the sprite sheet
-  spriteSheet = new Image();
-  spriteSheet.src = 'assets/luizmelo/warrior/sprites/Idle.png';
-  spriteSheet.onload = () => {
-    loaded = true;
+  const img = new Image();
+  img.src = char.idlePath;
+
+  animState[charKey] = { img, ctx, loaded: false, frame: 0, tick: 0 };
+
+  img.onload = () => {
+    animState[charKey].loaded = true;
   };
+}
 
-  let frame = 0;
-  let tick = 0;
+function animateAll() {
+  const interval = Math.round(60 / FPS);
 
-  function animate() {
-    tick++;
+  for (const charKey of Object.keys(CHARACTERS)) {
+    const state = animState[charKey];
+    if (!state || !state.loaded) continue;
 
-    if (loaded) {
-      // Advance frame at the desired FPS
-      if (tick % Math.round(60 / FPS) === 0) {
-        frame = (frame + 1) % FRAME_COUNT;
-      }
+    const char = CHARACTERS[charKey];
+    state.tick++;
 
-      // Clear and draw current frame
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(
-        spriteSheet,
-        frame * FRAME_W, 0, FRAME_W, FRAME_H,  // source
-        0, 0, FRAME_W * DISPLAY_SCALE, FRAME_H * DISPLAY_SCALE  // dest
-      );
+    if (state.tick % interval === 0) {
+      state.frame = (state.frame + 1) % char.idleFrames;
     }
 
-    requestAnimationFrame(animate);
+    state.ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    state.ctx.drawImage(
+      state.img,
+      state.frame * char.frameW, 0, char.frameW, char.frameH,
+      0, 0, CANVAS_SIZE, CANVAS_SIZE
+    );
   }
 
-  animate();
+  requestAnimationFrame(animateAll);
+}
+
+export function initKnightSprite() {
+  // Set default selection
+  setSelected('warrior');
+
+  // Setup each character canvas
+  for (const charKey of Object.keys(CHARACTERS)) {
+    setupCharCanvas(charKey);
+  }
+
+  // Click handlers for selection
+  document.querySelectorAll('.char-option').forEach(el => {
+    el.addEventListener('click', () => {
+      setSelected(el.dataset.char);
+    });
+  });
+
+  // Start animation loop
+  animateAll();
 }

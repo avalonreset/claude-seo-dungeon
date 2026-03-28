@@ -373,7 +373,7 @@ export class DungeonHallScene extends Phaser.Scene {
     footerBg.lineBetween(770, LIST_BOTTOM + 1, 770, LIST_BOTTOM + 14);
 
     // Knight (animated warrior idle sprite)
-    const knight = this.add.sprite(90, 558, 'warrior_idle').setScale(2).setDepth(101).play('warrior_idle_anim');
+    const knight = this.add.sprite(90, 558, 'char_idle').setScale(2).setDepth(101).play('char_idle_anim');
 
     // Knight breathing glow
     const knightGlow = this.add.graphics().setDepth(100);
