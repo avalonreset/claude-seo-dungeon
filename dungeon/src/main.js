@@ -17,11 +17,11 @@ async function connectBridge() {
     await bridge.connect();
     status.textContent = 'Blood will be spilled tonight.';
     status.className = 'connected';
-    addLog('Connected to the dungeon');
+    addLog('Something stirs in the dark');
   } catch (err) {
     status.textContent = 'The dungeon is unreachable. Start the server.';
     status.className = 'error';
-    addLog('ERROR: No connection');
+    addLog('The darkness does not answer');
   }
 }
 
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initActivityLog();
   initKnightSprite();
 
-  addLog('The dungeon awaits');
+  addLog('Torches flicker in the deep');
 
   const domainInput = document.getElementById('domain-input');
   const pathInput = document.getElementById('path-input');
