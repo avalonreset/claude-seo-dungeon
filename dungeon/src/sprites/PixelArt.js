@@ -17,242 +17,277 @@ export class PixelArt {
     this.generateParticles(scene);
   }
 
-  // ── Knight (protagonist) — detailed Dark Souls style, 4 walk frames + static ──
+  // ── Knight (protagonist) — detailed Dark Souls style, 24x28 canvas, 4 walk frames + static ──
   static generateKnight(scene) {
     const s = 4; // pixel scale
+    const W = 24, H = 28; // canvas in pixel units
 
     // Colors
-    const steel = 0x606878, steelHi = 0x8890a0, steelDk = 0x404858;
-    const helmet = 0x505868, helmetHi = 0x687080;
-    const visor = 0x30e8f0;
-    const plume = 0xc03030, plumeDk = 0x901818;
-    const gold = 0xd4af37, goldLt = 0xe8c850;
-    const cape = 0x1838a0, capeLt = 0x2850c0, capeDk = 0x102880;
-    const leather = 0x403838, leatherDk = 0x302828;
-    const leg = 0x505060;
+    const steel = 0x606878, steelHi = 0x8890a0, steelDk = 0x404858, steelBright = 0xa0a8b8;
+    const helmet = 0x505868, helmetHi = 0x687080, helmetDk = 0x404050;
+    const visor = 0x30e8f0, visorDim = 0x20b0b8;
+    const plume = 0xc03030, plumeMid = 0xa02020, plumeDk = 0x901818, plumeHi = 0xe04040;
+    const gold = 0xd4af37, goldLt = 0xe8c850, goldDk = 0xb09028;
+    const cape = 0x1838a0, capeLt = 0x2850c0, capeMid = 0x1840b0, capeDk = 0x102880;
+    const leather = 0x403838, leatherDk = 0x302828, leatherHi = 0x504848;
+    const leg = 0x505060, legHi = 0x606878, legDk = 0x404050;
+    const shieldBlue = 0x2848a0, shieldBlueLt = 0x3860b8;
+    const white = 0xe0e0e0, whiteDk = 0xc0c0c0;
+    const bladeBright = 0xe8f0f8, bladeDk = 0xc0c8d0, bladeShine = 0xf8ffff;
 
-    // Per-frame variation data for the 4-frame walk cycle
-    // Frame 0: Left foot forward, right foot back, arms in opposite swing
-    // Frame 1: Feet together (passing position), arms neutral
-    // Frame 2: Right foot forward, left foot back, arms opposite swing
-    // Frame 3: Feet together again (other passing position)
+    // Helper to draw one frame of the knight
+    const drawKnight = (g, f) => {
+      const p    = (x, y, color) => { g.fillStyle(color); g.fillRect(x*s, y*s, s, s); };
+      const row  = (x, y, w, color) => { g.fillStyle(color); g.fillRect(x*s, y*s, w*s, s); };
+      const rect = (x, y, w, h, color) => { g.fillStyle(color); g.fillRect(x*s, y*s, w*s, h*s); };
+
+      // ── Cape (drawn first, behind everything) ──
+      const cx = 4 + f.capeSwayX;
+      // Main cape body — wide, flowing down past knees
+      rect(cx, 10, 3, 14 + f.capeExtraLen, cape);
+      rect(cx - 1, 12, 1, 12 + f.capeExtraLen, cape);
+      rect(cx + 3, 11, 1, 11 + f.capeExtraLen, capeDk);
+      // Cape folds and highlights
+      for (const hy of f.capeHighlight) {
+        p(cx, hy, capeLt); p(cx + 1, hy, capeMid);
+      }
+      // Cape bottom fringe — ragged edge
+      const cBot = 24 + f.capeExtraLen;
+      p(cx - 1, cBot, capeDk); p(cx, cBot, cape); p(cx + 1, cBot, capeLt);
+      p(cx + 2, cBot, cape); p(cx + 3, cBot - 1, capeDk);
+      // Cape shadow on stride frames
+      if (f.isStride) {
+        p(cx, 14, capeDk); p(cx + 1, 17, capeDk); p(cx, 20, capeDk);
+      }
+
+      // ── Plume (flowing red crest, 5 pixels tall, curved) ──
+      // Top wisp
+      p(12, 0, plumeDk); p(13, 0, plume);
+      // Main plume body
+      p(11, 1, plumeDk); p(12, 1, plume); p(13, 1, plumeHi); p(14, 1, plume);
+      p(10, 2, plumeDk); p(11, 2, plume); p(12, 2, plumeHi); p(13, 2, plume); p(14, 2, plumeMid);
+      p(10, 3, plumeMid); p(11, 3, plume); p(12, 3, plumeMid); p(13, 3, plumeDk);
+      // Plume base attaching to helmet ridge
+      p(11, 4, plumeDk); p(12, 4, plumeMid);
+
+      // ── Helmet (rounded full-face, T-visor) ──
+      // Top ridge
+      row(9, 3, 3, helmetHi);
+      p(8, 3, helmet);
+      // Helmet dome — rounded shape
+      row(8, 4, 6, helmetHi);
+      p(7, 4, helmet); p(14, 4, helmet);
+      // Main helmet body
+      rect(7, 5, 8, 4, helmet);
+      row(8, 5, 6, helmetHi); // top highlight band
+      p(7, 5, helmetDk); p(14, 5, helmetDk); // dark edges
+      // T-shaped visor slit (glowing cyan)
+      row(8, 6, 6, visor);       // horizontal bar of the T
+      p(10, 7, visor); p(11, 7, visor); // vertical bar of the T
+      p(10, 8, visorDim); p(11, 8, visorDim); // lower visor glow
+      // Visor glow aura — subtle pixels beside the slit
+      p(7, 6, visorDim); p(14, 6, visorDim);
+      // Chin guard
+      row(8, 9, 6, helmetDk);
+      p(7, 9, helmetDk); p(14, 9, helmetDk);
+      // Helmet cheek plates
+      p(7, 7, helmetHi); p(14, 7, helmetHi);
+      p(7, 8, helmet); p(14, 8, helmet);
+
+      // ── Gorget (neck guard) ──
+      row(8, 10, 6, steelDk);
+      p(9, 10, steel); p(12, 10, steel);
+
+      // ── Shoulder pauldrons (large, rounded, with gold trim and rivets) ──
+      // Left pauldron
+      rect(4, 11, 5, 3, steelHi);
+      row(4, 11, 5, steelBright);  // top highlight
+      row(4, 13, 5, steel);        // bottom edge
+      row(4, 14, 5, goldDk);       // gold trim
+      p(5, 11, gold); p(7, 11, gold); // rivets
+      p(4, 12, steelDk);           // shadow edge
+      // Right pauldron
+      rect(14, 11, 5, 3, steelHi);
+      row(14, 11, 5, steelBright);
+      row(14, 13, 5, steel);
+      row(14, 14, 5, goldDk);
+      p(15, 11, gold); p(17, 11, gold); // rivets
+      p(18, 12, steelDk);
+
+      // ── Chest plate (detailed with center ridge, gold emblem) ──
+      rect(7, 11, 8, 6, steel);
+      // Center ridge — vertical bright line
+      rect(10, 11, 2, 6, steelHi);
+      // Darker edges
+      p(7, 11, steelDk); p(14, 11, steelDk);
+      p(7, 12, steelDk); p(14, 12, steelDk);
+      // Brighter center highlight
+      p(10, 12, steelBright); p(11, 12, steelBright);
+      // Gold emblem in center (diamond/cross shape)
+      p(10, 13, gold); p(11, 13, gold);
+      p(9, 14, goldDk); p(10, 14, goldLt); p(11, 14, goldLt); p(12, 14, goldDk);
+      p(10, 15, gold); p(11, 15, gold);
+      // Chest plate lower highlight
+      row(8, 16, 6, steelDk);
+
+      // ── Gold belt ──
+      row(7, 17, 8, gold);
+      p(10, 17, goldLt); p(11, 17, goldLt); // buckle highlight
+      p(7, 17, goldDk); p(14, 17, goldDk);
+
+      // ── Left arm (swings with walk, steel gauntlets, gold wrist bands) ──
+      const laY = f.leftArmY;
+      rect(4, laY, 3, 4, steel);
+      p(4, laY, steelHi); p(5, laY, steelHi); // shoulder transition
+      rect(4, laY + 4, 3, 1, steelHi);   // gauntlet cuff
+      row(4, laY + 3, 3, gold);           // gold wrist band
+      p(5, laY + 1, steelDk); // arm shadow
+
+      // ── Right arm (swings opposite, steel gauntlets, gold wrist bands) ──
+      const raY = f.rightArmY;
+      rect(16, raY, 3, 4, steel);
+      p(17, raY, steelHi); p(18, raY, steelHi);
+      rect(16, raY + 4, 3, 1, steelHi);
+      row(16, raY + 3, 3, gold);
+      p(17, raY + 1, steelDk);
+
+      // ── Shield (left hand — heater shape with pointed bottom) ──
+      const shY = f.leftArmY + 2;
+      // Main shield body (wider at top, pointed at bottom)
+      rect(1, shY, 4, 5, shieldBlue);
+      rect(0, shY, 1, 4, shieldBlue);       // left extension
+      rect(5, shY, 1, 4, shieldBlue);       // right extension (only top 4 rows)
+      // Pointed bottom
+      row(1, shY + 5, 4, shieldBlue);
+      row(2, shY + 6, 2, shieldBlue);
+      p(2, shY + 7, shieldBlue);
+      // Gold border — top
+      row(0, shY, 6, gold);
+      // Gold border — sides
+      p(0, shY + 1, gold); p(0, shY + 2, gold); p(0, shY + 3, gold);
+      p(5, shY + 1, gold); p(5, shY + 2, gold); p(5, shY + 3, gold);
+      // Gold border — pointed bottom edges
+      p(1, shY + 5, gold); p(4, shY + 5, gold);
+      p(1, shY + 6, gold); p(4, shY + 6, gold);
+      p(2, shY + 7, gold);
+      // White cross emblem
+      p(2, shY + 1, white); p(3, shY + 1, white);  // horizontal
+      p(1, shY + 2, whiteDk); p(2, shY + 2, white); p(3, shY + 2, white); p(4, shY + 2, whiteDk);
+      p(2, shY + 3, white); p(3, shY + 3, white);  // vertical continued
+      p(2, shY + 4, whiteDk); p(3, shY + 4, whiteDk);
+      // Shield highlight
+      p(1, shY + 1, shieldBlueLt); p(4, shY + 1, shieldBlueLt);
+
+      // ── Sword (right hand — long gleaming blade, bobs with step) ──
+      const sBy = 2 + f.swordBobY;
+      // Blade — alternating bright/dark for gleam effect, 12 pixels long
+      for (let bi = 0; bi < 12; bi++) {
+        const bladeColor = (bi % 3 === 0) ? bladeShine : (bi % 3 === 1) ? bladeBright : bladeDk;
+        p(20, sBy + bi, bladeColor);
+      }
+      // Blade edge highlight (second column, partial)
+      p(21, sBy, bladeDk); p(21, sBy + 2, bladeDk); p(21, sBy + 4, bladeBright);
+      p(21, sBy + 6, bladeDk); p(21, sBy + 8, bladeBright);
+      // Blade tip
+      p(20, sBy - 1, steelBright);
+      // Gold crossguard
+      row(19, sBy + 12, 4, gold);
+      p(19, sBy + 12, goldLt); p(22, sBy + 12, goldLt);
+      // Brown leather grip
+      p(20, sBy + 13, leather); p(20, sBy + 14, leatherHi);
+      p(20, sBy + 15, leather);
+      // Gold pommel
+      p(20, sBy + 16, gold); p(19, sBy + 16, goldDk);
+
+      // ── Legs (armored greaves with knee guards, per-frame stride) ──
+      // Left leg
+      rect(f.leftLegX, f.leftLegY, 3, f.leftLegH, leg);
+      p(f.leftLegX, f.leftLegY, legHi);           // highlight
+      p(f.leftLegX + 2, f.leftLegY + 1, legDk);   // shadow
+      row(f.leftLegX, f.leftLegY + 2, 3, steelHi); // knee guard
+      row(f.leftLegX, f.leftLegY + 3, 3, steelDk); // knee guard shadow
+      // Right leg
+      rect(f.rightLegX, f.rightLegY, 3, f.rightLegH, leg);
+      p(f.rightLegX, f.rightLegY, legHi);
+      p(f.rightLegX + 2, f.rightLegY + 1, legDk);
+      row(f.rightLegX, f.rightLegY + 2, 3, steelHi);
+      row(f.rightLegX, f.rightLegY + 3, 3, steelDk);
+
+      // ── Boots (dark leather with slight heel, gold trim) ──
+      // Left boot
+      rect(f.leftBootX, f.leftBootY, 4, 2, leather);
+      row(f.leftBootX, f.leftBootY, 4, leatherHi);    // boot top trim
+      row(f.leftBootX, f.leftBootY + 1, 4, leatherDk); // sole
+      p(f.leftBootX + 3, f.leftBootY + 1, 0x282020);   // heel
+      p(f.leftBootX, f.leftBootY, 0x504030);            // toe cap
+      // Right boot
+      rect(f.rightBootX, f.rightBootY, 4, 2, leather);
+      row(f.rightBootX, f.rightBootY, 4, leatherHi);
+      row(f.rightBootX, f.rightBootY + 1, 4, leatherDk);
+      p(f.rightBootX + 3, f.rightBootY + 1, 0x282020);
+      p(f.rightBootX, f.rightBootY, 0x504030);
+    };
+
+    // Per-frame variation data for the 4-frame walk cycle (24x28 canvas)
     const walkFrames = [
       { // Frame 0 — left foot forward stride
-        leftLegX: 5,  leftLegY: 15, leftLegH: 6,
-        rightLegX: 12, rightLegY: 16, rightLegH: 5,
-        leftBootX: 4,  leftBootY: 21,
-        rightBootX: 12, rightBootY: 21,
-        leftArmY: 10,  rightArmY: 12,  // left arm back, right arm forward
-        capeSwayX: 0,  capeExtraLen: 1, capeHighlight: [10, 13, 17],
-        swordBobY: -1,
+        leftLegX: 7,  leftLegY: 18, leftLegH: 6,
+        rightLegX: 13, rightLegY: 19, rightLegH: 5,
+        leftBootX: 6,  leftBootY: 24,
+        rightBootX: 13, rightBootY: 24,
+        leftArmY: 12,  rightArmY: 14,
+        capeSwayX: 0,  capeExtraLen: 1, capeHighlight: [13, 16, 20],
+        swordBobY: -1, isStride: true,
       },
       { // Frame 1 — feet together, passing position
-        leftLegX: 6,  leftLegY: 15, leftLegH: 5,
-        rightLegX: 11, rightLegY: 15, rightLegH: 5,
-        leftBootX: 5,  leftBootY: 20,
-        rightBootX: 11, rightBootY: 20,
-        leftArmY: 11,  rightArmY: 11,  // arms neutral
-        capeSwayX: 1,  capeExtraLen: 0, capeHighlight: [10, 13, 16],
-        swordBobY: 0,
+        leftLegX: 8,  leftLegY: 18, leftLegH: 5,
+        rightLegX: 12, rightLegY: 18, rightLegH: 5,
+        leftBootX: 7,  leftBootY: 23,
+        rightBootX: 12, rightBootY: 23,
+        leftArmY: 13,  rightArmY: 13,
+        capeSwayX: 1,  capeExtraLen: 0, capeHighlight: [13, 16, 19],
+        swordBobY: 0, isStride: false,
       },
       { // Frame 2 — right foot forward stride
-        leftLegX: 7,  leftLegY: 16, leftLegH: 5,
-        rightLegX: 10, rightLegY: 15, rightLegH: 6,
-        leftBootX: 7,  leftBootY: 21,
-        rightBootX: 9,  rightBootY: 21,
-        leftArmY: 12,  rightArmY: 10,  // right arm back, left arm forward
-        capeSwayX: 0,  capeExtraLen: 1, capeHighlight: [11, 14, 17],
-        swordBobY: -1,
+        leftLegX: 9,  leftLegY: 19, leftLegH: 5,
+        rightLegX: 11, rightLegY: 18, rightLegH: 6,
+        leftBootX: 9,  leftBootY: 24,
+        rightBootX: 10, rightBootY: 24,
+        leftArmY: 14,  rightArmY: 12,
+        capeSwayX: 0,  capeExtraLen: 1, capeHighlight: [14, 17, 21],
+        swordBobY: -1, isStride: true,
       },
       { // Frame 3 — feet together, other passing position
-        leftLegX: 6,  leftLegY: 15, leftLegH: 5,
-        rightLegX: 11, rightLegY: 15, rightLegH: 5,
-        leftBootX: 5,  leftBootY: 20,
-        rightBootX: 11, rightBootY: 20,
-        leftArmY: 11,  rightArmY: 11,  // arms neutral
-        capeSwayX: -1, capeExtraLen: 0, capeHighlight: [10, 14, 16],
-        swordBobY: 0,
+        leftLegX: 8,  leftLegY: 18, leftLegH: 5,
+        rightLegX: 12, rightLegY: 18, rightLegH: 5,
+        leftBootX: 7,  leftBootY: 23,
+        rightBootX: 12, rightBootY: 23,
+        leftArmY: 13,  rightArmY: 13,
+        capeSwayX: -1, capeExtraLen: 0, capeHighlight: [13, 17, 20],
+        swordBobY: 0, isStride: false,
       },
     ];
 
     // Generate 4 walk-cycle frame textures
     for (let fi = 0; fi < 4; fi++) {
-      const f = walkFrames[fi];
       const g = scene.make.graphics({ add: false });
-      const p  = (x, y, color) => { g.fillStyle(color); g.fillRect(x*s, y*s, s, s); };
-      const row  = (x, y, w, color) => { g.fillStyle(color); g.fillRect(x*s, y*s, w*s, s); };
-      const rect = (x, y, w, h, color) => { g.fillStyle(color); g.fillRect(x*s, y*s, w*s, h*s); };
-
-      // ── Plume (flowing crest) ──
-      p(8, 0, plume); p(9, 0, plume);
-      p(7, 1, plumeDk); p(8, 1, plume); p(9, 1, plume); p(10, 1, plume);
-      p(8, 2, plumeDk); p(9, 2, plumeDk);
-
-      // ── Helmet ──
-      row(6, 3, 8, helmetHi);
-      rect(5, 4, 10, 3, helmet);
-      row(6, 4, 8, helmetHi);
-      row(6, 5, 8, visor);
-      row(6, 7, 8, steelDk);
-
-      // ── Shoulder pauldrons ──
-      rect(3, 8, 4, 2, steelHi);
-      rect(13, 8, 4, 2, steelHi);
-      row(3, 10, 4, steel);
-      row(13, 10, 4, steel);
-      p(4, 8, gold); p(14, 8, gold);
-
-      // ── Chest plate ──
-      rect(5, 8, 10, 6, steel);
-      rect(7, 9, 6, 3, steelHi);
-      rect(8, 10, 4, 2, gold);
-      p(9, 9, goldLt); p(10, 9, goldLt);
-
-      // ── Gold belt ──
-      row(5, 14, 10, gold);
-      p(9, 14, goldLt); p(10, 14, goldLt);
-
-      // ── Cape (behind, left side — sways per frame) ──
-      const cx = 3 + f.capeSwayX;
-      rect(cx, 9, 2, 10 + f.capeExtraLen, cape);
-      rect(cx - 1, 11, 1, 8 + f.capeExtraLen, cape);
-      // Cape highlight pixels shift per frame
-      for (const hy of f.capeHighlight) {
-        p(cx, hy, capeLt);
-      }
-      // Cape shadow on stride frames
-      if (fi === 0 || fi === 2) {
-        p(cx, 12, capeDk); p(cx, 15, capeDk);
-      }
-
-      // ── Left arm (swings with walk) ──
-      rect(3, f.leftArmY, 2, 3, steel);
-      rect(3, f.leftArmY + 3, 2, 1, steelHi);   // gauntlet
-      row(3, f.leftArmY + 2, 2, gold);           // gold wrist band
-
-      // ── Right arm (swings opposite) ──
-      rect(15, f.rightArmY, 2, 3, steel);
-      rect(15, f.rightArmY + 3, 2, 1, steelHi);  // gauntlet
-      row(15, f.rightArmY + 2, 2, gold);          // gold wrist band
-
-      // ── Shield (left hand — follows left arm) ──
-      const shY = f.leftArmY + 1;
-      rect(1, shY, 3, 6, 0x2848a0);
-      row(1, shY, 3, gold);           // top border
-      row(1, shY + 5, 3, gold);       // bottom border
-      p(0, shY, gold); p(0, shY + 5, gold);
-      p(2, shY + 2, 0xe0e0e0); p(2, shY + 3, 0xe0e0e0);
-      p(1, shY + 2, 0xc0c0c0); p(3, shY + 2, 0xc0c0c0);
-
-      // ── Sword (right hand — bobs with step) ──
-      const sBy = 3 + f.swordBobY;
-      for (let bi = 0; bi < 10; bi++) {
-        p(17, sBy + bi, (bi % 2 === 0) ? 0xe8f0f8 : 0xc0c8d0);
-      }
-      row(16, sBy + 10, 3, gold);                 // guard
-      p(17, sBy + 11, leather); p(17, sBy + 12, leather); // grip
-      p(17, sBy + 13, gold);                      // pommel
-
-      // ── Legs (per-frame stride positions) ──
-      rect(f.leftLegX, f.leftLegY, 3, f.leftLegH, leg);
-      rect(f.rightLegX, f.rightLegY, 3, f.rightLegH, leg);
-      // Knee guards
-      row(f.leftLegX, f.leftLegY + 2, 3, steelHi);
-      row(f.rightLegX, f.rightLegY + 2, 3, steelHi);
-
-      // ── Boots ──
-      rect(f.leftBootX, f.leftBootY, 4, 2, leather);
-      rect(f.rightBootX, f.rightBootY, 4, 2, leather);
-      row(f.leftBootX, f.leftBootY + 1, 4, leatherDk);
-      row(f.rightBootX, f.rightBootY + 1, 4, leatherDk);
-      row(f.leftBootX, f.leftBootY, 4, 0x504030);   // boot trim
-      row(f.rightBootX, f.rightBootY, 4, 0x504030);  // boot trim
-
-      g.generateTexture('knight_walk_' + fi, 20*s, 22*s);
+      drawKnight(g, walkFrames[fi]);
+      g.generateTexture('knight_walk_' + fi, W*s, H*s);
       g.destroy();
     }
 
-    // ── Also generate static 'knight' texture (original pose for battle scenes etc.) ──
+    // ── Also generate static 'knight' texture (neutral standing pose) ──
     const g = scene.make.graphics({ add: false });
-    const p  = (x, y, color) => { g.fillStyle(color); g.fillRect(x*s, y*s, s, s); };
-    const row  = (x, y, w, color) => { g.fillStyle(color); g.fillRect(x*s, y*s, w*s, s); };
-    const rect = (x, y, w, h, color) => { g.fillStyle(color); g.fillRect(x*s, y*s, w*s, h*s); };
-
-    // ── Plume (flowing crest) ──
-    p(8, 0, plume); p(9, 0, plume);
-    p(7, 1, plumeDk); p(8, 1, plume); p(9, 1, plume); p(10, 1, plume);
-    p(8, 2, plumeDk); p(9, 2, plumeDk);
-
-    // ── Helmet ──
-    row(6, 3, 8, helmetHi);
-    rect(5, 4, 10, 3, helmet);
-    row(6, 4, 8, helmetHi);
-    row(6, 5, 8, visor);
-    row(6, 7, 8, steelDk);
-
-    // ── Shoulder pauldrons ──
-    rect(3, 8, 4, 2, steelHi);
-    rect(13, 8, 4, 2, steelHi);
-    row(3, 10, 4, steel);
-    row(13, 10, 4, steel);
-    p(4, 8, gold); p(14, 8, gold);
-
-    // ── Chest plate ──
-    rect(5, 8, 10, 6, steel);
-    rect(7, 9, 6, 3, steelHi);
-    rect(8, 10, 4, 2, gold);
-    p(9, 9, goldLt); p(10, 9, goldLt);
-
-    // ── Gold belt ──
-    row(5, 14, 10, gold);
-    p(9, 14, goldLt); p(10, 14, goldLt);
-
-    // ── Cape (behind, left side) ──
-    rect(3, 9, 2, 10, cape);
-    rect(2, 11, 1, 8, cape);
-    p(3, 10, capeLt); p(3, 13, capeLt); p(3, 16, capeLt);
-
-    // ── Arms ──
-    rect(3, 11, 2, 3, steel);
-    rect(15, 11, 2, 3, steel);
-    rect(3, 14, 2, 1, steelHi);
-    rect(15, 14, 2, 1, steelHi);
-    row(3, 13, 2, gold);
-    row(15, 13, 2, gold);
-
-    // ── Shield (left hand) ──
-    rect(1, 12, 3, 6, 0x2848a0);
-    row(1, 12, 3, gold);
-    row(1, 17, 3, gold);
-    p(0, 12, gold); p(0, 17, gold);
-    p(2, 14, 0xe0e0e0); p(2, 15, 0xe0e0e0);
-    p(1, 14, 0xc0c0c0); p(3, 14, 0xc0c0c0);
-
-    // ── Sword (right hand) ──
-    p(17, 3, 0xe8f0f8); p(17, 4, 0xc0c8d0);
-    p(17, 5, 0xe8f0f8); p(17, 6, 0xc0c8d0);
-    p(17, 7, 0xe8f0f8); p(17, 8, 0xc0c8d0);
-    p(17, 9, 0xe8f0f8); p(17, 10, 0xc0c8d0);
-    p(17, 11, 0xe8f0f8); p(17, 12, 0xc0c8d0);
-    row(16, 13, 3, gold);
-    p(17, 14, leather); p(17, 15, leather);
-    p(17, 16, gold);
-
-    // ── Legs ──
-    rect(6, 15, 3, 5, leg);
-    rect(11, 15, 3, 5, leg);
-    row(6, 17, 3, steelHi);
-    row(11, 17, 3, steelHi);
-
-    // ── Boots ──
-    rect(5, 20, 4, 2, leather);
-    rect(11, 20, 4, 2, leather);
-    row(5, 21, 4, leatherDk);
-    row(11, 21, 4, leatherDk);
-    row(5, 20, 4, 0x504030);
-    row(11, 20, 4, 0x504030);
-
-    g.generateTexture('knight', 20*s, 22*s);
+    drawKnight(g, {
+      leftLegX: 8,  leftLegY: 18, leftLegH: 5,
+      rightLegX: 12, rightLegY: 18, rightLegH: 5,
+      leftBootX: 7,  leftBootY: 23,
+      rightBootX: 12, rightBootY: 23,
+      leftArmY: 13,  rightArmY: 13,
+      capeSwayX: 0,  capeExtraLen: 0, capeHighlight: [13, 16, 19],
+      swordBobY: 0, isStride: false,
+    });
+    g.generateTexture('knight', W*s, H*s);
     g.destroy();
   }
 
