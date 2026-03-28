@@ -1,5 +1,6 @@
 import { COLORS, FONTS } from '../utils/colors.js';
 import { bridge } from '../utils/ws.js';
+import { DESCENT_MESSAGES } from '../utils/flavor-text.js';
 
 /**
  * Summoning scene — Castlevania-style side-scroller.
@@ -55,8 +56,7 @@ export class SummoningScene extends Phaser.Scene {
     floorEdge.fillStyle(0x1a1a0e, 0.5);
     floorEdge.fillRect(0, 436, W, 2);
 
-    // ── Torch Glow Circles (fixed screen positions, pulse) ─────
-    this._createTorchGlows(W);
+    // Torch glows removed — torches are baked into the wall tile
 
     // ── Embers drifting LEFT and UP ────────────────────────────
     this._createEmbers(W, H);
@@ -137,14 +137,14 @@ export class SummoningScene extends Phaser.Scene {
     });
 
     // ── Status Message ─────────────────────────────────────────
-    this.messageText = this.add.text(cx, 470, 'Summoning the audit spirits...', {
+    this.messageText = this.add.text(cx, 470, DESCENT_MESSAGES[0], {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '15px',
       color: '#66cccc',
       letterSpacing: 1
     }).setOrigin(0.5).setDepth(55);
 
-    this.messageGlow = this.add.text(cx, 470, 'Summoning the audit spirits...', {
+    this.messageGlow = this.add.text(cx, 470, DESCENT_MESSAGES[0], {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '15px',
       color: '#44aaaa',
@@ -177,18 +177,7 @@ export class SummoningScene extends Phaser.Scene {
     this._drawVignette(W, H);
 
     // ── Atmospheric Messages ───────────────────────────────────
-    this.flavorMessages = [
-      'Scanning the dark corridors...',
-      'Detecting hostile entities...',
-      'Mapping the dungeon layout...',
-      'Analyzing threat levels...',
-      'Identifying demon weaknesses...',
-      'Forging battle strategy...',
-      'The spirits speak of many foes...',
-      'Preparing your arsenal...',
-      'Darkness reveals its secrets...',
-      'Almost there, brave knight...'
-    ];
+    this.flavorMessages = DESCENT_MESSAGES;
     this.messageIndex = 0;
 
     this.time.addEvent({
