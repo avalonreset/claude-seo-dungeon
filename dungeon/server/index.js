@@ -189,29 +189,71 @@ async function runCommit(message, projectCwd, onStream) {
 function runClaude(prompt, onStream, cwd) {
   const workDir = cwd || PROJECT_ROOT;
   return new Promise((resolve, reject) => {
-    // Call Claude's cli.js directly via Node — no shell needed
     const cliJs = path.join(process.env.APPDATA, 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
-    console.log(`  Running: node ${cliJs}`);
+    console.log(`  Running with stream-json`);
     console.log(`  CWD: ${workDir}`);
-    const proc = spawn(process.execPath, [cliJs, '-p', prompt], {
+    const proc = spawn(process.execPath, [cliJs, '-p', prompt, '--output-format', 'stream-json', '--verbose'], {
       cwd: workDir,
       env: { ...process.env }
     });
 
-    // Send heartbeat messages so the game knows we're alive
-    const heartbeat = setInterval(() => {
-      onStream('[working...]');
-    }, 5000);
-
-    let stdout = '';
+    let fullText = '';
+    let buffer = '';
     let stderr = '';
 
     proc.stdout.on('data', (data) => {
-      const chunk = data.toString();
-      stdout += chunk;
-      onStream(chunk);
-      // Log progress so we know it's alive
-      process.stdout.write('.');
+      buffer += data.toString();
+
+      // Process complete JSON lines from the buffer
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // Keep incomplete line in buffer
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const event = JSON.parse(line);
+
+          // Extract meaningful info from stream events
+          if (event.type === 'assistant' && event.message) {
+            const content = event.message.content;
+            if (Array.isArray(content)) {
+              for (const block of content) {
+                if (block.type === 'text' && block.text) {
+                  fullText += block.text;
+                  // Send text in small chunks for the log
+                  const lines = block.text.split('\n').filter(l => l.trim());
+                  for (const line of lines) {
+                    onStream(line.trim());
+                  }
+                }
+                if (block.type === 'tool_use') {
+                  // Show tool name + key input details
+                  const input = block.input || {};
+                  let detail = '';
+                  if (input.url) detail = input.url;
+                  else if (input.query) detail = input.query;
+                  else if (input.command) detail = input.command.substring(0, 60);
+                  else if (input.pattern) detail = input.pattern;
+                  else if (input.file_path) detail = input.file_path;
+
+                  const toolMsg = detail
+                    ? `[${block.name}] ${detail}`
+                    : `[${block.name}]`;
+                  onStream(toolMsg);
+                  console.log(`  ${toolMsg}`);
+                }
+              }
+            }
+          } else if (event.type === 'result') {
+            if (event.result) {
+              fullText = event.result;
+              onStream('[Complete]');
+            }
+          }
+        } catch (e) {
+          // Not valid JSON, might be partial — skip
+        }
+      }
     });
 
     proc.stderr.on('data', (data) => {
@@ -219,16 +261,25 @@ function runClaude(prompt, onStream, cwd) {
     });
 
     proc.on('close', (code) => {
-      clearInterval(heartbeat);
-      console.log(`  Claude finished (exit ${code}), ${stdout.length} bytes`);
+      // Process any remaining buffer
+      if (buffer.trim()) {
+        try {
+          const event = JSON.parse(buffer);
+          if (event.type === 'result' && event.result) {
+            fullText = event.result;
+          }
+        } catch (e) {}
+      }
+
+      console.log(`  Claude finished (exit ${code}), ${fullText.length} chars`);
       if (code !== 0) {
         reject(new Error(`Claude exited with code ${code}: ${stderr}`));
         return;
       }
       try {
-        resolve(JSON.parse(stdout));
+        resolve(JSON.parse(fullText));
       } catch {
-        resolve({ raw: stdout });
+        resolve({ raw: fullText });
       }
     });
 

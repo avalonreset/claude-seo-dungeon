@@ -172,6 +172,7 @@ export class BattleScene extends Phaser.Scene {
         const clean = stream.replace(/[\n\r]+/g, ' ').trim();
         if (clean.length > 0) {
           this.streamText.setText(clean.substring(0, 90) + '...');
+          if (this.game.addLog) this.game.addLog(clean);
         }
       });
       this.streamText.setText('');

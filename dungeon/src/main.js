@@ -5,6 +5,7 @@ import { SummoningScene } from './scenes/SummoningScene.js';
 import { DungeonHallScene } from './scenes/DungeonHallScene.js';
 import { BattleScene } from './scenes/BattleScene.js';
 import { VictoryScene } from './scenes/VictoryScene.js';
+import { LogScene } from './scenes/LogScene.js';
 
 const config = {
   type: Phaser.AUTO,
@@ -18,7 +19,7 @@ const config = {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
   },
-  scene: [BootScene, TitleScene, SummoningScene, DungeonHallScene, BattleScene, VictoryScene]
+  scene: [BootScene, TitleScene, SummoningScene, DungeonHallScene, BattleScene, VictoryScene, LogScene]
 };
 
 const game = new Phaser.Game(config);

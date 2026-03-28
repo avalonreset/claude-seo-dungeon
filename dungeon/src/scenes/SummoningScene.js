@@ -69,14 +69,6 @@ export class SummoningScene extends Phaser.Scene {
       ...FONTS.body, color: COLORS.red
     }).setOrigin(0.5);
 
-    // ── Server log panel (right side) ──────────────
-    this.add.rectangle(690, 300, 200, 560, 0x0a0a12, 0.9).setStrokeStyle(1, 0x2a2a4e);
-    this.add.text(690, 30, 'SERVER LOG', {
-      ...FONTS.small, color: COLORS.purple, fontSize: '10px'
-    }).setOrigin(0.5);
-    this.serverLogTexts = [];
-    this.serverLogY = 50;
-
     // Log area
     this.logTexts = [];
     this.logY = 510;
@@ -141,23 +133,6 @@ export class SummoningScene extends Phaser.Scene {
     this.logTexts.push(text);
   }
 
-  addServerLog(msg) {
-    // Push to the server log panel on the right
-    this.serverLogTexts.forEach(t => t.y -= 12);
-    if (this.serverLogTexts.length > 40) {
-      const old = this.serverLogTexts.shift();
-      old.destroy();
-    }
-    const clean = msg.replace(/[\n\r]+/g, ' ').trim().substring(0, 28);
-    if (clean.length === 0) return;
-    const text = this.add.text(595, this.serverLogY + this.serverLogTexts.length * 0, clean, {
-      fontFamily: 'monospace', fontSize: '9px', color: '#50c050'
-    });
-    // Scroll position
-    const yPos = 50 + this.serverLogTexts.length * 12;
-    text.y = Math.min(yPos, 570);
-    this.serverLogTexts.push(text);
-  }
 
   setProgress(pct) {
     this.progressBar.width = 400 * Math.min(pct, 1);
@@ -180,7 +155,7 @@ export class SummoningScene extends Phaser.Scene {
         const clean = streamData.replace(/[\n\r]+/g, ' ').trim();
         if (clean.length > 0) {
           this.streamText.setText(clean.substring(0, 60));
-          this.addServerLog(clean);
+          if (this.game.addLog) this.game.addLog(clean);
         }
         this.demonCounter.setText(`Claude is working... (${this.streamChunks} signals received)`);
       });
@@ -213,7 +188,7 @@ export class SummoningScene extends Phaser.Scene {
     } catch (err) {
       progressTimer.remove();
       console.error('Audit error:', err);
-      this.addServerLog('ERROR: ' + err.message);
+      if (this.game.addLog) this.game.addLog('ERROR: ' + err.message);
       this.addLog('Bridge error — entering demo mode');
       await this.simulateAudit();
     }
