@@ -8,8 +8,9 @@ const wss = new WebSocketServer({ server });
 
 const PORT = 3001;
 
-// Project root is one level up from dungeon/ — where CLAUDE.md and skills/ live
-const PROJECT_ROOT = path.resolve(__dirname, '..');
+// Project root is two levels up: server/ -> dungeon/ -> claude-seo-dungeon/
+// That's where CLAUDE.md and skills/ live
+const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 
 console.log('⚔ Claude SEO Dungeon — Bridge Server');
 console.log('─'.repeat(40));
