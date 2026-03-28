@@ -15,13 +15,13 @@ async function connectBridge() {
   const status = document.getElementById('bridge-status');
   try {
     await bridge.connect();
-    status.textContent = 'Sword sharpened — ready for battle';
+    status.textContent = 'Blood will be spilled tonight.';
     status.className = 'connected';
-    addLog('Arms readied');
+    addLog('Connected to the dungeon');
   } catch (err) {
-    status.textContent = 'The gate is sealed — start the server';
+    status.textContent = 'The dungeon is unreachable. Start the server.';
     status.className = 'error';
-    addLog('ERROR: Gate sealed');
+    addLog('ERROR: No connection');
   }
 }
 
@@ -30,8 +30,8 @@ function launchGame(domain, projectPath) {
   document.getElementById('title-screen').style.display = 'none';
   document.getElementById('game-container').style.display = 'block';
 
-  addLog(`Target realm: ${domain}`);
-  addLog(`Armory: ${projectPath}`);
+  addLog(`Hunting: ${domain}`);
+  addLog(`Source: ${projectPath}`);
   showLoadingIndicator();
 
   const config = {

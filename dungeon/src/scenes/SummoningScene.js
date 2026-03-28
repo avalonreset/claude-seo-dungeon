@@ -2,8 +2,8 @@ import { COLORS, FONTS } from '../utils/colors.js';
 import { bridge } from '../utils/ws.js';
 
 /**
- * Summoning scene — knight descends into a torchlit dungeon corridor while audit runs.
- * Atmospheric loading screen with particle effects, animated torches, and glowing progress bar.
+ * Summoning scene — knight marches down a torchlit dungeon corridor while audit runs.
+ * Scrolling stone wall background with parallax torches and embers.
  * Transitions to DungeonHall once audit completes.
  */
 export class SummoningScene extends Phaser.Scene {
@@ -24,18 +24,22 @@ export class SummoningScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(0x05050f);
     this.cameras.main.fadeIn(800, 0, 0, 0);
 
-    // ── Stone Brick Wall Background ──────────────────────────────
-    this._drawStoneWalls(W, H);
+    // ── Scrolling Stone Brick Wall Background ───────────────────
+    this._generateWallTexture(W);
+    this.wallTile = this.add.tileSprite(0, 0, W, H, 'stonewall_tile')
+      .setOrigin(0, 0)
+      .setDepth(0);
+    this.scrollSpeed = 40; // pixels per second
 
     // ── Corridor Darkness Gradient (depth illusion) ──────────────
     this._drawCorridorDepth(cx, W, H);
 
-    // ── Torch Flames (left and right walls) ──────────────────────
+    // ── Torch Flames (fixed screen positions, scrolling feel) ────
     this.torchesLeft = [];
     this.torchesRight = [];
-    this._createTorches(cx, H);
+    this._createScrollingTorches(cx, W, H);
 
-    // ── Floating Embers (rising from below) ──────────────────────
+    // ── Floating Embers (rising, faster than background for parallax) ──
     this._createEmbers(W, H);
 
     // ── Dust Motes (slow ambient drift) ──────────────────────────
@@ -105,30 +109,13 @@ export class SummoningScene extends Phaser.Scene {
       repeat: -1
     });
 
-    // ── Knight Character ─────────────────────────────────────────
-    this.knight = this.add.image(cx, 140, 'knight').setScale(2.5).setDepth(10);
+    // ── Knight Character (centered, marching animation) ──────────
+    this.knight = this.add.sprite(cx, 280, 'knight_walk_0').setScale(2.5).setDepth(10);
+    this.knight.play('knight_march');
 
-    // Knight ambient glow (lantern light)
-    this.knightGlow = this.add.circle(cx, 160, 60, 0xff8833, 0.08).setDepth(9);
-    this.knightGlowInner = this.add.circle(cx, 160, 30, 0xffaa44, 0.12).setDepth(9);
-
-    // Knight descending tween
-    this.tweens.add({
-      targets: this.knight,
-      y: 360,
-      duration: 10000,
-      ease: 'Sine.easeInOut',
-      yoyo: true,
-      repeat: -1
-    });
-    this.tweens.add({
-      targets: [this.knightGlow, this.knightGlowInner],
-      y: '+=220',
-      duration: 10000,
-      ease: 'Sine.easeInOut',
-      yoyo: true,
-      repeat: -1
-    });
+    // Knight ambient glow (lantern light) — follows knight position
+    this.knightGlow = this.add.circle(cx, 300, 60, 0xff8833, 0.08).setDepth(9);
+    this.knightGlowInner = this.add.circle(cx, 300, 30, 0xffaa44, 0.12).setDepth(9);
 
     // Knight glow breathing
     this.tweens.add({
@@ -240,58 +227,100 @@ export class SummoningScene extends Phaser.Scene {
   // VISUAL CONSTRUCTION HELPERS
   // ═══════════════════════════════════════════════════════════════
 
-  _drawStoneWalls(W, H) {
-    const g = this.add.graphics().setDepth(0);
+  /**
+   * Generate a tileable stone wall texture (800 x 300) with bricks and torch brackets.
+   * This gets used as a tileSprite that scrolls upward continuously.
+   */
+  _generateWallTexture(W) {
+    const TILE_H = 300;
+    const g = this.make.graphics({ add: false });
 
     // Base dark fill
     g.fillStyle(0x111122, 1);
-    g.fillRect(0, 0, W, H);
+    g.fillRect(0, 0, W, TILE_H);
 
     // Draw stone bricks
     const brickW = 64;
     const brickH = 32;
-    const rows = Math.ceil(H / brickH) + 1;
+    const rows = Math.ceil(TILE_H / brickH) + 1;
     const cols = Math.ceil(W / brickW) + 1;
 
+    // Use a seeded random so the tile is consistent
+    const seededRand = (seed) => {
+      let x = Math.sin(seed * 127.1 + 311.7) * 43758.5453123;
+      return x - Math.floor(x);
+    };
+
     for (let row = 0; row < rows; row++) {
-      const offset = (row % 2) * (brickW / 2); // offset every other row
+      const offset = (row % 2) * (brickW / 2);
       for (let col = -1; col < cols; col++) {
         const bx = col * brickW + offset;
         const by = row * brickH;
 
+        if (by >= TILE_H) continue;
+
+        const seed = row * 100 + col;
+
         // Brick face - subtle color variation
-        const shade = 0x14 + Phaser.Math.Between(-2, 3);
-        const r = shade + Phaser.Math.Between(0, 2);
-        const gb = shade + Phaser.Math.Between(-1, 1);
-        const brickColor = (r << 16) | (gb << 8) | (gb - 2);
+        const shade = 0x14 + Math.floor((seededRand(seed) - 0.5) * 6);
+        const r = shade + Math.floor(seededRand(seed + 1) * 3);
+        const gb = shade + Math.floor((seededRand(seed + 2) - 0.5) * 2);
+        const brickColor = (r << 16) | (gb << 8) | Math.max(0, gb - 2);
         g.fillStyle(brickColor, 0.9);
         g.fillRect(bx + 1, by + 1, brickW - 2, brickH - 2);
 
         // Mortar lines (dark gaps)
         g.fillStyle(0x080810, 0.8);
-        g.fillRect(bx, by, brickW, 1); // top mortar
-        g.fillRect(bx, by, 1, brickH); // left mortar
+        g.fillRect(bx, by, brickW, 1);
+        g.fillRect(bx, by, 1, brickH);
 
         // Subtle highlight on top-left of each brick
         g.fillStyle(0x222238, 0.4);
         g.fillRect(bx + 2, by + 2, brickW - 4, 1);
         g.fillRect(bx + 2, by + 2, 1, brickH - 4);
 
-        // Random imperfections
-        if (Math.random() < 0.15) {
+        // Random imperfections (deterministic)
+        if (seededRand(seed + 10) < 0.15) {
           g.fillStyle(0x0a0a16, 0.5);
-          const dx = Phaser.Math.Between(4, brickW - 10);
-          const dy = Phaser.Math.Between(4, brickH - 10);
-          g.fillRect(bx + dx, by + dy, Phaser.Math.Between(3, 8), Phaser.Math.Between(2, 4));
+          const dx = 4 + Math.floor(seededRand(seed + 11) * (brickW - 14));
+          const dy = 4 + Math.floor(seededRand(seed + 12) * (brickH - 14));
+          const dw = 3 + Math.floor(seededRand(seed + 13) * 6);
+          const dh = 2 + Math.floor(seededRand(seed + 14) * 3);
+          g.fillRect(bx + dx, by + dy, dw, dh);
         }
       }
     }
+
+    // Draw torch bracket marks at intervals in the tile
+    // Left side brackets at y=75 and y=225 (every 150px)
+    // Right side brackets at y=0 and y=150 (offset by 75px from left)
+    const bracketPositions = [
+      { x: 130, y: 75 },   // left wall
+      { x: 670, y: 0 },    // right wall
+      { x: 130, y: 225 },  // left wall
+      { x: 670, y: 150 },  // right wall
+    ];
+
+    bracketPositions.forEach(pos => {
+      // Iron bracket
+      g.fillStyle(0x3a3028, 1);
+      g.fillRect(pos.x - 5, pos.y + 8, 10, 16);
+      g.fillStyle(0x2a2018, 1);
+      g.fillRect(pos.x - 4, pos.y + 9, 8, 14);
+      // Mounting bolts
+      g.fillStyle(0x505040, 1);
+      g.fillRect(pos.x - 3, pos.y + 10, 2, 2);
+      g.fillRect(pos.x + 1, pos.y + 10, 2, 2);
+    });
+
+    g.generateTexture('stonewall_tile', W, TILE_H);
+    g.destroy();
   }
 
   _drawCorridorDepth(cx, W, H) {
     const g = this.add.graphics().setDepth(1);
 
-    // Central corridor lighter area (distant light from above)
+    // Central corridor lighter area
     const corridorW = 300;
     g.fillStyle(0x1a1a30, 0.3);
     g.fillRect(cx - corridorW / 2, 0, corridorW, H);
@@ -307,29 +336,30 @@ export class SummoningScene extends Phaser.Scene {
       g.fillRect(W - 100 - i * 20, 0, 100 + i * 20, H);
     }
 
-    // Floor gradient at bottom (darker = further)
+    // Floor gradient at bottom
     for (let i = 0; i < 6; i++) {
       g.fillStyle(0x000005, 0.08);
       g.fillRect(0, H - 120 + i * 20, W, 20);
     }
   }
 
-  _createTorches(cx, H) {
-    const torchPositions = [
-      { x: cx - 180, y: 160 },
-      { x: cx + 180, y: 160 },
-      { x: cx - 200, y: 320 },
-      { x: cx + 200, y: 320 },
+  /**
+   * Create torches at fixed screen positions. They represent the "current" torches
+   * the knight is passing. Placed alternating left/right every ~150px vertically.
+   */
+  _createScrollingTorches(cx, W, H) {
+    // Place torches at fixed screen Y positions spaced every ~150px
+    // Alternating left and right walls
+    const torchScreenPositions = [
+      { x: cx - 180, y: 80 },   // left
+      { x: cx + 180, y: 155 },  // right
+      { x: cx - 180, y: 230 },  // left
+      { x: cx + 180, y: 305 },  // right
+      { x: cx - 180, y: 380 },  // left
+      { x: cx + 180, y: 455 },  // right
     ];
 
-    torchPositions.forEach((pos, idx) => {
-      // Torch bracket (small dark rectangle)
-      const bracket = this.add.graphics().setDepth(5);
-      bracket.fillStyle(0x3a3028, 1);
-      bracket.fillRect(pos.x - 4, pos.y + 8, 8, 14);
-      bracket.fillStyle(0x2a2018, 1);
-      bracket.fillRect(pos.x - 3, pos.y + 8, 6, 12);
-
+    torchScreenPositions.forEach((pos, idx) => {
       // Wall glow from torch
       const wallGlow = this.add.circle(pos.x, pos.y, 80, 0xff6622, 0.04).setDepth(2);
       this.tweens.add({
@@ -358,7 +388,7 @@ export class SummoningScene extends Phaser.Scene {
     // Tip
     const tip = this.add.circle(x, y - 12, 3, 0xffee88, 0.4).setDepth(8);
 
-    const baseDelay = seed * 137; // offset each flame
+    const baseDelay = seed * 137;
 
     this.tweens.add({
       targets: outerGlow,
@@ -406,6 +436,7 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   _createEmbers(W, H) {
+    // Embers drift upward faster than background for parallax depth
     for (let i = 0; i < 40; i++) {
       const startX = Phaser.Math.Between(50, W - 50);
       const startY = Phaser.Math.Between(H + 10, H + 100);
@@ -413,14 +444,15 @@ export class SummoningScene extends Phaser.Scene {
       const orangeShade = Phaser.Math.Between(0, 1) === 0 ? 0xf08020 : 0xff6633;
       const ember = this.add.circle(startX, startY, size, orangeShade, 0.7).setDepth(15);
 
+      // Embers move upward at ~60-100px/sec (faster than the 40px/sec wall scroll)
       this.tweens.add({
         targets: ember,
-        y: Phaser.Math.Between(-20, H * 0.3),
+        y: Phaser.Math.Between(-40, H * 0.15),
         x: startX + Phaser.Math.Between(-80, 80),
         alpha: 0,
         scaleX: { from: 1, to: 0.3 },
         scaleY: { from: 1, to: 0.3 },
-        duration: Phaser.Math.Between(3000, 7000),
+        duration: Phaser.Math.Between(2500, 5500),
         repeat: -1,
         delay: Phaser.Math.Between(0, 5000),
         ease: 'Sine.easeOut',
@@ -492,12 +524,12 @@ export class SummoningScene extends Phaser.Scene {
     frame.fillStyle(0x0a0a14, 1);
     frame.fillRoundedRect(barX, barY - barH / 2, barW, barH, 2);
 
-    // Progress fill — we use a graphics object so we can redraw
+    // Progress fill
     this.progressGfx = this.add.graphics().setDepth(21);
     this.progressBarConfig = { x: barX, y: barY, w: barW, h: barH };
     this.progressValue = 0;
 
-    // Shimmer overlay (animated bright streak)
+    // Shimmer overlay
     this.shimmerX = 0;
 
     // Progress percentage text
@@ -520,7 +552,6 @@ export class SummoningScene extends Phaser.Scene {
     const steps = Math.ceil(fillW / 4);
     for (let i = 0; i < steps; i++) {
       const t = i / Math.max(steps - 1, 1);
-      // Blend from deep blue (0x1a3388) to gold (0xddaa22)
       const r = Math.floor(0x1a + (0xdd - 0x1a) * t);
       const g = Math.floor(0x33 + (0xaa - 0x33) * t);
       const b = Math.floor(0x88 + (0x22 - 0x88) * t);
@@ -535,7 +566,7 @@ export class SummoningScene extends Phaser.Scene {
     this.progressGfx.fillStyle(0xffffff, 0.12);
     this.progressGfx.fillRect(x, y - h / 2 + 1, fillW, 3);
 
-    // Shimmer streak (moving bright spot)
+    // Shimmer streak
     const shimmerPos = x + (this.shimmerX % (w + 60)) - 30;
     if (shimmerPos < x + fillW) {
       for (let s = 0; s < 40; s++) {
@@ -588,7 +619,6 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   _ambientPulse() {
-    // Very subtle ambient brightness pulse on the whole scene
     const overlay = this.add.rectangle(400, 300, 800, 600, 0x1122aa, 0).setDepth(48);
     this.tweens.add({
       targets: overlay,
@@ -601,10 +631,23 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // UPDATE LOOP — animate shimmer
+  // UPDATE LOOP — scroll background + animate shimmer
   // ═══════════════════════════════════════════════════════════════
 
   update(time, delta) {
+    // Scroll the stone wall upward continuously
+    if (this.wallTile) {
+      this.wallTile.tilePositionY += (this.scrollSpeed * delta) / 1000;
+    }
+
+    // Keep knight glow following the knight
+    if (this.knight && this.knightGlow) {
+      this.knightGlow.x = this.knight.x;
+      this.knightGlow.y = this.knight.y + 20;
+      this.knightGlowInner.x = this.knight.x;
+      this.knightGlowInner.y = this.knight.y + 20;
+    }
+
     // Animate shimmer across progress bar
     this.shimmerX = (this.shimmerX || 0) + delta * 0.08;
     this._drawProgressFill(this.progressValue);
