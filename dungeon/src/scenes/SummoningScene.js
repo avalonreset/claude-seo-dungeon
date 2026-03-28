@@ -4,6 +4,7 @@ import { bridge } from '../utils/ws.js';
 /**
  * Summoning scene — knight descends into dungeon while audit runs.
  * Shows atmospheric loading with progress messages.
+ * Transitions to DungeonHall once audit completes.
  */
 export class SummoningScene extends Phaser.Scene {
   constructor() {
@@ -44,37 +45,46 @@ export class SummoningScene extends Phaser.Scene {
     const glow = this.add.circle(cx, 250, 50, 0x2040a0, 0.15);
     this.tweens.add({
       targets: glow,
-      scaleX: 1.5,
-      scaleY: 1.5,
-      alpha: 0.05,
-      duration: 2000,
-      yoyo: true,
-      repeat: -1
+      scaleX: 1.5, scaleY: 1.5, alpha: 0.05,
+      duration: 2000, yoyo: true, repeat: -1
     });
     this.tweens.add({
       targets: glow,
-      y: 350,
-      duration: 8000,
-      ease: 'Sine.easeInOut',
-      yoyo: true,
-      repeat: -1
+      y: 350, duration: 8000, ease: 'Sine.easeInOut', yoyo: true, repeat: -1
     });
 
-    // Progress messages
-    this.messageText = this.add.text(cx, 440, 'Summoning the audit spirits...', {
+    // Status message
+    this.messageText = this.add.text(cx, 420, 'Summoning the audit spirits...', {
       ...FONTS.body, color: COLORS.cyan
     }).setOrigin(0.5);
 
+    // Stream output area — shows what Claude is doing
+    this.streamText = this.add.text(cx, 450, '', {
+      ...FONTS.small, color: COLORS.purple, wordWrap: { width: 700 }
+    }).setOrigin(0.5);
+
+    // Demon counter — shows demons found so far
+    this.demonCounter = this.add.text(cx, 480, '', {
+      ...FONTS.body, color: COLORS.red
+    }).setOrigin(0.5);
+
+    // ── Server log panel (right side) ──────────────
+    this.add.rectangle(690, 300, 200, 560, 0x0a0a12, 0.9).setStrokeStyle(1, 0x2a2a4e);
+    this.add.text(690, 30, 'SERVER LOG', {
+      ...FONTS.small, color: COLORS.purple, fontSize: '10px'
+    }).setOrigin(0.5);
+    this.serverLogTexts = [];
+    this.serverLogY = 50;
+
     // Log area
     this.logTexts = [];
-    this.logY = 480;
+    this.logY = 510;
 
     // Progress bar
-    this.progressBg = this.add.rectangle(cx, 560, 400, 12, 0x1a1a2e).setOrigin(0.5);
     this.add.rectangle(cx, 560, 402, 14).setStrokeStyle(1, COLORS.hPurple).setOrigin(0.5);
     this.progressBar = this.add.rectangle(200, 560, 0, 10, COLORS.hPurple).setOrigin(0, 0.5);
 
-    // Atmospheric messages that cycle during loading
+    // Atmospheric messages
     this.flavorMessages = [
       'Scanning the dark corridors...',
       'Detecting hostile entities...',
@@ -89,9 +99,8 @@ export class SummoningScene extends Phaser.Scene {
     ];
     this.messageIndex = 0;
 
-    // Cycle flavor text
     this.time.addEvent({
-      delay: 2500,
+      delay: 3000,
       callback: () => {
         this.messageIndex = (this.messageIndex + 1) % this.flavorMessages.length;
         this.messageText.setText(this.flavorMessages[this.messageIndex]);
@@ -99,38 +108,54 @@ export class SummoningScene extends Phaser.Scene {
       loop: true
     });
 
-    // Floating particles (embers falling)
+    // Floating embers
     for (let i = 0; i < 30; i++) {
       const x = Phaser.Math.Between(0, 800);
       const y = Phaser.Math.Between(0, 600);
       const ember = this.add.circle(x, y, Phaser.Math.Between(1, 2), 0xf08020, 0.6);
       this.tweens.add({
         targets: ember,
-        y: 620,
-        x: x + Phaser.Math.Between(-50, 50),
-        alpha: 0,
+        y: 620, x: x + Phaser.Math.Between(-50, 50), alpha: 0,
         duration: Phaser.Math.Between(2000, 5000),
-        repeat: -1,
-        delay: Phaser.Math.Between(0, 3000)
+        repeat: -1, delay: Phaser.Math.Between(0, 3000)
       });
     }
 
-    // Start the actual audit
+    // Track how many stream chunks we've received (to show activity)
+    this.streamChunks = 0;
+
+    // Start audit
     this.runAudit();
   }
 
   addLog(msg) {
-    // Shift existing logs up
     this.logTexts.forEach(t => t.y -= 18);
-    // Remove old ones
-    if (this.logTexts.length > 3) {
+    if (this.logTexts.length > 2) {
       const old = this.logTexts.shift();
       old.destroy();
     }
-    const text = this.add.text(400, this.logY, `> ${msg}`, {
+    const text = this.add.text(300, this.logY, `> ${msg}`, {
       ...FONTS.small, color: COLORS.gray
     }).setOrigin(0.5);
     this.logTexts.push(text);
+  }
+
+  addServerLog(msg) {
+    // Push to the server log panel on the right
+    this.serverLogTexts.forEach(t => t.y -= 12);
+    if (this.serverLogTexts.length > 40) {
+      const old = this.serverLogTexts.shift();
+      old.destroy();
+    }
+    const clean = msg.replace(/[\n\r]+/g, ' ').trim().substring(0, 28);
+    if (clean.length === 0) return;
+    const text = this.add.text(595, this.serverLogY + this.serverLogTexts.length * 0, clean, {
+      fontFamily: 'monospace', fontSize: '9px', color: '#50c050'
+    });
+    // Scroll position
+    const yPos = 50 + this.serverLogTexts.length * 12;
+    text.y = Math.min(yPos, 570);
+    this.serverLogTexts.push(text);
   }
 
   setProgress(pct) {
@@ -140,46 +165,55 @@ export class SummoningScene extends Phaser.Scene {
   async runAudit() {
     let progress = 0;
     const progressTimer = this.time.addEvent({
-      delay: 300,
+      delay: 500,
       callback: () => {
-        progress = Math.min(progress + 0.02, 0.9);
+        progress = Math.min(progress + 0.008, 0.9);
         this.setProgress(progress);
       },
       loop: true
     });
 
     try {
-      // Try real audit via bridge
       const result = await bridge.audit(this.domain, (streamData) => {
-        // Clean up stream data for display
+        this.streamChunks++;
         const clean = streamData.replace(/[\n\r]+/g, ' ').trim();
         if (clean.length > 0) {
-          this.addLog(clean.substring(0, 60));
+          this.streamText.setText(clean.substring(0, 60));
+          this.addServerLog(clean);
         }
+        this.demonCounter.setText(`Claude is working... (${this.streamChunks} signals received)`);
       });
 
       progressTimer.remove();
       this.setProgress(1);
 
-      // result.data contains the audit object from the bridge
       const auditData = result.data || result;
       if (auditData && auditData.issues && auditData.issues.length > 0) {
         this.game.auditData = auditData;
-        this.addLog(`Found ${auditData.issues.length} demons! Score: ${auditData.score}/100`);
-        this.transitionToDungeon();
+        this.messageText.setText('The dungeon reveals itself...');
+        this.messageText.setColor(COLORS.gold);
+        this.streamText.setText('');
+        this.demonCounter.setText(`${auditData.issues.length} demons detected! Score: ${auditData.score}/100`);
+        this.demonCounter.setColor(COLORS.gold);
+
+        // Dramatic pause before transition
+        this.cameras.main.flash(300, 200, 50, 50);
+        this.time.delayedCall(2000, () => {
+          this.cameras.main.fadeOut(1000, 0, 0, 0);
+          this.time.delayedCall(1000, () => {
+            this.scene.start('DungeonHall');
+          });
+        });
       } else {
-        // Bridge returned but no valid data — fall back to demo
         this.addLog('Audit returned no issues — entering demo mode');
         await this.simulateAudit();
       }
 
     } catch (err) {
-      // Demo mode — generate sample data
       progressTimer.remove();
-      this.addLog('Bridge unavailable — entering demo mode');
       console.error('Audit error:', err);
-
-      // Simulate audit progress
+      this.addServerLog('ERROR: ' + err.message);
+      this.addLog('Bridge error — entering demo mode');
       await this.simulateAudit();
     }
   }
@@ -200,7 +234,6 @@ export class SummoningScene extends Phaser.Scene {
       { id: 12, severity: 'info', title: 'No Canonical Tags', description: 'Potential duplicate content issues', category: 'On-Page', hp: 20 }
     ];
 
-    // Animate progress
     for (let i = 0; i <= 10; i++) {
       await this.delay(400);
       this.setProgress(i / 10);
@@ -216,22 +249,17 @@ export class SummoningScene extends Phaser.Scene {
       totalIssues: demoIssues.length
     };
 
-    this.transitionToDungeon();
-  }
-
-  delay(ms) {
-    return new Promise(resolve => this.time.delayedCall(ms, resolve));
-  }
-
-  transitionToDungeon() {
     this.messageText.setText('The dungeon reveals itself...');
     this.messageText.setColor(COLORS.gold);
-
     this.time.delayedCall(1500, () => {
       this.cameras.main.fadeOut(1000, 0, 0, 0);
       this.time.delayedCall(1000, () => {
         this.scene.start('DungeonHall');
       });
     });
+  }
+
+  delay(ms) {
+    return new Promise(resolve => this.time.delayedCall(ms, resolve));
   }
 }

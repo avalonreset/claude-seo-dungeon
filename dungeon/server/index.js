@@ -4,105 +4,101 @@ const http = require('http');
 const path = require('path');
 
 const server = http.createServer();
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({
+  server,
+  // Keep connections alive during long audits
+  perMessageDeflate: false
+});
 
 const PORT = 3001;
 
-// Project root is two levels up: server/ -> dungeon/ -> claude-seo-dungeon/
-// That's where CLAUDE.md and skills/ live
+// Project root: server/ -> dungeon/ -> claude-seo-dungeon/
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 
-console.log('⚔ Claude SEO Dungeon — Bridge Server');
+// Catch crashes so server stays alive
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception (server stays alive):', err.message);
+});
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled rejection (server stays alive):', err.message || err);
+});
+
+console.log('Claude SEO Dungeon — Bridge Server');
 console.log('─'.repeat(40));
 
 wss.on('connection', (ws) => {
-  console.log('🛡 Game client connected');
+  console.log('Game client connected');
+
+  // Keepalive ping every 15s so the connection doesn't drop during long audits
+  const pingInterval = setInterval(() => {
+    if (ws.readyState === ws.OPEN) {
+      ws.ping();
+    }
+  }, 15000);
+
+  const safeSend = (data) => {
+    if (ws.readyState === ws.OPEN) {
+      ws.send(typeof data === 'string' ? data : JSON.stringify(data));
+    }
+  };
 
   ws.on('message', async (raw) => {
     const msg = JSON.parse(raw.toString());
     const { id, command, type } = msg;
 
-    console.log(`⚔ Command #${id} [${type || 'unknown'}]: ${command.substring(0, 80)}`);
+    console.log(`Command #${id} [${type}]: ${command.substring(0, 80)}`);
 
     try {
       if (type === 'audit') {
         const result = await runAudit(command, (chunk) => {
-          ws.send(JSON.stringify({ id, type: 'stream', content: chunk }));
-          console.log(`  ↳ stream: ${chunk.substring(0, 60).replace(/\n/g, ' ')}`);
+          safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
         });
-        ws.send(JSON.stringify({ id, type: 'result', data: result }));
-        console.log(`✓ Audit complete: ${result.issues.length} issues found, score: ${result.score}`);
+        safeSend(JSON.stringify({ id, type: 'result', data: result }));
+        console.log(`Audit done: ${result.issues.length} issues, score ${result.score}`);
 
       } else if (type === 'fix') {
         const result = await runFix(command, (chunk) => {
-          ws.send(JSON.stringify({ id, type: 'stream', content: chunk }));
-          console.log(`  ↳ stream: ${chunk.substring(0, 60).replace(/\n/g, ' ')}`);
+          safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
         });
-        ws.send(JSON.stringify({ id, type: 'result', data: result }));
-        console.log(`✓ Fix complete for: ${command.substring(0, 50)}`);
+        safeSend(JSON.stringify({ id, type: 'result', data: result }));
+        console.log(`Fix done: ${command.substring(0, 50)}`);
 
       } else {
-        // Generic command
         const result = await runClaude(command, (chunk) => {
-          ws.send(JSON.stringify({ id, type: 'stream', content: chunk }));
+          safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
         });
-        ws.send(JSON.stringify({ id, type: 'result', data: result }));
+        safeSend(JSON.stringify({ id, type: 'result', data: result }));
       }
     } catch (err) {
-      console.error(`✗ Error on #${id}:`, err.message);
-      ws.send(JSON.stringify({ id, type: 'error', message: err.message }));
+      console.error(`Error on #${id}:`, err.message);
+      safeSend(JSON.stringify({ id, type: 'error', message: err.message }));
     }
   });
 
   ws.on('close', () => {
-    console.log('🏃 Game client disconnected');
+    clearInterval(pingInterval);
+    console.log('Game client disconnected');
   });
 });
 
 /**
  * Run an SEO audit via Claude CLI.
- * Asks Claude to return structured JSON we can parse into demons.
  */
 async function runAudit(domain, onStream) {
-  const prompt = `Run a comprehensive SEO audit on the website "${domain}". Analyze it thoroughly for all SEO issues including technical SEO, on-page optimization, content quality, schema markup, performance, accessibility, and crawlability.
-
-After your analysis, return ONLY a JSON object (no markdown, no code fences, no explanation before or after) with this exact structure:
-
-{
-  "domain": "${domain}",
-  "score": <number 0-100>,
-  "totalIssues": <number>,
-  "issues": [
-    {
-      "id": <number>,
-      "severity": "<critical|high|medium|low|info>",
-      "title": "<short issue title>",
-      "description": "<one sentence description>",
-      "category": "<Security|Crawlability|On-Page|Links|Schema|Performance|Accessibility|Social|Content>",
-      "hp": <number 10-100 based on severity and effort to fix>
-    }
-  ]
-}
-
-Be thorough. Check for: HTTPS/SSL, robots.txt issues, meta descriptions, title tags, broken links, schema markup, page speed, alt text, Open Graph tags, canonical tags, sitemap, mobile-friendliness, heading hierarchy, content quality signals. Return real findings based on what you can determine about this domain. Return ONLY the JSON.`;
+  const prompt = `Analyze the website "${domain}" for SEO issues. Return ONLY valid JSON (no markdown fences, no explanation, no preamble): {"domain":"${domain}","score":<0-100>,"totalIssues":<n>,"issues":[{"id":<n>,"severity":"<critical|high|medium|low|info>","title":"<title>","description":"<desc>","category":"<category>","hp":<10-100>}]}. Check HTTPS, meta tags, schema, performance, crawlability, heading structure, images, sitemap. Be thorough with real findings.`;
 
   const raw = await runClaude(prompt, onStream);
 
-  // Parse the JSON from Claude's response
   try {
-    // Handle if raw is already parsed
     if (raw.issues) return raw;
 
-    // Extract JSON from the response text
     const text = typeof raw === 'string' ? raw : (raw.raw || JSON.stringify(raw));
 
-    // Try to find JSON in the response (strip any markdown fences)
+    // Extract JSON — handle markdown fences and preamble text
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
-      // Validate structure
       if (parsed.issues && Array.isArray(parsed.issues)) {
-        // Ensure all issues have required fields
         parsed.issues = parsed.issues.map((issue, i) => ({
           id: issue.id || i + 1,
           severity: issue.severity || 'medium',
@@ -117,22 +113,17 @@ Be thorough. Check for: HTTPS/SSL, robots.txt issues, meta descriptions, title t
         return parsed;
       }
     }
-
-    throw new Error('Could not parse audit results');
+    throw new Error('No valid JSON found');
   } catch (parseErr) {
-    console.error('⚠ Parse error, using raw text to generate issues:', parseErr.message);
-    // Last resort: return a basic structure
+    console.error('Parse error:', parseErr.message);
     return {
       domain,
       score: 50,
       totalIssues: 1,
       issues: [{
-        id: 1,
-        severity: 'medium',
-        title: 'Audit Parsing Error',
-        description: 'Claude returned results but they could not be parsed. Raw response logged to server.',
-        category: 'General',
-        hp: 50
+        id: 1, severity: 'medium', title: 'Audit Parsing Error',
+        description: 'Claude returned data but it could not be parsed.',
+        category: 'General', hp: 50
       }]
     };
   }
@@ -142,45 +133,37 @@ Be thorough. Check for: HTTPS/SSL, robots.txt issues, meta descriptions, title t
  * Fix a specific SEO issue via Claude CLI.
  */
 async function runFix(issueDescription, onStream) {
-  const prompt = `You are an SEO expert. Fix this specific SEO issue: ${issueDescription}
-
-Provide a clear, actionable fix. Be concise. Return a JSON object with:
-{
-  "fixed": true,
-  "summary": "<what was done>",
-  "details": "<step by step explanation>"
-}
-
-Return ONLY the JSON, no markdown fences.`;
+  const prompt = `Fix this SEO issue: ${issueDescription}. Return ONLY valid JSON (no markdown): {"fixed":true,"summary":"<what to do>","details":"<step by step>"}`;
 
   const raw = await runClaude(prompt, onStream);
 
   try {
     const text = typeof raw === 'string' ? raw : (raw.raw || JSON.stringify(raw));
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-  } catch (e) {
-    // Fine, return basic success
-  }
+    if (jsonMatch) return JSON.parse(jsonMatch[0]);
+  } catch (e) {}
 
-  return { fixed: true, summary: 'Issue addressed by Claude', details: typeof raw === 'string' ? raw : raw.raw || 'Fix applied' };
+  return { fixed: true, summary: 'Issue addressed by Claude', details: '' };
 }
 
 /**
- * Run a prompt through Claude CLI.
- * Uses `claude -p` for non-interactive prompt mode (uses user's login, not API).
+ * Run claude -p. Uses the user's existing login, not API.
  */
 function runClaude(prompt, onStream) {
   return new Promise((resolve, reject) => {
-    const args = ['-p', prompt];
-    console.log(`  ↳ Running claude from: ${PROJECT_ROOT}`);
-    const proc = spawn('claude', args, {
-      shell: true,
+    // Call Claude's cli.js directly via Node — no shell needed
+    const cliJs = path.join(process.env.APPDATA, 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
+    console.log(`  Running: node ${cliJs}`);
+    console.log(`  CWD: ${PROJECT_ROOT}`);
+    const proc = spawn(process.execPath, [cliJs, '-p', prompt], {
       cwd: PROJECT_ROOT,
       env: { ...process.env }
     });
+
+    // Send heartbeat messages so the game knows we're alive
+    const heartbeat = setInterval(() => {
+      onStream('[working...]');
+    }, 5000);
 
     let stdout = '';
     let stderr = '';
@@ -189,6 +172,8 @@ function runClaude(prompt, onStream) {
       const chunk = data.toString();
       stdout += chunk;
       onStream(chunk);
+      // Log progress so we know it's alive
+      process.stdout.write('.');
     });
 
     proc.stderr.on('data', (data) => {
@@ -196,14 +181,14 @@ function runClaude(prompt, onStream) {
     });
 
     proc.on('close', (code) => {
+      clearInterval(heartbeat);
+      console.log(`  Claude finished (exit ${code}), ${stdout.length} bytes`);
       if (code !== 0) {
         reject(new Error(`Claude exited with code ${code}: ${stderr}`));
         return;
       }
-
       try {
-        const parsed = JSON.parse(stdout);
-        resolve(parsed);
+        resolve(JSON.parse(stdout));
       } catch {
         resolve({ raw: stdout });
       }
@@ -213,7 +198,6 @@ function runClaude(prompt, onStream) {
       reject(new Error(`Failed to spawn claude: ${err.message}`));
     });
 
-    // Timeout after 5 minutes
     setTimeout(() => {
       proc.kill();
       reject(new Error('Claude command timed out (5 min)'));
@@ -222,7 +206,7 @@ function runClaude(prompt, onStream) {
 }
 
 server.listen(PORT, () => {
-  console.log(`⚔ Bridge server listening on ws://localhost:${PORT}`);
-  console.log('🎮 Start the game with: npm run game');
+  console.log(`Bridge listening on ws://localhost:${PORT}`);
+  console.log(`Claude runs from: ${PROJECT_ROOT}`);
   console.log('─'.repeat(40));
 });

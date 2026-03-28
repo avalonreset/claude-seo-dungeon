@@ -67,6 +67,7 @@ export class TitleScene extends Phaser.Scene {
     const input = document.createElement('input');
     input.type = 'text';
     input.id = 'domain-input';
+    input.value = 'rankenstein.pro';
     input.placeholder = 'example.com';
     input.autocomplete = 'off';
     input.spellcheck = false;
@@ -107,6 +108,47 @@ export class TitleScene extends Phaser.Scene {
     document.body.appendChild(input);
     this.domainInput = input;
 
+    // Launch button
+    const btn = document.createElement('button');
+    btn.textContent = '⚔ DESCEND ⚔';
+    Object.assign(btn.style, {
+      position: 'absolute',
+      left: '50%',
+      top: '76%',
+      transform: 'translate(-50%, -50%)',
+      padding: '10px 40px',
+      fontFamily: 'monospace',
+      fontSize: '18px',
+      color: '#0a0a1a',
+      backgroundColor: '#f0c040',
+      border: '2px solid #f0c040',
+      borderRadius: '0',
+      cursor: 'pointer',
+      zIndex: '10',
+      letterSpacing: '3px',
+      fontWeight: 'bold'
+    });
+    btn.addEventListener('mouseenter', () => {
+      btn.style.backgroundColor = '#ffe060';
+      btn.style.borderColor = '#ffe060';
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.backgroundColor = '#f0c040';
+      btn.style.borderColor = '#f0c040';
+    });
+    btn.addEventListener('click', () => {
+      if (input.value.trim()) {
+        this.launchAudit(input.value.trim());
+      }
+    });
+    document.body.appendChild(btn);
+    this.launchBtn = btn;
+
+    // Clean up button on scene shutdown too
+    this.events.on('shutdown', () => {
+      btn.remove();
+    });
+
     // Clean up on scene shutdown
     this.events.on('shutdown', () => {
       input.remove();
@@ -129,8 +171,9 @@ export class TitleScene extends Phaser.Scene {
   }
 
   launchAudit(domain) {
-    // Remove input
+    // Remove input and button
     if (this.domainInput) this.domainInput.remove();
+    if (this.launchBtn) this.launchBtn.remove();
 
     // Store domain
     this.game.domain = domain;
