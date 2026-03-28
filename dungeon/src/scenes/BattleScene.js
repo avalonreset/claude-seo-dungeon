@@ -4,6 +4,7 @@ import { bridge } from '../utils/ws.js';
 /**
  * Battle scene — Final Fantasy style turn-based combat.
  * Knight vs SEO Demon. Selecting ATTACK triggers Claude to fix the issue.
+ * High-quality 16-bit retro RPG battle screen with dramatic animations.
  */
 export class BattleScene extends Phaser.Scene {
   constructor() {
@@ -17,145 +18,688 @@ export class BattleScene extends Phaser.Scene {
     this.knightHp = 100;
     this.isPlayerTurn = true;
     this.battleOver = false;
+    this.selectedMenuItem = 0;
   }
 
   create() {
-    this.cameras.main.setBackgroundColor(COLORS.bg);
+    this.cameras.main.setBackgroundColor(0x000000);
 
-    // Battle background
-    this.add.image(400, 300, 'battle_bg');
+    // ── Dark dungeon background ──────────────────────
+    this.drawDungeonBackground();
 
-    // Camera fade in
-    this.cameras.main.fadeIn(500, 0, 0, 0);
+    // ── Dramatic entrance ────────────────────────────
+    this.cameras.main.fadeIn(800, 0, 0, 0);
 
-    // ── Demon side (right) ─────────────────────────
-    const demonKey = `demon_${this.issue.severity}`;
-    this.demon = this.add.image(580, 240, demonKey).setScale(3);
+    // ── Battle arena floor ───────────────────────────
+    this.drawBattleFloor();
 
-    // Demon idle animation
-    this.tweens.add({
-      targets: this.demon,
-      y: 230,
-      duration: 1500,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
+    // ── Demon side (right) ───────────────────────────
+    this.createDemon();
 
-    // Demon name & HP bar
-    this.add.text(580, 130, this.issue.title, {
-      ...FONTS.body, color: COLORS.red, fontStyle: 'bold'
-    }).setOrigin(0.5);
+    // ── Knight side (left) ───────────────────────────
+    this.createKnight();
 
-    this.add.text(580, 150, this.issue.severity.toUpperCase(), {
-      ...FONTS.small, color: COLORS.gray
-    }).setOrigin(0.5);
-
-    // Demon HP bar
-    this.demonHpBg = this.add.rectangle(580, 170, 200, 12, 0x400000).setOrigin(0.5);
-    this.demonHpBar = this.add.rectangle(481, 170, 198, 10, 0xe04040).setOrigin(0, 0.5);
-    this.demonHpText = this.add.text(580, 188, `${this.demonHp} / ${this.demonMaxHp}`, {
-      ...FONTS.small, color: COLORS.red
-    }).setOrigin(0.5);
-
-    // ── Knight side (left) ─────────────────────────
-    this.knight = this.add.image(200, 320, 'knight').setScale(2.5);
-    this.sword = this.add.image(235, 310, 'sword').setScale(1.5).setAngle(-30);
-    this.shield = this.add.image(165, 325, 'shield').setScale(1.5);
-
-    // Knight idle breathing
-    this.tweens.add({
-      targets: [this.knight, this.sword, this.shield],
-      y: '+=5',
-      duration: 2000,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-
-    // Knight HP
-    this.add.text(200, 390, 'KNIGHT', {
-      ...FONTS.body, color: COLORS.cyan, fontStyle: 'bold'
-    }).setOrigin(0.5);
-    this.knightHpBar = this.add.rectangle(101, 408, 198, 10, 0x40c040).setOrigin(0, 0.5);
-    this.add.rectangle(200, 408, 200, 12, 0x003000).setOrigin(0.5).setDepth(-1);
-
-    // ── Battle log ─────────────────────────────────
-    this.logPanel = this.add.rectangle(400, 470, 760, 60, 0x0a0a1a, 0.9);
-    this.logPanel.setStrokeStyle(1, COLORS.hPurple);
-    this.battleLog = this.add.text(30, 448, 'A wild SEO demon appears!', {
-      ...FONTS.body, color: COLORS.white, wordWrap: { width: 720 }
-    });
-
-    // ── Command menu (FF-style) ────────────────────
+    // ── UI Layer ─────────────────────────────────────
+    this.createHPDisplays();
     this.createCommandMenu();
+    this.createBattleLog();
+    this.createIssueDetails();
+    this.createStreamText();
 
-    // ── Issue details panel ────────────────────────
-    this.add.rectangle(400, 545, 760, 50, 0x1a1a2e, 0.9).setStrokeStyle(1, 0x3a3a5e);
-    this.add.text(30, 528, `${this.issue.category}`, {
-      ...FONTS.small, color: COLORS.cyan
-    });
-    this.add.text(130, 528, this.issue.description, {
-      ...FONTS.small, color: COLORS.gray
-    });
+    // ── Dramatic entrance animation ──────────────────
+    this.playEntranceAnimation();
 
-    // Stream text for showing Claude's progress
-    this.streamText = this.add.text(30, 548, '', {
-      ...FONTS.small, color: COLORS.purple, wordWrap: { width: 720 }
+    // ── Keyboard support ─────────────────────────────
+    this.setupKeyboard();
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  BACKGROUND & ENVIRONMENT
+  // ═══════════════════════════════════════════════════
+
+  drawDungeonBackground() {
+    // Dark stone wall gradient
+    const bgGfx = this.add.graphics();
+
+    // Stone wall base
+    bgGfx.fillStyle(0x12101a, 1);
+    bgGfx.fillRect(0, 0, 800, 360);
+
+    // Stone brick pattern
+    for (let row = 0; row < 9; row++) {
+      for (let col = 0; col < 16; col++) {
+        const offset = (row % 2 === 0) ? 0 : 25;
+        const x = col * 50 + offset;
+        const y = row * 40;
+        const shade = 0x18 + Phaser.Math.Between(-3, 3);
+        const color = Phaser.Display.Color.GetColor(shade, shade - 2, shade + 6);
+        bgGfx.fillStyle(color, 1);
+        bgGfx.fillRect(x + 1, y + 1, 48, 38);
+      }
+    }
+
+    // Mortar lines (subtle)
+    bgGfx.lineStyle(1, 0x0a0a12, 0.6);
+    for (let row = 0; row <= 9; row++) {
+      bgGfx.lineBetween(0, row * 40, 800, row * 40);
+    }
+    for (let row = 0; row < 9; row++) {
+      const offset = (row % 2 === 0) ? 0 : 25;
+      for (let col = 0; col <= 16; col++) {
+        const x = col * 50 + offset;
+        bgGfx.lineBetween(x, row * 40, x, (row + 1) * 40);
+      }
+    }
+
+    // Vignette overlay - darker edges
+    const vignette = this.add.graphics();
+    vignette.fillStyle(0x000000, 0.4);
+    vignette.fillRect(0, 0, 80, 360);
+    vignette.fillRect(720, 0, 80, 360);
+    vignette.fillStyle(0x000000, 0.3);
+    vignette.fillRect(0, 0, 800, 30);
+
+    // Torch glow areas (left and right)
+    this.createTorchGlow(100, 80);
+    this.createTorchGlow(700, 80);
+    this.createTorchGlow(400, 50);
+  }
+
+  createTorchGlow(x, y) {
+    const glow = this.add.graphics();
+    glow.fillStyle(0xff6600, 0.04);
+    glow.fillCircle(x, y, 120);
+    glow.fillStyle(0xff8800, 0.03);
+    glow.fillCircle(x, y, 80);
+    glow.fillStyle(0xffaa00, 0.02);
+    glow.fillCircle(x, y, 50);
+
+    // Animated torch flicker
+    this.tweens.add({
+      targets: glow,
+      alpha: { from: 0.6, to: 1.0 },
+      duration: Phaser.Math.Between(300, 600),
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
     });
   }
 
-  createCommandMenu() {
-    const menuX = 30;
-    const menuY = 500;
-    const menuW = 180;
-    const menuH = 90;
+  drawBattleFloor() {
+    const floor = this.add.graphics();
+    // Dark floor with perspective lines
+    floor.fillStyle(0x0e0c16, 1);
+    floor.fillRect(0, 300, 800, 120);
 
-    // Menu panel
-    this.menuPanel = this.add.rectangle(menuX + menuW/2, menuY + menuH/2, menuW, menuH, 0x1a1a2e, 0.95);
-    this.menuPanel.setStrokeStyle(2, COLORS.hGold);
+    // Floor tile pattern
+    for (let i = 0; i < 20; i++) {
+      const alpha = 0.05 + (i % 2) * 0.03;
+      floor.fillStyle(0x1a1828, alpha);
+      floor.fillRect(i * 42, 300, 40, 120);
+    }
+
+    // Floor highlight line
+    floor.lineStyle(1, 0x2a2a3e, 0.5);
+    floor.lineBetween(0, 300, 800, 300);
+    floor.lineStyle(1, 0x1a1a2e, 0.3);
+    floor.lineBetween(0, 340, 800, 340);
+    floor.lineBetween(0, 380, 800, 380);
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  CHARACTER CREATION
+  // ═══════════════════════════════════════════════════
+
+  createDemon() {
+    const demonKey = `demon_${this.issue.severity}`;
+    const sevColor = this.getSeverityHexColor();
+
+    // Pulsing shadow beneath demon
+    this.demonShadow = this.add.ellipse(580, 350, 100, 24, 0x000000, 0.5);
+
+    // Menacing aura / glow
+    this.demonAuraOuter = this.add.ellipse(580, 240, 130, 140, sevColor, 0.06);
+    this.demonAuraInner = this.add.ellipse(580, 240, 90, 100, sevColor, 0.1);
+
+    this.tweens.add({
+      targets: this.demonAuraOuter,
+      scaleX: 1.3,
+      scaleY: 1.2,
+      alpha: 0.02,
+      duration: 1800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    this.tweens.add({
+      targets: this.demonAuraInner,
+      scaleX: 1.15,
+      scaleY: 1.1,
+      alpha: 0.15,
+      duration: 1200,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+      delay: 200
+    });
+
+    // Demon sprite
+    this.demon = this.add.image(580, 240, demonKey).setScale(3);
+    this.demon.setAlpha(0); // for entrance anim
+
+    // Demon idle hover
+    this.tweens.add({
+      targets: this.demon,
+      y: 228,
+      duration: 1800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    // Shadow breathe sync
+    this.tweens.add({
+      targets: this.demonShadow,
+      scaleX: 0.85,
+      alpha: 0.35,
+      duration: 1800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+  }
+
+  createKnight() {
+    // Knight shadow
+    this.knightShadow = this.add.ellipse(200, 380, 80, 18, 0x000000, 0.4);
+
+    // Knight + equipment
+    this.knight = this.add.image(200, 320, 'knight').setScale(2.5).setAlpha(0);
+    this.sword = this.add.image(235, 310, 'sword').setScale(1.5).setAngle(-30).setAlpha(0);
+    this.shield = this.add.image(165, 325, 'shield').setScale(1.5).setAlpha(0);
+
+    // Knight idle breathing (subtle)
+    this.tweens.add({
+      targets: [this.knight, this.sword, this.shield],
+      y: '+=4',
+      duration: 2200,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    // Shadow breathe
+    this.tweens.add({
+      targets: this.knightShadow,
+      scaleX: 0.9,
+      alpha: 0.3,
+      duration: 2200,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  ENTRANCE ANIMATION
+  // ═══════════════════════════════════════════════════
+
+  playEntranceAnimation() {
+    // Knight slides in from left
+    this.knight.setX(-60);
+    this.sword.setX(-25);
+    this.shield.setX(-95);
+
+    this.tweens.add({
+      targets: this.knight,
+      x: 200,
+      alpha: 1,
+      duration: 700,
+      ease: 'Back.easeOut',
+      delay: 300
+    });
+    this.tweens.add({
+      targets: this.sword,
+      x: 235,
+      alpha: 1,
+      duration: 700,
+      ease: 'Back.easeOut',
+      delay: 350
+    });
+    this.tweens.add({
+      targets: this.shield,
+      x: 165,
+      alpha: 1,
+      duration: 700,
+      ease: 'Back.easeOut',
+      delay: 400
+    });
+
+    // Demon materializes with flash
+    this.demon.setScale(0.5);
+    this.time.delayedCall(600, () => {
+      this.cameras.main.flash(200, 80, 20, 20);
+      this.tweens.add({
+        targets: this.demon,
+        alpha: 1,
+        scaleX: 3,
+        scaleY: 3,
+        duration: 500,
+        ease: 'Back.easeOut'
+      });
+    });
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  HP DISPLAYS
+  // ═══════════════════════════════════════════════════
+
+  createHPDisplays() {
+    // ── Demon HP (top right area) ──────────────
+    const demonPanelX = 460;
+    const demonPanelY = 110;
+
+    // Demon name plate
+    const namePanel = this.add.graphics();
+    namePanel.fillStyle(0x0a0a18, 0.85);
+    namePanel.fillRoundedRect(demonPanelX, demonPanelY, 260, 70, 4);
+    namePanel.lineStyle(2, this.getSeverityHexColor(), 0.8);
+    namePanel.strokeRoundedRect(demonPanelX, demonPanelY, 260, 70, 4);
+
+    // Inner highlight line
+    namePanel.lineStyle(1, 0x2a2a4a, 0.3);
+    namePanel.strokeRoundedRect(demonPanelX + 2, demonPanelY + 2, 256, 66, 3);
+
+    this.add.text(demonPanelX + 10, demonPanelY + 6, this.issue.title, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '10px',
+      color: COLORS.white,
+      wordWrap: { width: 240 }
+    });
+
+    const sevColor = COLORS[this.issue.severity] || COLORS.red;
+    this.add.text(demonPanelX + 10, demonPanelY + 24, this.issue.severity.toUpperCase(), {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px',
+      color: sevColor
+    });
+
+    // HP bar background
+    const barX = demonPanelX + 10;
+    const barY = demonPanelY + 42;
+    const barW = 200;
+    const barH = 14;
+
+    this.add.text(barX, barY - 1, 'HP', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px',
+      color: COLORS.gray
+    });
+
+    const barStartX = barX + 24;
+    const actualBarW = barW - 24;
+
+    // Bar frame
+    const barFrame = this.add.graphics();
+    barFrame.fillStyle(0x200808, 1);
+    barFrame.fillRoundedRect(barStartX, barY, actualBarW, barH, 2);
+    barFrame.lineStyle(1, 0x4a2020, 1);
+    barFrame.strokeRoundedRect(barStartX, barY, actualBarW, barH, 2);
+
+    // HP bar fill
+    this.demonHpBar = this.add.graphics();
+    this.demonHpBarWidth = actualBarW - 4;
+    this.demonHpBarX = barStartX + 2;
+    this.demonHpBarY = barY + 2;
+    this.demonHpBarH = barH - 4;
+    this.drawDemonHpBar(1.0);
+
+    // HP shimmer overlay
+    this.demonHpShimmer = this.add.graphics();
+    this.drawBarShimmer(this.demonHpShimmer, this.demonHpBarX, this.demonHpBarY, this.demonHpBarWidth, this.demonHpBarH);
+
+    // HP text
+    this.demonHpText = this.add.text(barStartX + actualBarW + 8, barY + 1, `${this.demonHp}/${this.demonMaxHp}`, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px',
+      color: COLORS.red
+    });
+
+    // ── Knight HP (bottom left area) ──────────
+    const knightPanelX = 40;
+    const knightPanelY = 388;
+
+    const kPanel = this.add.graphics();
+    kPanel.fillStyle(0x0a0a18, 0.85);
+    kPanel.fillRoundedRect(knightPanelX, knightPanelY, 230, 44, 4);
+    kPanel.lineStyle(2, 0x40c0c0, 0.6);
+    kPanel.strokeRoundedRect(knightPanelX, knightPanelY, 230, 44, 4);
+    kPanel.lineStyle(1, 0x2a2a4a, 0.3);
+    kPanel.strokeRoundedRect(knightPanelX + 2, knightPanelY + 2, 226, 40, 3);
+
+    this.add.text(knightPanelX + 10, knightPanelY + 5, 'SEO KNIGHT', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '10px',
+      color: COLORS.cyan
+    });
+
+    const kBarX = knightPanelX + 10;
+    const kBarY = knightPanelY + 22;
+    const kBarW = 170;
+    const kBarH = 14;
+
+    this.add.text(kBarX, kBarY - 1, 'HP', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px',
+      color: COLORS.gray
+    });
+
+    const kBarStartX = kBarX + 24;
+    const kActualBarW = kBarW - 24;
+
+    const kBarFrame = this.add.graphics();
+    kBarFrame.fillStyle(0x082008, 1);
+    kBarFrame.fillRoundedRect(kBarStartX, kBarY, kActualBarW, kBarH, 2);
+    kBarFrame.lineStyle(1, 0x204a20, 1);
+    kBarFrame.strokeRoundedRect(kBarStartX, kBarY, kActualBarW, kBarH, 2);
+
+    this.knightHpBar = this.add.graphics();
+    this.knightHpBarWidth = kActualBarW - 4;
+    this.knightHpBarX = kBarStartX + 2;
+    this.knightHpBarY = kBarY + 2;
+    this.knightHpBarH = kBarH - 4;
+    this.drawKnightHpBar(1.0);
+
+    // Knight HP shimmer
+    this.knightHpShimmer = this.add.graphics();
+    this.drawBarShimmer(this.knightHpShimmer, this.knightHpBarX, this.knightHpBarY, this.knightHpBarWidth, this.knightHpBarH);
+
+    this.knightHpText = this.add.text(kBarStartX + kActualBarW + 8, kBarY + 1, `${this.knightHp}/100`, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px',
+      color: COLORS.green
+    });
+  }
+
+  drawDemonHpBar(pct) {
+    this.demonHpBar.clear();
+    if (pct <= 0) return;
+    const w = this.demonHpBarWidth * pct;
+    // Gradient effect: darker at bottom
+    this.demonHpBar.fillStyle(0xe04040, 1);
+    this.demonHpBar.fillRoundedRect(this.demonHpBarX, this.demonHpBarY, w, this.demonHpBarH, 1);
+    // Lighter highlight on top half
+    this.demonHpBar.fillStyle(0xff6060, 0.4);
+    this.demonHpBar.fillRect(this.demonHpBarX, this.demonHpBarY, w, this.demonHpBarH / 2);
+  }
+
+  drawKnightHpBar(pct) {
+    this.knightHpBar.clear();
+    if (pct <= 0) return;
+    const w = this.knightHpBarWidth * pct;
+    this.knightHpBar.fillStyle(0x40c040, 1);
+    this.knightHpBar.fillRoundedRect(this.knightHpBarX, this.knightHpBarY, w, this.knightHpBarH, 1);
+    this.knightHpBar.fillStyle(0x70e070, 0.4);
+    this.knightHpBar.fillRect(this.knightHpBarX, this.knightHpBarY, w, this.knightHpBarH / 2);
+  }
+
+  drawBarShimmer(gfx, x, y, w, h) {
+    // Animated shimmer that sweeps across
+    gfx.clear();
+    gfx.fillStyle(0xffffff, 0.08);
+    gfx.fillRect(x, y, w, 2);
+
+    // Animate shimmer sweep
+    const shimmerRect = this.add.rectangle(x - 20, y + h / 2, 20, h, 0xffffff, 0.15);
+    shimmerRect.setOrigin(0, 0.5);
+    this.tweens.add({
+      targets: shimmerRect,
+      x: x + w,
+      duration: 2500,
+      repeat: -1,
+      delay: Phaser.Math.Between(0, 1000),
+      ease: 'Linear',
+      onUpdate: () => {
+        if (shimmerRect.x < x || shimmerRect.x > x + w) {
+          shimmerRect.setAlpha(0);
+        } else {
+          shimmerRect.setAlpha(0.15);
+        }
+      }
+    });
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  COMMAND MENU (FF-style)
+  // ═══════════════════════════════════════════════════
+
+  createCommandMenu() {
+    const menuX = 560;
+    const menuY = 432;
+    const menuW = 210;
+    const menuH = 110;
+
+    // Menu panel with double border (FF style)
+    const menuGfx = this.add.graphics();
+
+    // Outer border
+    menuGfx.lineStyle(3, 0xb8b8d8, 1);
+    menuGfx.strokeRoundedRect(menuX, menuY, menuW, menuH, 6);
+
+    // Inner fill
+    menuGfx.fillStyle(0x0a0a24, 0.95);
+    menuGfx.fillRoundedRect(menuX + 2, menuY + 2, menuW - 4, menuH - 4, 5);
+
+    // Inner border highlight
+    menuGfx.lineStyle(1, 0x3a3a6e, 0.6);
+    menuGfx.strokeRoundedRect(menuX + 4, menuY + 4, menuW - 8, menuH - 8, 4);
+
+    // Corner accents
+    menuGfx.fillStyle(0xf0c040, 0.8);
+    menuGfx.fillRect(menuX + 6, menuY + 6, 4, 4);
+    menuGfx.fillRect(menuX + menuW - 10, menuY + 6, 4, 4);
+    menuGfx.fillRect(menuX + 6, menuY + menuH - 10, 4, 4);
+    menuGfx.fillRect(menuX + menuW - 10, menuY + menuH - 10, 4, 4);
 
     const commands = [
-      { label: '⚔ ATTACK', action: () => this.doAttack() },
-      { label: '🛡 DEFEND', action: () => this.doDefend() },
-      { label: '👁 INSPECT', action: () => this.doInspect() },
-      { label: '🏃 FLEE', action: () => this.doFlee() }
+      { label: 'ATTACK', icon: '\u2694', action: () => this.doAttack() },
+      { label: 'DEFEND', icon: '\u26E8', action: () => this.doDefend() },
+      { label: 'INSPECT', icon: '\u25C9', action: () => this.doInspect() },
+      { label: 'FLEE', icon: '\u21B6', action: () => this.doFlee() }
     ];
 
     this.menuItems = commands.map((cmd, i) => {
-      const text = this.add.text(menuX + 15, menuY + 8 + i * 20, cmd.label, {
-        ...FONTS.body, color: i === 0 ? COLORS.gold : COLORS.white
+      const itemY = menuY + 16 + i * 22;
+      const text = this.add.text(menuX + 36, itemY, cmd.label, {
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: '11px',
+        color: COLORS.white
       }).setInteractive({ useHandCursor: true });
 
-      text.on('pointerover', () => {
-        if (this.isPlayerTurn && !this.battleOver) text.setColor(COLORS.gold);
-      });
-      text.on('pointerout', () => {
-        if (this.isPlayerTurn && !this.battleOver) text.setColor(COLORS.white);
-      });
-      text.on('pointerdown', () => {
-        if (this.isPlayerTurn && !this.battleOver) cmd.action();
+      // Icon
+      this.add.text(menuX + 20, itemY, cmd.icon, {
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        color: COLORS.gray
       });
 
+      text.on('pointerover', () => {
+        if (this.isPlayerTurn && !this.battleOver) {
+          this.selectMenuItem(i);
+        }
+      });
+
+      text.on('pointerdown', () => {
+        if (this.isPlayerTurn && !this.battleOver) {
+          this.selectMenuItem(i);
+          cmd.action();
+        }
+      });
+
+      text._cmdAction = cmd.action;
       return text;
     });
 
-    // Cursor
-    this.cursor = this.add.text(menuX + 3, menuY + 8, '▶', {
-      ...FONTS.body, color: COLORS.gold
+    // Bouncing arrow cursor
+    this.cursor = this.add.text(menuX + 10, menuY + 16, '\u25B6', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '10px',
+      color: COLORS.gold
     });
+
     this.tweens.add({
       targets: this.cursor,
-      x: menuX + 7,
-      duration: 400,
+      x: menuX + 14,
+      duration: 350,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    this.selectMenuItem(0);
+  }
+
+  selectMenuItem(index) {
+    this.selectedMenuItem = index;
+    this.menuItems.forEach((item, i) => {
+      if (i === index) {
+        item.setColor(COLORS.gold);
+        item.setScale(1.05);
+      } else {
+        item.setColor(COLORS.white);
+        item.setScale(1.0);
+      }
+    });
+    // Move cursor
+    const targetY = this.menuItems[index].y;
+    this.cursor.y = targetY;
+  }
+
+  setupKeyboard() {
+    this.input.keyboard.on('keydown-UP', () => {
+      if (!this.isPlayerTurn || this.battleOver) return;
+      this.selectMenuItem((this.selectedMenuItem - 1 + 4) % 4);
+    });
+    this.input.keyboard.on('keydown-DOWN', () => {
+      if (!this.isPlayerTurn || this.battleOver) return;
+      this.selectMenuItem((this.selectedMenuItem + 1) % 4);
+    });
+    this.input.keyboard.on('keydown-ENTER', () => {
+      if (!this.isPlayerTurn || this.battleOver) return;
+      this.menuItems[this.selectedMenuItem]._cmdAction();
+    });
+    this.input.keyboard.on('keydown-SPACE', () => {
+      if (!this.isPlayerTurn || this.battleOver) return;
+      this.menuItems[this.selectedMenuItem]._cmdAction();
+    });
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  BATTLE LOG
+  // ═══════════════════════════════════════════════════
+
+  createBattleLog() {
+    const logX = 20;
+    const logY = 432;
+    const logW = 530;
+    const logH = 110;
+
+    // Log panel with FF-style double border
+    const logGfx = this.add.graphics();
+    logGfx.lineStyle(3, 0xb8b8d8, 1);
+    logGfx.strokeRoundedRect(logX, logY, logW, logH, 6);
+    logGfx.fillStyle(0x0a0a24, 0.95);
+    logGfx.fillRoundedRect(logX + 2, logY + 2, logW - 4, logH - 4, 5);
+    logGfx.lineStyle(1, 0x3a3a6e, 0.6);
+    logGfx.strokeRoundedRect(logX + 4, logY + 4, logW - 8, logH - 8, 4);
+
+    this.battleLog = this.add.text(logX + 14, logY + 12, 'A wild SEO demon appears!', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '9px',
+      color: COLORS.white,
+      lineSpacing: 6,
+      wordWrap: { width: logW - 28 }
+    });
+
+    // Blinking indicator
+    this.logIndicator = this.add.text(logX + logW - 20, logY + logH - 18, '\u25BC', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px',
+      color: COLORS.gold
+    });
+    this.tweens.add({
+      targets: this.logIndicator,
+      alpha: 0.2,
+      duration: 500,
       yoyo: true,
       repeat: -1
     });
   }
 
+  createIssueDetails() {
+    const detX = 20;
+    const detY = 550;
+    const detW = 760;
+    const detH = 42;
+
+    const detGfx = this.add.graphics();
+    detGfx.fillStyle(0x0e0c1a, 0.9);
+    detGfx.fillRoundedRect(detX, detY, detW, detH, 3);
+    detGfx.lineStyle(1, 0x2a2a4e, 0.6);
+    detGfx.strokeRoundedRect(detX, detY, detW, detH, 3);
+
+    // Category badge
+    const catText = this.add.text(detX + 10, detY + 6, this.issue.category, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px',
+      color: COLORS.cyan
+    });
+
+    // Separator
+    this.add.text(catText.x + catText.width + 8, detY + 6, '|', {
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      color: '#3a3a5e'
+    });
+
+    // Description
+    this.add.text(detX + 10, detY + 22, this.issue.description, {
+      fontFamily: 'monospace',
+      fontSize: '11px',
+      color: COLORS.gray,
+      wordWrap: { width: detW - 20 }
+    });
+  }
+
+  createStreamText() {
+    this.streamText = this.add.text(28, 555, '', {
+      fontFamily: 'monospace',
+      fontSize: '10px',
+      color: COLORS.purple,
+      wordWrap: { width: 720 }
+    }).setDepth(10);
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  BATTLE LOG HELPER
+  // ═══════════════════════════════════════════════════
+
   setLog(msg) {
     this.battleLog.setText(msg);
+    // Quick text pop effect
+    this.battleLog.setScale(1.02);
+    this.tweens.add({
+      targets: this.battleLog,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 150,
+      ease: 'Back.easeOut'
+    });
   }
+
+  // ═══════════════════════════════════════════════════
+  //  ATTACK
+  // ═══════════════════════════════════════════════════
 
   async doAttack() {
     if (!this.isPlayerTurn || this.battleOver) return;
@@ -187,7 +731,7 @@ export class BattleScene extends Phaser.Scene {
         this.setLog(`Claude strikes for ${damage} damage! ${fixData.summary || ''}`);
       }
     } catch (err) {
-      // Demo mode — deal partial damage
+      // Demo mode -- deal partial damage
       this.streamText.setText('');
       const damage = Phaser.Math.Between(25, 50);
       this.dealDamage(damage);
@@ -206,116 +750,309 @@ export class BattleScene extends Phaser.Scene {
 
   async slashAnimation() {
     return new Promise(resolve => {
-      // Knight lunges forward
+      // Knight lunges forward dramatically
       this.tweens.add({
         targets: [this.knight, this.sword, this.shield],
-        x: '+=80',
-        duration: 200,
-        yoyo: true,
-        ease: 'Power2',
+        x: '+=100',
+        duration: 180,
+        ease: 'Power3',
         onComplete: () => {
-          // Flash on demon
-          this.cameras.main.flash(100, 255, 255, 255);
+          // Screen flash
+          this.cameras.main.flash(150, 255, 255, 255, true);
 
-          // Slash sprite
-          const slash = this.add.image(580, 240, 'slash').setScale(3).setAlpha(0.9);
-          this.tweens.add({
-            targets: slash,
-            alpha: 0,
-            scaleX: 5,
-            scaleY: 5,
-            angle: 45,
-            duration: 300,
-            onComplete: () => { slash.destroy(); resolve(); }
-          });
+          // Multiple slash lines
+          this.createSlashEffect(580, 240, 0);
+          this.time.delayedCall(60, () => this.createSlashEffect(580, 240, -30));
+          this.time.delayedCall(120, () => this.createSlashEffect(580, 240, 30));
 
-          // Demon knockback
+          // Hit particles
+          this.createHitParticles(580, 240, 0xffffff);
+          this.createHitParticles(580, 240, this.getSeverityHexColor());
+
+          // Demon knockback + red flash
+          this.demon.setTint(0xff0000);
+          this.cameras.main.shake(200, 0.015);
+
           this.tweens.add({
             targets: this.demon,
             x: 620,
-            duration: 100,
-            yoyo: true
+            duration: 80,
+            yoyo: true,
+            ease: 'Power2',
+            onComplete: () => {
+              this.time.delayedCall(100, () => this.demon.clearTint());
+            }
+          });
+
+          // Knight returns
+          this.time.delayedCall(200, () => {
+            this.tweens.add({
+              targets: [this.knight, this.sword, this.shield],
+              x: '-=100',
+              duration: 300,
+              ease: 'Power2',
+              onComplete: resolve
+            });
           });
         }
       });
     });
   }
 
+  createSlashEffect(x, y, angleOffset) {
+    const slash = this.add.graphics();
+    slash.lineStyle(3, 0xffffff, 0.9);
+
+    const startAngle = (-45 + angleOffset) * Math.PI / 180;
+    const endAngle = (45 + angleOffset) * Math.PI / 180;
+    const radius = 50;
+
+    slash.beginPath();
+    slash.moveTo(
+      x + Math.cos(startAngle) * radius,
+      y + Math.sin(startAngle) * radius
+    );
+
+    // Draw arc-like slash
+    const steps = 8;
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const angle = startAngle + (endAngle - startAngle) * t;
+      const r = radius + Math.sin(t * Math.PI) * 20;
+      slash.lineTo(
+        x + Math.cos(angle) * r,
+        y + Math.sin(angle) * r
+      );
+    }
+    slash.strokePath();
+
+    // Glow line
+    slash.lineStyle(6, 0xffffff, 0.3);
+    slash.beginPath();
+    slash.moveTo(
+      x + Math.cos(startAngle) * radius,
+      y + Math.sin(startAngle) * radius
+    );
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const angle = startAngle + (endAngle - startAngle) * t;
+      const r = radius + Math.sin(t * Math.PI) * 20;
+      slash.lineTo(
+        x + Math.cos(angle) * r,
+        y + Math.sin(angle) * r
+      );
+    }
+    slash.strokePath();
+
+    // Fade and destroy
+    this.tweens.add({
+      targets: slash,
+      alpha: 0,
+      duration: 250,
+      onComplete: () => slash.destroy()
+    });
+  }
+
+  createHitParticles(x, y, color) {
+    const count = 12;
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2 + Phaser.Math.FloatBetween(-0.3, 0.3);
+      const speed = Phaser.Math.Between(60, 160);
+      const size = Phaser.Math.Between(2, 5);
+
+      const particle = this.add.rectangle(
+        x + Phaser.Math.Between(-10, 10),
+        y + Phaser.Math.Between(-10, 10),
+        size, size, color, 1
+      );
+
+      this.tweens.add({
+        targets: particle,
+        x: particle.x + Math.cos(angle) * speed,
+        y: particle.y + Math.sin(angle) * speed,
+        alpha: 0,
+        scaleX: 0.1,
+        scaleY: 0.1,
+        duration: Phaser.Math.Between(300, 600),
+        ease: 'Power2',
+        onComplete: () => particle.destroy()
+      });
+    }
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  DAMAGE DEALING
+  // ═══════════════════════════════════════════════════
+
   dealDamage(amount) {
     this.demonHp = Math.max(0, this.demonHp - amount);
     const pct = this.demonHp / this.demonMaxHp;
 
-    // Animate HP bar
-    this.tweens.add({
-      targets: this.demonHpBar,
-      width: 198 * pct,
-      duration: 500,
-      ease: 'Power2'
+    // Animate HP bar smoothly
+    this.tweens.addCounter({
+      from: (this.demonHp + amount) / this.demonMaxHp,
+      to: pct,
+      duration: 600,
+      ease: 'Power2',
+      onUpdate: (tween) => {
+        this.drawDemonHpBar(tween.getValue());
+      }
     });
 
-    // Damage number popup
+    // Damage number - dramatic float with scale
     const dmgText = this.add.text(580, 200, `-${amount}`, {
-      ...FONTS.damage
-    }).setOrigin(0.5);
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '20px',
+      color: '#ff4040',
+      stroke: '#000000',
+      strokeThickness: 4
+    }).setOrigin(0.5).setScale(0.3);
+
+    // Scale up, then float up and fade
     this.tweens.add({
       targets: dmgText,
-      y: 160,
-      alpha: 0,
-      duration: 1000,
-      onComplete: () => dmgText.destroy()
+      scaleX: 1.4,
+      scaleY: 1.4,
+      duration: 150,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: dmgText,
+          y: 140,
+          scaleX: 1.0,
+          scaleY: 1.0,
+          alpha: 0,
+          duration: 900,
+          ease: 'Power1',
+          onComplete: () => dmgText.destroy()
+        });
+      }
     });
 
-    this.demonHpText.setText(`${this.demonHp} / ${this.demonMaxHp}`);
+    this.demonHpText.setText(`${this.demonHp}/${this.demonMaxHp}`);
 
-    // Demon flash red
+    // Demon red flash
     this.demon.setTint(0xff0000);
-    this.time.delayedCall(200, () => this.demon.clearTint());
+    this.time.delayedCall(200, () => {
+      this.demon.setTint(0xff4444);
+      this.time.delayedCall(100, () => this.demon.clearTint());
+    });
+
+    // Screen shake on hit
+    this.cameras.main.shake(150, 0.01);
+
+    // Red flash overlay
+    const redFlash = this.add.rectangle(580, 240, 120, 120, 0xff0000, 0.3);
+    this.tweens.add({
+      targets: redFlash,
+      alpha: 0,
+      duration: 200,
+      onComplete: () => redFlash.destroy()
+    });
+
+    // Hit particles
+    this.createHitParticles(580, 240, 0xff4040);
   }
+
+  // ═══════════════════════════════════════════════════
+  //  DEMON TURN
+  // ═══════════════════════════════════════════════════
 
   demonTurn() {
     if (this.battleOver) return;
 
     this.setLog('The demon retaliates!');
 
-    // Demon attack animation
+    // Demon lunge attack
     this.tweens.add({
       targets: this.demon,
-      x: 400,
-      duration: 300,
-      yoyo: true,
-      ease: 'Power2',
+      x: 380,
+      duration: 250,
+      ease: 'Power3',
       onComplete: () => {
         const damage = Phaser.Math.Between(5, 15);
         this.knightHp = Math.max(0, this.knightHp - damage);
+        const pct = this.knightHp / 100;
 
-        // Knight flash
-        this.knight.setTint(0xff0000);
+        // Screen flash
+        this.cameras.main.flash(80, 100, 20, 20);
+
+        // Knight knockback
+        this.tweens.add({
+          targets: [this.knight, this.sword, this.shield],
+          x: '-=20',
+          duration: 80,
+          yoyo: true,
+          ease: 'Power2'
+        });
+
+        // Knight red flash
+        this.knight.setTint(0xff4444);
         this.time.delayedCall(200, () => this.knight.clearTint());
 
-        // Update HP bar
-        this.tweens.add({
-          targets: this.knightHpBar,
-          width: 198 * (this.knightHp / 100),
-          duration: 300
+        // Update HP bar smoothly
+        this.tweens.addCounter({
+          from: (this.knightHp + damage) / 100,
+          to: pct,
+          duration: 400,
+          ease: 'Power2',
+          onUpdate: (tween) => {
+            this.drawKnightHpBar(tween.getValue());
+          }
         });
+
+        this.knightHpText.setText(`${this.knightHp}/100`);
 
         // Damage popup on knight
         const dmgText = this.add.text(200, 280, `-${damage}`, {
-          ...FONTS.damage, color: '#ff8040'
-        }).setOrigin(0.5);
+          fontFamily: '"Press Start 2P", monospace',
+          fontSize: '16px',
+          color: '#ff8040',
+          stroke: '#000000',
+          strokeThickness: 3
+        }).setOrigin(0.5).setScale(0.3);
+
         this.tweens.add({
           targets: dmgText,
-          y: 250,
-          alpha: 0,
-          duration: 800,
-          onComplete: () => dmgText.destroy()
+          scaleX: 1.2,
+          scaleY: 1.2,
+          duration: 120,
+          ease: 'Back.easeOut',
+          onComplete: () => {
+            this.tweens.add({
+              targets: dmgText,
+              y: 240,
+              scaleX: 0.8,
+              scaleY: 0.8,
+              alpha: 0,
+              duration: 700,
+              onComplete: () => dmgText.destroy()
+            });
+          }
         });
 
-        this.setLog(`Demon deals ${damage} damage! Your turn, knight.`);
-        this.isPlayerTurn = true;
+        // Hit particles on knight
+        this.createHitParticles(200, 320, 0xff8040);
+
+        // Demon returns
+        this.tweens.add({
+          targets: this.demon,
+          x: 580,
+          duration: 400,
+          ease: 'Power2',
+          delay: 150,
+          onComplete: () => {
+            this.setLog(`Demon deals ${damage} damage! Your turn, knight.`);
+            this.isPlayerTurn = true;
+          }
+        });
       }
     });
   }
+
+  // ═══════════════════════════════════════════════════
+  //  DEFEND
+  // ═══════════════════════════════════════════════════
 
   doDefend() {
     if (!this.isPlayerTurn || this.battleOver) return;
@@ -323,16 +1060,74 @@ export class BattleScene extends Phaser.Scene {
 
     this.setLog('Knight raises shield! Defense increased.');
 
-    // Shield glow
+    // Shield glow effect
     this.shield.setTint(0x40c0f0);
-    this.time.delayedCall(500, () => this.shield.clearTint());
+
+    // Shield pulse
+    this.tweens.add({
+      targets: this.shield,
+      scaleX: 2.0,
+      scaleY: 2.0,
+      duration: 200,
+      yoyo: true,
+      ease: 'Sine.easeOut',
+      onComplete: () => {
+        this.shield.setScale(1.5);
+        this.time.delayedCall(300, () => this.shield.clearTint());
+      }
+    });
+
+    // Heal glow particles
+    for (let i = 0; i < 8; i++) {
+      const p = this.add.rectangle(
+        200 + Phaser.Math.Between(-30, 30),
+        380,
+        4, 4,
+        0x40e0a0, 0.8
+      );
+      this.tweens.add({
+        targets: p,
+        y: p.y - Phaser.Math.Between(40, 80),
+        alpha: 0,
+        duration: 800,
+        delay: i * 80,
+        ease: 'Power1',
+        onComplete: () => p.destroy()
+      });
+    }
 
     // Heal a bit
     this.knightHp = Math.min(100, this.knightHp + 10);
+    const pct = this.knightHp / 100;
+
+    this.tweens.addCounter({
+      from: (this.knightHp - 10) / 100,
+      to: pct,
+      duration: 400,
+      ease: 'Power2',
+      onUpdate: (tween) => {
+        this.drawKnightHpBar(tween.getValue());
+      }
+    });
+
+    this.knightHpText.setText(`${this.knightHp}/100`);
+
+    // +10 heal text
+    const healText = this.add.text(200, 300, '+10', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '14px',
+      color: '#40e080',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5);
+
     this.tweens.add({
-      targets: this.knightHpBar,
-      width: 198 * (this.knightHp / 100),
-      duration: 300
+      targets: healText,
+      y: 260,
+      alpha: 0,
+      duration: 800,
+      ease: 'Power1',
+      onComplete: () => healText.destroy()
     });
 
     this.time.delayedCall(1000, () => {
@@ -340,21 +1135,65 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
+  // ═══════════════════════════════════════════════════
+  //  INSPECT
+  // ═══════════════════════════════════════════════════
+
   doInspect() {
     if (!this.isPlayerTurn || this.battleOver) return;
 
     this.setLog(`[${this.issue.category}] ${this.issue.description} | Severity: ${this.issue.severity} | HP: ${this.demonHp}/${this.demonMaxHp}`);
+
+    // Flash demon with info color
+    this.demon.setTint(0x4080e0);
+    this.time.delayedCall(400, () => this.demon.clearTint());
+
+    // Inspect eye particles
+    for (let i = 0; i < 6; i++) {
+      const p = this.add.circle(
+        580 + Phaser.Math.Between(-40, 40),
+        240 + Phaser.Math.Between(-40, 40),
+        3, 0x4080e0, 0.7
+      );
+      this.tweens.add({
+        targets: p,
+        alpha: 0,
+        scaleX: 3,
+        scaleY: 3,
+        duration: 600,
+        delay: i * 60,
+        onComplete: () => p.destroy()
+      });
+    }
   }
+
+  // ═══════════════════════════════════════════════════
+  //  FLEE
+  // ═══════════════════════════════════════════════════
 
   doFlee() {
     if (!this.isPlayerTurn || this.battleOver) return;
 
     this.setLog('You retreat from battle...');
+
+    // Knight runs off screen left
+    this.tweens.add({
+      targets: [this.knight, this.sword, this.shield],
+      x: '-=300',
+      alpha: 0,
+      duration: 600,
+      ease: 'Power2'
+    });
+
     this.cameras.main.fadeOut(800, 0, 0, 0);
     this.time.delayedCall(800, () => {
       this.scene.start('DungeonHall');
     });
   }
+
+  // ═══════════════════════════════════════════════════
+  //  DEMON DEFEATED
+  // ═══════════════════════════════════════════════════
 
   demonDefeated() {
     this.battleOver = true;
@@ -362,31 +1201,115 @@ export class BattleScene extends Phaser.Scene {
     // Mark issue as defeated in game data
     this.issue.defeated = true;
 
-    // Demon death animation
     this.setLog(`${this.issue.title} has been vanquished!`);
 
-    // Flash and shake
-    this.cameras.main.flash(500, 255, 200, 50);
-    this.cameras.main.shake(300, 0.02);
+    // Big screen flash
+    this.cameras.main.flash(600, 255, 220, 80);
+    this.cameras.main.shake(400, 0.025);
 
-    // Demon dissolve
+    // Explosion particles burst
+    const colors = [0xffffff, 0xff4040, 0xf0c040, 0xff8040, this.getSeverityHexColor()];
+    for (let wave = 0; wave < 3; wave++) {
+      this.time.delayedCall(wave * 150, () => {
+        for (let i = 0; i < 20; i++) {
+          const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+          const speed = Phaser.Math.Between(80, 220);
+          const color = Phaser.Utils.Array.GetRandom(colors);
+          const size = Phaser.Math.Between(2, 7);
+
+          const p = this.add.rectangle(
+            580 + Phaser.Math.Between(-15, 15),
+            240 + Phaser.Math.Between(-15, 15),
+            size, size, color, 1
+          ).setDepth(20);
+
+          this.tweens.add({
+            targets: p,
+            x: p.x + Math.cos(angle) * speed,
+            y: p.y + Math.sin(angle) * speed - 30,
+            alpha: 0,
+            scaleX: 0.1,
+            scaleY: 0.1,
+            duration: Phaser.Math.Between(400, 900),
+            ease: 'Power2',
+            onComplete: () => p.destroy()
+          });
+        }
+      });
+    }
+
+    // Demon dissolve - flicker then shrink
     this.tweens.add({
       targets: this.demon,
+      alpha: 0.5,
+      duration: 100,
+      yoyo: true,
+      repeat: 4,
+      onComplete: () => {
+        // Final dissolve
+        this.tweens.add({
+          targets: this.demon,
+          alpha: 0,
+          scaleX: 0.3,
+          scaleY: 4,
+          y: 300,
+          duration: 800,
+          ease: 'Power3'
+        });
+      }
+    });
+
+    // Aura dissolve
+    this.tweens.add({
+      targets: [this.demonAuraOuter, this.demonAuraInner, this.demonShadow],
       alpha: 0,
-      scaleX: 0.5,
-      scaleY: 0.5,
-      angle: 15,
-      y: 300,
-      duration: 1500,
-      ease: 'Power2'
+      duration: 800,
+      delay: 500
+    });
+
+    // Victory flash
+    this.time.delayedCall(1500, () => {
+      this.cameras.main.flash(300, 255, 255, 200);
+
+      // Victory text
+      const victoryText = this.add.text(400, 200, 'VICTORY!', {
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: '32px',
+        color: COLORS.gold,
+        stroke: '#000000',
+        strokeThickness: 6
+      }).setOrigin(0.5).setScale(0.1).setDepth(30);
+
+      this.tweens.add({
+        targets: victoryText,
+        scaleX: 1.0,
+        scaleY: 1.0,
+        duration: 400,
+        ease: 'Back.easeOut'
+      });
     });
 
     // Transition to victory
-    this.time.delayedCall(2000, () => {
+    this.time.delayedCall(2500, () => {
       this.cameras.main.fadeOut(800, 0, 0, 0);
       this.time.delayedCall(800, () => {
         this.scene.start('Victory', { issue: this.issue });
       });
     });
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  HELPERS
+  // ═══════════════════════════════════════════════════
+
+  getSeverityHexColor() {
+    const map = {
+      critical: 0xff2040,
+      high: 0xe06020,
+      medium: 0xf0c040,
+      low: 0x40c040,
+      info: 0x4080e0
+    };
+    return map[this.issue.severity] || 0xe04040;
   }
 }

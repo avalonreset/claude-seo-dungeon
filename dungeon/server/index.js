@@ -97,7 +97,11 @@ wss.on('connection', (ws) => {
  * Run an SEO audit via Claude CLI.
  */
 async function runAudit(domain, onStream) {
-  const prompt = `Analyze the website "${domain}" for SEO issues. Return ONLY valid JSON (no markdown fences, no explanation, no preamble): {"domain":"${domain}","score":<0-100>,"totalIssues":<n>,"issues":[{"id":<n>,"severity":"<critical|high|medium|low|info>","title":"<title>","description":"<desc>","category":"<category>","hp":<10-100>}]}. Check HTTPS, meta tags, schema, performance, crawlability, heading structure, images, sitemap. Be thorough with real findings.`;
+  const prompt = `Run /seo audit on ${domain}. This will trigger the full SEO audit skill which spawns multiple subagents for technical SEO, content quality, schema markup, performance, crawlability, images, and more.
+
+After the audit completes, take ALL the findings and format them as a single JSON object. Return ONLY valid JSON at the very end (no markdown fences): {"domain":"${domain}","score":<overall 0-100>,"totalIssues":<n>,"issues":[{"id":<n>,"severity":"<critical|high|medium|low|info>","title":"<short title>","description":"<one sentence>","category":"<category>","hp":<10-100 based on effort to fix>}]}
+
+Include every issue found by every subagent. Be thorough.`;
 
   const raw = await runClaude(prompt, onStream);
 
@@ -287,10 +291,11 @@ function runClaude(prompt, onStream, cwd) {
       reject(new Error(`Failed to spawn claude: ${err.message}`));
     });
 
+    // 10 minute timeout — real SEO audits with subagents take a while
     setTimeout(() => {
       proc.kill();
-      reject(new Error('Claude command timed out (5 min)'));
-    }, 300000);
+      reject(new Error('Claude command timed out (10 min)'));
+    }, 600000);
   });
 }
 
