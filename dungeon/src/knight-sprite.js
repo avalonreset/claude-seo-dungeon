@@ -40,7 +40,7 @@ const CHARACTERS = {
   }
 };
 
-const CANVAS_SIZE = 200;
+const CANVAS_SIZE = 300;
 const FPS = 8;
 
 // Track animation state per character
@@ -90,11 +90,17 @@ function animateAll() {
       state.frame = (state.frame + 1) % char.idleFrames;
     }
 
-    state.ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    const scale = 3;
+    const dw = char.frameW * scale;
+    const dh = char.frameH * scale;
+    state.ctx.canvas.width = dw;
+    state.ctx.canvas.height = dh;
+    state.ctx.imageSmoothingEnabled = false;
+    state.ctx.clearRect(0, 0, dw, dh);
     state.ctx.drawImage(
       state.img,
       state.frame * char.frameW, 0, char.frameW, char.frameH,
-      0, 0, CANVAS_SIZE, CANVAS_SIZE
+      0, 0, dw, dh
     );
   }
 
