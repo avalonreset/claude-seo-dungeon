@@ -176,9 +176,9 @@
 
     /* ── Right: Activity Log ─────────────────── */
     #log-panel {
-      width: 340px;
-      min-width: 280px;
-      max-width: 400px;
+      width: 33.33%;
+      min-width: 300px;
+      max-width: 600px;
       background: #0c0c16;
       border-left: 1px solid #1a1a30;
       display: flex;
@@ -204,9 +204,9 @@
     #log-content {
       flex: 1;
       overflow-y: auto;
-      padding: 14px 18px;
-      font-size: 12px;
-      line-height: 1.7;
+      padding: 16px 20px;
+      font-size: 13px;
+      line-height: 1.8;
       scrollbar-width: thin;
       scrollbar-color: #1e1e38 #0c0c16;
     }
@@ -215,16 +215,16 @@
     #log-content::-webkit-scrollbar-track { background: #0c0c16; }
     #log-content::-webkit-scrollbar-thumb { background: #1e1e38; border-radius: 2px; }
 
-    .log-line { padding: 1px 0; word-break: break-word; }
-    .log-line.tool { color: #5cb8c8; }
-    .log-line.text { color: #909898; }
-    .log-line.error { color: #d05050; }
-    .log-line.status { color: #c8a838; }
-    .log-line.system { color: #404058; }
-    .log-line.complete { color: #40a040; }
+    .log-line { padding: 2px 0; word-break: break-word; }
+    .log-line.tool { color: #7dd8e8; }
+    .log-line.text { color: #c8d0c8; }
+    .log-line.error { color: #f06060; }
+    .log-line.status { color: #e8c848; }
+    .log-line.system { color: #808898; }
+    .log-line.complete { color: #60d060; }
 
     @media (max-width: 900px) {
-      #log-panel { width: 240px; min-width: 200px; }
+      #log-panel { width: 30%; min-width: 220px; }
     }
   </style>
 </head>
