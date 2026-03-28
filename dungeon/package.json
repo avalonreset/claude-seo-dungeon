@@ -1,0 +1,20 @@
+{
+  "name": "claude-seo-dungeon",
+  "version": "0.1.0",
+  "description": "A 16-bit dungeon crawler interface for Claude SEO audits",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run game\"",
+    "server": "node server/index.js",
+    "game": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "concurrently": "^9.1.2",
+    "express": "^4.21.2",
+    "phaser": "^3.87.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "vite": "^6.3.0"
+  }
+}
