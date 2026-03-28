@@ -2,7 +2,8 @@ import { COLORS, FONTS } from '../utils/colors.js';
 import { bridge } from '../utils/ws.js';
 
 /**
- * Title screen — SNES-style with domain + project path inputs.
+ * Title screen — clean retro design with domain + project path inputs.
+ * HTML inputs are positioned inside the game container for proper scaling.
  */
 export class TitleScene extends Phaser.Scene {
   constructor() {
@@ -10,195 +11,220 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create() {
-    const cx = 400;
+    const cx = 400, cy = 300;
 
-    this.cameras.main.setBackgroundColor(COLORS.bg);
-    this.cameras.main.fadeIn(1000, 0, 0, 0);
+    this.cameras.main.setBackgroundColor(0x0a0a1a);
+    this.cameras.main.fadeIn(800, 0, 0, 0);
 
-    // Title
-    this.add.text(cx, 80, 'CLAUDE SEO', {
-      ...FONTS.title, fontSize: '48px'
+    // ── Title ──
+    this.add.text(cx, 70, 'CLAUDE SEO', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '36px',
+      color: '#d4af37'
     }).setOrigin(0.5);
 
-    this.add.text(cx, 130, '⚔  D U N G E O N  ⚔', {
-      ...FONTS.title, fontSize: '28px', color: COLORS.red
+    this.add.text(cx, 120, 'D U N G E O N', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '16px',
+      color: '#c04040'
     }).setOrigin(0.5);
 
-    // Knight sprite
-    this.add.image(cx, 220, 'knight').setScale(2);
+    // ── Knight ──
+    this.add.image(cx, 200, 'knight').setScale(2.2);
 
-    // Domain label + input
-    this.add.text(cx, 300, 'Domain to audit:', {
-      ...FONTS.body, color: COLORS.gold
+    // ── Subtle tagline ──
+    this.add.text(cx, 275, 'Slay your SEO demons, one by one.', {
+      fontFamily: 'monospace',
+      fontSize: '13px',
+      color: '#606080'
     }).setOrigin(0.5);
 
-    // Project path label + input
-    this.add.text(cx, 390, 'Project source folder:', {
-      ...FONTS.body, color: COLORS.cyan
+    // ── Form area ──
+    // Domain label
+    this.add.text(cx, 320, 'DOMAIN', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#808090',
+      letterSpacing: 2
+    }).setOrigin(0.5);
+
+    // Project label
+    this.add.text(cx, 400, 'PROJECT FOLDER', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#808090',
+      letterSpacing: 2
     }).setOrigin(0.5);
 
     // Safety note
-    this.add.text(cx, 475, 'Fixes are applied on a new git branch — your main branch is never touched.', {
-      ...FONTS.small, color: COLORS.gray, wordWrap: { width: 500 }
+    this.add.text(cx, 490, 'Fixes are applied on a new git branch.', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#404058'
+    }).setOrigin(0.5);
+    this.add.text(cx, 505, 'Your main branch is never touched.', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#404058'
     }).setOrigin(0.5);
 
-    // Create HTML inputs
+    // ── HTML Inputs (inside game container) ──
     this.htmlElements = [];
     this.createInputs();
 
-    // Floating particles
-    this.addAtmosphere();
-
-    // Connection status
-    this.statusText = this.add.text(cx, 570, 'Connecting to bridge...', {
-      ...FONTS.small, color: COLORS.gray
+    // ── Connection status ──
+    this.statusText = this.add.text(cx, 570, 'Connecting...', {
+      fontFamily: 'monospace', fontSize: '11px', color: '#505060'
     }).setOrigin(0.5);
 
+    // Atmosphere
+    this.addAtmosphere();
     this.connectToBridge();
   }
 
   createInputs() {
-    const inputStyle = {
+    const container = document.getElementById('game-container');
+    const canvas = container.querySelector('canvas');
+
+    // We need to position inputs relative to the canvas
+    // Use a wrapper div inside game-container
+    const wrapper = document.createElement('div');
+    Object.assign(wrapper.style, {
       position: 'absolute',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      width: '400px',
+      top: '0', left: '0', right: '0', bottom: '0',
+      pointerEvents: 'none',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center'
+    });
+    container.style.position = 'relative';
+    container.appendChild(wrapper);
+
+    const inputStyle = {
+      width: '320px',
       padding: '10px 16px',
-      fontFamily: 'monospace',
-      fontSize: '16px',
-      color: '#f0c040',
-      backgroundColor: '#1a1a2e',
-      border: '2px solid #4a4a6e',
-      borderRadius: '0',
+      fontFamily: "'JetBrains Mono', monospace",
+      fontSize: '15px',
+      color: '#d4af37',
+      backgroundColor: '#12122a',
+      border: '1px solid #2a2a4e',
+      borderRadius: '4px',
       textAlign: 'center',
       outline: 'none',
-      zIndex: '10',
-      letterSpacing: '1px'
+      pointerEvents: 'auto',
+      transition: 'border-color 0.2s'
     };
 
     // Domain input
     const domainInput = document.createElement('input');
     domainInput.type = 'text';
-    domainInput.id = 'domain-input';
     domainInput.value = 'claude-github.com';
     domainInput.placeholder = 'example.com';
     domainInput.autocomplete = 'off';
-    domainInput.spellcheck = false;
-    Object.assign(domainInput.style, { ...inputStyle, top: '53%' });
-    domainInput.addEventListener('focus', () => domainInput.style.borderColor = '#f0c040');
-    domainInput.addEventListener('blur', () => domainInput.style.borderColor = '#4a4a6e');
-    document.body.appendChild(domainInput);
+    Object.assign(domainInput.style, {
+      ...inputStyle,
+      marginTop: '120px'
+    });
+    domainInput.addEventListener('focus', () => domainInput.style.borderColor = '#d4af37');
+    domainInput.addEventListener('blur', () => domainInput.style.borderColor = '#2a2a4e');
+    wrapper.appendChild(domainInput);
     this.domainInput = domainInput;
-    this.htmlElements.push(domainInput);
 
-    // Project path input
+    // Spacer
+    const spacer = document.createElement('div');
+    spacer.style.height = '38px';
+    wrapper.appendChild(spacer);
+
+    // Path input
     const pathInput = document.createElement('input');
     pathInput.type = 'text';
-    pathInput.id = 'path-input';
     pathInput.value = 'E:\\claude-github-website';
-    pathInput.placeholder = 'C:\\path\\to\\your\\project';
+    pathInput.placeholder = 'C:\\path\\to\\project';
     pathInput.autocomplete = 'off';
-    pathInput.spellcheck = false;
     Object.assign(pathInput.style, {
       ...inputStyle,
-      top: '68%',
-      color: '#40c0c0',
-      fontSize: '14px'
+      color: '#5cb8c8',
+      fontSize: '13px'
     });
-    pathInput.addEventListener('focus', () => pathInput.style.borderColor = '#40c0c0');
-    pathInput.addEventListener('blur', () => pathInput.style.borderColor = '#4a4a6e');
-    document.body.appendChild(pathInput);
+    pathInput.addEventListener('focus', () => pathInput.style.borderColor = '#5cb8c8');
+    pathInput.addEventListener('blur', () => pathInput.style.borderColor = '#2a2a4e');
+    wrapper.appendChild(pathInput);
     this.pathInput = pathInput;
-    this.htmlElements.push(pathInput);
 
-    // Enter key on either input launches
+    // Spacer
+    const spacer2 = document.createElement('div');
+    spacer2.style.height = '50px';
+    wrapper.appendChild(spacer2);
+
+    // Descend button
+    const btn = document.createElement('button');
+    btn.textContent = 'DESCEND INTO THE DUNGEON';
+    Object.assign(btn.style, {
+      padding: '12px 36px',
+      fontFamily: "'JetBrains Mono', monospace",
+      fontSize: '14px',
+      fontWeight: '600',
+      color: '#0a0a1a',
+      backgroundColor: '#d4af37',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      pointerEvents: 'auto',
+      letterSpacing: '2px',
+      transition: 'background-color 0.2s, transform 0.1s'
+    });
+    btn.addEventListener('mouseenter', () => btn.style.backgroundColor = '#e0c050');
+    btn.addEventListener('mouseleave', () => btn.style.backgroundColor = '#d4af37');
+    btn.addEventListener('mousedown', () => btn.style.transform = 'scale(0.97)');
+    btn.addEventListener('mouseup', () => btn.style.transform = 'scale(1)');
+
     const launch = () => {
       if (domainInput.value.trim() && pathInput.value.trim()) {
         this.launchAudit(domainInput.value.trim(), pathInput.value.trim());
       }
     };
+    btn.addEventListener('click', launch);
     domainInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') launch(); });
     pathInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') launch(); });
+    wrapper.appendChild(btn);
 
-    // DESCEND button
-    const btn = document.createElement('button');
-    btn.textContent = '⚔ DESCEND ⚔';
-    Object.assign(btn.style, {
-      position: 'absolute',
-      left: '50%',
-      top: '80%',
-      transform: 'translateX(-50%)',
-      padding: '10px 40px',
-      fontFamily: 'monospace',
-      fontSize: '18px',
-      color: '#0a0a1a',
-      backgroundColor: '#f0c040',
-      border: '2px solid #f0c040',
-      borderRadius: '0',
-      cursor: 'pointer',
-      zIndex: '10',
-      letterSpacing: '3px',
-      fontWeight: 'bold'
-    });
-    btn.addEventListener('mouseenter', () => {
-      btn.style.backgroundColor = '#ffe060';
-      btn.style.borderColor = '#ffe060';
-    });
-    btn.addEventListener('mouseleave', () => {
-      btn.style.backgroundColor = '#f0c040';
-      btn.style.borderColor = '#f0c040';
-    });
-    btn.addEventListener('click', launch);
-    document.body.appendChild(btn);
-    this.htmlElements.push(btn);
+    this.htmlElements = [wrapper];
 
-    // Clean up all HTML elements on scene shutdown
+    // Clean up on scene shutdown
     this.events.on('shutdown', () => {
-      this.htmlElements.forEach(el => el.remove());
+      wrapper.remove();
     });
 
-    // Focus domain input
-    this.time.delayedCall(500, () => domainInput.focus());
+    this.time.delayedCall(300, () => domainInput.focus());
   }
 
   async connectToBridge() {
     try {
       await bridge.connect();
-      this.statusText.setText('⚔ Bridge connected — ready for battle');
-      this.statusText.setColor(COLORS.green);
+      this.statusText.setText('Bridge connected — ready for battle');
+      this.statusText.setColor('#50a050');
     } catch (err) {
-      this.statusText.setText('Bridge offline — start server with: npm run server');
-      this.statusText.setColor(COLORS.red);
+      this.statusText.setText('Bridge offline — start server first');
+      this.statusText.setColor('#a05050');
     }
   }
 
   launchAudit(domain, projectPath) {
-    // Remove all HTML elements
     this.htmlElements.forEach(el => el.remove());
-
-    // Store both domain and project path globally
     this.game.domain = domain;
     this.game.projectPath = projectPath;
 
-    // Transition
-    this.cameras.main.fadeOut(800, 0, 0, 0);
-    this.time.delayedCall(800, () => {
+    this.cameras.main.fadeOut(600, 0, 0, 0);
+    this.time.delayedCall(600, () => {
       this.scene.start('Summoning', { domain, projectPath });
     });
   }
 
   addAtmosphere() {
-    for (let i = 0; i < 20; i++) {
-      const x = Phaser.Math.Between(0, 800);
-      const y = Phaser.Math.Between(0, 600);
-      const dot = this.add.circle(x, y, 1, 0x4a4a6e, 0.5);
+    for (let i = 0; i < 15; i++) {
+      const x = Phaser.Math.Between(50, 750);
+      const y = Phaser.Math.Between(50, 550);
+      const dot = this.add.circle(x, y, 1, 0x303050, 0.4);
       this.tweens.add({
         targets: dot,
-        y: y - Phaser.Math.Between(50, 150),
+        y: y - Phaser.Math.Between(30, 100),
         alpha: 0,
-        duration: Phaser.Math.Between(3000, 6000),
+        duration: Phaser.Math.Between(4000, 8000),
         repeat: -1,
-        delay: Phaser.Math.Between(0, 3000)
+        delay: Phaser.Math.Between(0, 4000)
       });
     }
   }

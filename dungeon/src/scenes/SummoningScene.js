@@ -20,7 +20,7 @@ export class SummoningScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(COLORS.bg);
     this.cameras.main.fadeIn(500, 0, 0, 0);
 
-    const cx = 400;
+    const cx = 400; // Center of game area (left 2/3)
 
     // Dungeon entrance (top)
     this.add.text(cx, 40, '⚔ DESCENDING INTO THE DUNGEON ⚔', {

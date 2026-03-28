@@ -65,7 +65,7 @@ export class DungeonHallScene extends Phaser.Scene {
   drawCorridor() {
     const g = this.add.graphics();
     g.fillStyle(0x12121e);
-    g.fillRect(0, 70, 800, 500);
+    g.fillRect(0, 70, 800, 605);
     g.lineStyle(1, 0x1a1a2a);
     for (let y = 70; y < 570; y += 30) {
       g.lineBetween(0, y, 800, y);
