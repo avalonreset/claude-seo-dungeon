@@ -5,6 +5,7 @@ import { DungeonHallScene } from './scenes/DungeonHallScene.js';
 import { BattleScene } from './scenes/BattleScene.js';
 import { VictoryScene } from './scenes/VictoryScene.js';
 import { bridge } from './utils/ws.js';
+import { initKnightSprite } from './knight-sprite.js';
 
 let game = null;
 
@@ -101,6 +102,9 @@ document.addEventListener('DOMContentLoaded', () => {
   btn.addEventListener('click', launch);
   domainInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') launch(); });
   pathInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') launch(); });
+
+  // Init animated knight sprite
+  initKnightSprite();
 
   // Connect to bridge
   connectBridge();
