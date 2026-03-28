@@ -41,8 +41,8 @@ export class BattleScene extends Phaser.Scene {
 
     // ── UI Layer ─────────────────────────────────────
     this.createHPDisplays();
-    this.createCommandMenu();
     this.createBattleLog();
+    this.createCommandMenu();
     this.createIssueDetails();
     this.createStreamText();
 
@@ -122,6 +122,31 @@ export class BattleScene extends Phaser.Scene {
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'
+    });
+
+    // Torch flame particles
+    this.time.addEvent({
+      delay: 180,
+      repeat: -1,
+      callback: () => {
+        const flame = this.add.circle(
+          x + Phaser.Math.Between(-4, 4),
+          y,
+          Phaser.Math.Between(2, 4),
+          Phaser.Utils.Array.GetRandom([0xff6600, 0xff8800, 0xffaa00, 0xffcc44]),
+          0.6
+        );
+        this.tweens.add({
+          targets: flame,
+          y: y - Phaser.Math.Between(15, 35),
+          alpha: 0,
+          scaleX: 0.2,
+          scaleY: 0.2,
+          duration: Phaser.Math.Between(300, 600),
+          ease: 'Power1',
+          onComplete: () => flame.destroy()
+        });
+      }
     });
   }
 
@@ -211,12 +236,12 @@ export class BattleScene extends Phaser.Scene {
 
   createKnight() {
     // Knight shadow
-    this.knightShadow = this.add.ellipse(200, 380, 80, 18, 0x000000, 0.4);
+    this.knightShadow = this.add.ellipse(180, 380, 80, 18, 0x000000, 0.4);
 
     // Knight + equipment
-    this.knight = this.add.image(200, 320, 'knight').setScale(2.5).setAlpha(0);
-    this.sword = this.add.image(235, 310, 'sword').setScale(1.5).setAngle(-30).setAlpha(0);
-    this.shield = this.add.image(165, 325, 'shield').setScale(1.5).setAlpha(0);
+    this.knight = this.add.image(180, 320, 'knight').setScale(2.5).setAlpha(0);
+    this.sword = this.add.image(215, 310, 'sword').setScale(1.5).setAngle(-30).setAlpha(0);
+    this.shield = this.add.image(145, 325, 'shield').setScale(1.5).setAlpha(0);
 
     // Knight idle breathing (subtle)
     this.tweens.add({
@@ -252,7 +277,7 @@ export class BattleScene extends Phaser.Scene {
 
     this.tweens.add({
       targets: this.knight,
-      x: 200,
+      x: 180,
       alpha: 1,
       duration: 700,
       ease: 'Back.easeOut',
@@ -260,7 +285,7 @@ export class BattleScene extends Phaser.Scene {
     });
     this.tweens.add({
       targets: this.sword,
-      x: 235,
+      x: 215,
       alpha: 1,
       duration: 700,
       ease: 'Back.easeOut',
@@ -268,7 +293,7 @@ export class BattleScene extends Phaser.Scene {
     });
     this.tweens.add({
       targets: this.shield,
-      x: 165,
+      x: 145,
       alpha: 1,
       duration: 700,
       ease: 'Back.easeOut',
@@ -296,48 +321,48 @@ export class BattleScene extends Phaser.Scene {
 
   createHPDisplays() {
     // ── Demon HP (top right area) ──────────────
-    const demonPanelX = 460;
-    const demonPanelY = 110;
+    const demonPanelX = 440;
+    const demonPanelY = 100;
 
     // Demon name plate
     const namePanel = this.add.graphics();
     namePanel.fillStyle(0x0a0a18, 0.85);
-    namePanel.fillRoundedRect(demonPanelX, demonPanelY, 260, 70, 4);
+    namePanel.fillRoundedRect(demonPanelX, demonPanelY, 280, 78, 4);
     namePanel.lineStyle(2, this.getSeverityHexColor(), 0.8);
-    namePanel.strokeRoundedRect(demonPanelX, demonPanelY, 260, 70, 4);
+    namePanel.strokeRoundedRect(demonPanelX, demonPanelY, 280, 78, 4);
 
     // Inner highlight line
     namePanel.lineStyle(1, 0x2a2a4a, 0.3);
-    namePanel.strokeRoundedRect(demonPanelX + 2, demonPanelY + 2, 256, 66, 3);
+    namePanel.strokeRoundedRect(demonPanelX + 2, demonPanelY + 2, 276, 74, 3);
 
     this.add.text(demonPanelX + 10, demonPanelY + 6, this.issue.title, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '10px',
       color: COLORS.white,
-      wordWrap: { width: 240 }
+      wordWrap: { width: 260 }
     });
 
     const sevColor = COLORS[this.issue.severity] || COLORS.red;
     this.add.text(demonPanelX + 10, demonPanelY + 24, this.issue.severity.toUpperCase(), {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px',
+      fontSize: '10px',
       color: sevColor
     });
 
     // HP bar background
     const barX = demonPanelX + 10;
-    const barY = demonPanelY + 42;
-    const barW = 200;
-    const barH = 14;
+    const barY = demonPanelY + 44;
+    const barW = 220;
+    const barH = 16;
 
-    this.add.text(barX, barY - 1, 'HP', {
+    this.add.text(barX, barY + 1, 'HP', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px',
+      fontSize: '10px',
       color: COLORS.gray
     });
 
-    const barStartX = barX + 24;
-    const actualBarW = barW - 24;
+    const barStartX = barX + 28;
+    const actualBarW = barW - 28;
 
     // Bar frame
     const barFrame = this.add.graphics();
@@ -361,41 +386,41 @@ export class BattleScene extends Phaser.Scene {
     // HP text
     this.demonHpText = this.add.text(barStartX + actualBarW + 8, barY + 1, `${this.demonHp}/${this.demonMaxHp}`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px',
+      fontSize: '10px',
       color: COLORS.red
     });
 
     // ── Knight HP (bottom left area) ──────────
-    const knightPanelX = 40;
+    const knightPanelX = 30;
     const knightPanelY = 388;
 
     const kPanel = this.add.graphics();
     kPanel.fillStyle(0x0a0a18, 0.85);
-    kPanel.fillRoundedRect(knightPanelX, knightPanelY, 230, 44, 4);
+    kPanel.fillRoundedRect(knightPanelX, knightPanelY, 250, 48, 4);
     kPanel.lineStyle(2, 0x40c0c0, 0.6);
-    kPanel.strokeRoundedRect(knightPanelX, knightPanelY, 230, 44, 4);
+    kPanel.strokeRoundedRect(knightPanelX, knightPanelY, 250, 48, 4);
     kPanel.lineStyle(1, 0x2a2a4a, 0.3);
-    kPanel.strokeRoundedRect(knightPanelX + 2, knightPanelY + 2, 226, 40, 3);
+    kPanel.strokeRoundedRect(knightPanelX + 2, knightPanelY + 2, 246, 44, 3);
 
     this.add.text(knightPanelX + 10, knightPanelY + 5, 'SEO KNIGHT', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '10px',
+      fontSize: '12px',
       color: COLORS.cyan
     });
 
     const kBarX = knightPanelX + 10;
-    const kBarY = knightPanelY + 22;
-    const kBarW = 170;
-    const kBarH = 14;
+    const kBarY = knightPanelY + 24;
+    const kBarW = 190;
+    const kBarH = 16;
 
-    this.add.text(kBarX, kBarY - 1, 'HP', {
+    this.add.text(kBarX, kBarY + 1, 'HP', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px',
+      fontSize: '10px',
       color: COLORS.gray
     });
 
-    const kBarStartX = kBarX + 24;
-    const kActualBarW = kBarW - 24;
+    const kBarStartX = kBarX + 28;
+    const kActualBarW = kBarW - 28;
 
     const kBarFrame = this.add.graphics();
     kBarFrame.fillStyle(0x082008, 1);
@@ -416,7 +441,7 @@ export class BattleScene extends Phaser.Scene {
 
     this.knightHpText = this.add.text(kBarStartX + kActualBarW + 8, kBarY + 1, `${this.knightHp}/100`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px',
+      fontSize: '10px',
       color: COLORS.green
     });
   }
@@ -470,14 +495,69 @@ export class BattleScene extends Phaser.Scene {
   }
 
   // ═══════════════════════════════════════════════════
-  //  COMMAND MENU (FF-style)
+  //  BATTLE LOG (FF-style, bottom-left)
+  // ═══════════════════════════════════════════════════
+
+  createBattleLog() {
+    const logX = 16;
+    const logY = 440;
+    const logW = 520;
+    const logH = 104;
+
+    // Log panel with FF-style double border
+    const logGfx = this.add.graphics();
+
+    // Outer border
+    logGfx.lineStyle(3, 0xb8b8d8, 1);
+    logGfx.strokeRoundedRect(logX, logY, logW, logH, 6);
+
+    // Inner fill
+    logGfx.fillStyle(0x0a0a24, 0.95);
+    logGfx.fillRoundedRect(logX + 2, logY + 2, logW - 4, logH - 4, 5);
+
+    // Inner border highlight
+    logGfx.lineStyle(1, 0x3a3a6e, 0.6);
+    logGfx.strokeRoundedRect(logX + 4, logY + 4, logW - 8, logH - 8, 4);
+
+    // Corner accents
+    logGfx.fillStyle(0xb8b8d8, 0.5);
+    logGfx.fillRect(logX + 6, logY + 6, 3, 3);
+    logGfx.fillRect(logX + logW - 9, logY + 6, 3, 3);
+    logGfx.fillRect(logX + 6, logY + logH - 9, 3, 3);
+    logGfx.fillRect(logX + logW - 9, logY + logH - 9, 3, 3);
+
+    this.battleLog = this.add.text(logX + 14, logY + 12, 'A wild SEO demon appears!', {
+      fontFamily: 'monospace',
+      fontSize: '12px',
+      color: COLORS.white,
+      lineSpacing: 6,
+      wordWrap: { width: logW - 32 }
+    });
+
+    // Blinking indicator
+    this.logIndicator = this.add.text(logX + logW - 22, logY + logH - 20, '\u25BC', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '10px',
+      color: COLORS.gold
+    });
+    this.tweens.add({
+      targets: this.logIndicator,
+      alpha: 0.2,
+      duration: 500,
+      yoyo: true,
+      repeat: -1
+    });
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  COMMAND MENU (FF-style, bottom-right)
   // ═══════════════════════════════════════════════════
 
   createCommandMenu() {
-    const menuX = 560;
-    const menuY = 432;
-    const menuW = 210;
-    const menuH = 110;
+    const menuX = 548;
+    const menuY = 440;
+    const menuW = 236;
+    const menuH = 104;
 
     // Menu panel with double border (FF style)
     const menuGfx = this.add.graphics();
@@ -494,7 +574,7 @@ export class BattleScene extends Phaser.Scene {
     menuGfx.lineStyle(1, 0x3a3a6e, 0.6);
     menuGfx.strokeRoundedRect(menuX + 4, menuY + 4, menuW - 8, menuH - 8, 4);
 
-    // Corner accents
+    // Corner accents (gold)
     menuGfx.fillStyle(0xf0c040, 0.8);
     menuGfx.fillRect(menuX + 6, menuY + 6, 4, 4);
     menuGfx.fillRect(menuX + menuW - 10, menuY + 6, 4, 4);
@@ -509,18 +589,35 @@ export class BattleScene extends Phaser.Scene {
     ];
 
     this.menuItems = commands.map((cmd, i) => {
-      const itemY = menuY + 16 + i * 22;
-      const text = this.add.text(menuX + 36, itemY, cmd.label, {
+      const itemY = menuY + 14 + i * 22;
+      const text = this.add.text(menuX + 40, itemY, cmd.label, {
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: '11px',
+        fontSize: '12px',
         color: COLORS.white
       }).setInteractive({ useHandCursor: true });
 
       // Icon
-      this.add.text(menuX + 20, itemY, cmd.icon, {
+      this.add.text(menuX + 24, itemY, cmd.icon, {
         fontFamily: 'monospace',
-        fontSize: '12px',
+        fontSize: '14px',
         color: COLORS.gray
+      });
+
+      // Hover highlight zone (full row)
+      const hitZone = this.add.rectangle(menuX + menuW / 2, itemY + 7, menuW - 16, 20, 0xffffff, 0)
+        .setInteractive({ useHandCursor: true });
+
+      hitZone.on('pointerover', () => {
+        if (this.isPlayerTurn && !this.battleOver) {
+          this.selectMenuItem(i);
+        }
+      });
+
+      hitZone.on('pointerdown', () => {
+        if (this.isPlayerTurn && !this.battleOver) {
+          this.selectMenuItem(i);
+          cmd.action();
+        }
       });
 
       text.on('pointerover', () => {
@@ -541,7 +638,7 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // Bouncing arrow cursor
-    this.cursor = this.add.text(menuX + 10, menuY + 16, '\u25B6', {
+    this.cursor = this.add.text(menuX + 10, menuY + 14, '\u25B6', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '10px',
       color: COLORS.gold
@@ -549,7 +646,7 @@ export class BattleScene extends Phaser.Scene {
 
     this.tweens.add({
       targets: this.cursor,
-      x: menuX + 14,
+      x: menuX + 16,
       duration: 350,
       yoyo: true,
       repeat: -1,
@@ -595,88 +692,50 @@ export class BattleScene extends Phaser.Scene {
   }
 
   // ═══════════════════════════════════════════════════
-  //  BATTLE LOG
+  //  ISSUE DETAILS (very bottom strip)
   // ═══════════════════════════════════════════════════
 
-  createBattleLog() {
-    const logX = 20;
-    const logY = 432;
-    const logW = 530;
-    const logH = 110;
-
-    // Log panel with FF-style double border
-    const logGfx = this.add.graphics();
-    logGfx.lineStyle(3, 0xb8b8d8, 1);
-    logGfx.strokeRoundedRect(logX, logY, logW, logH, 6);
-    logGfx.fillStyle(0x0a0a24, 0.95);
-    logGfx.fillRoundedRect(logX + 2, logY + 2, logW - 4, logH - 4, 5);
-    logGfx.lineStyle(1, 0x3a3a6e, 0.6);
-    logGfx.strokeRoundedRect(logX + 4, logY + 4, logW - 8, logH - 8, 4);
-
-    this.battleLog = this.add.text(logX + 14, logY + 12, 'A wild SEO demon appears!', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '9px',
-      color: COLORS.white,
-      lineSpacing: 6,
-      wordWrap: { width: logW - 28 }
-    });
-
-    // Blinking indicator
-    this.logIndicator = this.add.text(logX + logW - 20, logY + logH - 18, '\u25BC', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px',
-      color: COLORS.gold
-    });
-    this.tweens.add({
-      targets: this.logIndicator,
-      alpha: 0.2,
-      duration: 500,
-      yoyo: true,
-      repeat: -1
-    });
-  }
-
   createIssueDetails() {
-    const detX = 20;
+    const detX = 16;
     const detY = 550;
-    const detW = 760;
-    const detH = 42;
+    const detW = 768;
+    const detH = 44;
 
     const detGfx = this.add.graphics();
-    detGfx.fillStyle(0x0e0c1a, 0.9);
+    detGfx.fillStyle(0x0e0c1a, 0.92);
     detGfx.fillRoundedRect(detX, detY, detW, detH, 3);
     detGfx.lineStyle(1, 0x2a2a4e, 0.6);
     detGfx.strokeRoundedRect(detX, detY, detW, detH, 3);
 
     // Category badge
-    const catText = this.add.text(detX + 10, detY + 6, this.issue.category, {
+    const catText = this.add.text(detX + 10, detY + 4, this.issue.category, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px',
+      fontSize: '10px',
       color: COLORS.cyan
     });
 
     // Separator
-    this.add.text(catText.x + catText.width + 8, detY + 6, '|', {
+    this.add.text(catText.x + catText.width + 8, detY + 4, '|', {
       fontFamily: 'monospace',
-      fontSize: '12px',
+      fontSize: '14px',
       color: '#3a3a5e'
     });
 
     // Description
     this.add.text(detX + 10, detY + 22, this.issue.description, {
       fontFamily: 'monospace',
-      fontSize: '11px',
+      fontSize: '12px',
       color: COLORS.gray,
-      wordWrap: { width: detW - 20 }
+      wordWrap: { width: detW - 24 }
     });
   }
 
   createStreamText() {
-    this.streamText = this.add.text(28, 555, '', {
+    this.streamText = this.add.text(24, 556, '', {
       fontFamily: 'monospace',
-      fontSize: '10px',
+      fontSize: '11px',
       color: COLORS.purple,
-      wordWrap: { width: 720 }
+      wordWrap: { width: 740 }
     }).setDepth(10);
   }
 
@@ -753,7 +812,7 @@ export class BattleScene extends Phaser.Scene {
       // Knight lunges forward dramatically
       this.tweens.add({
         targets: [this.knight, this.sword, this.shield],
-        x: '+=100',
+        x: '+=120',
         duration: 180,
         ease: 'Power3',
         onComplete: () => {
@@ -788,7 +847,7 @@ export class BattleScene extends Phaser.Scene {
           this.time.delayedCall(200, () => {
             this.tweens.add({
               targets: [this.knight, this.sword, this.shield],
-              x: '-=100',
+              x: '-=120',
               duration: 300,
               ease: 'Power2',
               onComplete: resolve
@@ -854,11 +913,11 @@ export class BattleScene extends Phaser.Scene {
   }
 
   createHitParticles(x, y, color) {
-    const count = 12;
+    const count = 16;
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2 + Phaser.Math.FloatBetween(-0.3, 0.3);
-      const speed = Phaser.Math.Between(60, 160);
-      const size = Phaser.Math.Between(2, 5);
+      const speed = Phaser.Math.Between(60, 180);
+      const size = Phaser.Math.Between(2, 6);
 
       const particle = this.add.rectangle(
         x + Phaser.Math.Between(-10, 10),
@@ -902,7 +961,7 @@ export class BattleScene extends Phaser.Scene {
     // Damage number - dramatic float with scale
     const dmgText = this.add.text(580, 200, `-${amount}`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '20px',
+      fontSize: '22px',
       color: '#ff4040',
       stroke: '#000000',
       strokeThickness: 4
@@ -1004,9 +1063,9 @@ export class BattleScene extends Phaser.Scene {
         this.knightHpText.setText(`${this.knightHp}/100`);
 
         // Damage popup on knight
-        const dmgText = this.add.text(200, 280, `-${damage}`, {
+        const dmgText = this.add.text(180, 280, `-${damage}`, {
           fontFamily: '"Press Start 2P", monospace',
-          fontSize: '16px',
+          fontSize: '18px',
           color: '#ff8040',
           stroke: '#000000',
           strokeThickness: 3
@@ -1032,7 +1091,7 @@ export class BattleScene extends Phaser.Scene {
         });
 
         // Hit particles on knight
-        this.createHitParticles(200, 320, 0xff8040);
+        this.createHitParticles(180, 320, 0xff8040);
 
         // Demon returns
         this.tweens.add({
@@ -1077,20 +1136,38 @@ export class BattleScene extends Phaser.Scene {
       }
     });
 
-    // Heal glow particles
-    for (let i = 0; i < 8; i++) {
+    // Shield barrier ring
+    const barrier = this.add.graphics();
+    barrier.lineStyle(3, 0x40c0f0, 0.6);
+    barrier.strokeCircle(180, 320, 50);
+    barrier.lineStyle(1, 0x80e0ff, 0.3);
+    barrier.strokeCircle(180, 320, 55);
+    this.tweens.add({
+      targets: barrier,
+      alpha: 0,
+      scaleX: 1.4,
+      scaleY: 1.4,
+      duration: 600,
+      ease: 'Power1',
+      onComplete: () => barrier.destroy()
+    });
+
+    // Green heal particles rising upward
+    for (let i = 0; i < 12; i++) {
       const p = this.add.rectangle(
-        200 + Phaser.Math.Between(-30, 30),
+        180 + Phaser.Math.Between(-35, 35),
         380,
         4, 4,
-        0x40e0a0, 0.8
+        Phaser.Utils.Array.GetRandom([0x40e0a0, 0x60ff80, 0x80ffc0]),
+        0.8
       );
       this.tweens.add({
         targets: p,
-        y: p.y - Phaser.Math.Between(40, 80),
+        y: p.y - Phaser.Math.Between(40, 100),
+        x: p.x + Phaser.Math.Between(-10, 10),
         alpha: 0,
-        duration: 800,
-        delay: i * 80,
+        duration: 900,
+        delay: i * 60,
         ease: 'Power1',
         onComplete: () => p.destroy()
       });
@@ -1113,9 +1190,9 @@ export class BattleScene extends Phaser.Scene {
     this.knightHpText.setText(`${this.knightHp}/100`);
 
     // +10 heal text
-    const healText = this.add.text(200, 300, '+10', {
+    const healText = this.add.text(180, 300, '+10', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '14px',
+      fontSize: '16px',
       color: '#40e080',
       stroke: '#000000',
       strokeThickness: 3
@@ -1148,8 +1225,22 @@ export class BattleScene extends Phaser.Scene {
     this.demon.setTint(0x4080e0);
     this.time.delayedCall(400, () => this.demon.clearTint());
 
+    // Inspect scanning ring
+    const scanRing = this.add.graphics();
+    scanRing.lineStyle(2, 0x4080e0, 0.7);
+    scanRing.strokeCircle(580, 240, 30);
+    this.tweens.add({
+      targets: scanRing,
+      scaleX: 2.5,
+      scaleY: 2.5,
+      alpha: 0,
+      duration: 700,
+      ease: 'Power1',
+      onComplete: () => scanRing.destroy()
+    });
+
     // Inspect eye particles
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 8; i++) {
       const p = this.add.circle(
         580 + Phaser.Math.Between(-40, 40),
         240 + Phaser.Math.Between(-40, 40),
@@ -1207,15 +1298,15 @@ export class BattleScene extends Phaser.Scene {
     this.cameras.main.flash(600, 255, 220, 80);
     this.cameras.main.shake(400, 0.025);
 
-    // Explosion particles burst
+    // Explosion particles burst (3 waves)
     const colors = [0xffffff, 0xff4040, 0xf0c040, 0xff8040, this.getSeverityHexColor()];
     for (let wave = 0; wave < 3; wave++) {
       this.time.delayedCall(wave * 150, () => {
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 24; i++) {
           const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
-          const speed = Phaser.Math.Between(80, 220);
+          const speed = Phaser.Math.Between(80, 260);
           const color = Phaser.Utils.Array.GetRandom(colors);
-          const size = Phaser.Math.Between(2, 7);
+          const size = Phaser.Math.Between(2, 8);
 
           const p = this.add.rectangle(
             580 + Phaser.Math.Between(-15, 15),
@@ -1235,6 +1326,24 @@ export class BattleScene extends Phaser.Scene {
             onComplete: () => p.destroy()
           });
         }
+      });
+    }
+
+    // Expanding white ring explosion
+    for (let r = 0; r < 3; r++) {
+      this.time.delayedCall(r * 120, () => {
+        const ring = this.add.graphics().setDepth(19);
+        ring.lineStyle(3 - r, 0xffffff, 0.7 - r * 0.2);
+        ring.strokeCircle(580, 240, 20);
+        this.tweens.add({
+          targets: ring,
+          scaleX: 4 + r,
+          scaleY: 4 + r,
+          alpha: 0,
+          duration: 600,
+          ease: 'Power1',
+          onComplete: () => ring.destroy()
+        });
       });
     }
 
@@ -1267,6 +1376,11 @@ export class BattleScene extends Phaser.Scene {
       delay: 500
     });
 
+    // Second screen flash for extra drama
+    this.time.delayedCall(600, () => {
+      this.cameras.main.flash(200, 255, 200, 100);
+    });
+
     // Victory flash
     this.time.delayedCall(1500, () => {
       this.cameras.main.flash(300, 255, 255, 200);
@@ -1287,6 +1401,26 @@ export class BattleScene extends Phaser.Scene {
         duration: 400,
         ease: 'Back.easeOut'
       });
+
+      // Sparkle particles around victory text
+      for (let i = 0; i < 10; i++) {
+        this.time.delayedCall(i * 80, () => {
+          const spark = this.add.rectangle(
+            400 + Phaser.Math.Between(-120, 120),
+            200 + Phaser.Math.Between(-30, 30),
+            3, 3, 0xf0c040, 1
+          ).setDepth(31);
+          this.tweens.add({
+            targets: spark,
+            alpha: 0,
+            scaleX: 0.1,
+            scaleY: 0.1,
+            y: spark.y - Phaser.Math.Between(20, 50),
+            duration: 500,
+            onComplete: () => spark.destroy()
+          });
+        });
+      }
     });
 
     // Transition to victory

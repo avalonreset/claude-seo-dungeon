@@ -70,7 +70,7 @@ export class VictoryScene extends Phaser.Scene {
 
   addBackgroundAmbience(cx) {
     // Radial warm glow behind the knight
-    const glow = this.add.circle(cx, 160, 140, 0xf0c040, 0.06);
+    const glow = this.add.circle(cx, 160, 140, 0xd4af37, 0.08);
     this.tweens.add({
       targets: glow,
       scaleX: 1.3,
@@ -82,11 +82,24 @@ export class VictoryScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
+    // Secondary warm ring for depth
+    const glow2 = this.add.circle(cx, 200, 220, 0xd4af37, 0.03);
+    this.tweens.add({
+      targets: glow2,
+      scaleX: 1.15,
+      scaleY: 1.15,
+      alpha: 0.01,
+      duration: 3000,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
     // Subtle floating dust motes
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 16; i++) {
       const x = Phaser.Math.Between(50, 750);
       const y = Phaser.Math.Between(50, 550);
-      const mote = this.add.circle(x, y, 1, 0xf0c040, Phaser.Math.FloatBetween(0.1, 0.3));
+      const mote = this.add.circle(x, y, Phaser.Math.Between(1, 2), 0xd4af37, Phaser.Math.FloatBetween(0.1, 0.35));
       this.tweens.add({
         targets: mote,
         y: y - Phaser.Math.Between(20, 60),
@@ -96,7 +109,7 @@ export class VictoryScene extends Phaser.Scene {
         repeat: -1,
         onRepeat: () => {
           mote.setPosition(Phaser.Math.Between(50, 750), Phaser.Math.Between(300, 550));
-          mote.setAlpha(Phaser.Math.FloatBetween(0.1, 0.3));
+          mote.setAlpha(Phaser.Math.FloatBetween(0.1, 0.35));
         }
       });
     }
@@ -107,30 +120,37 @@ export class VictoryScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════════════
 
   addVictoryTitle(cx) {
-    // Shadow text behind title
-    const shadow = this.add.text(cx + 3, 48, 'VICTORY', {
+    // Deep shadow for depth
+    const shadow = this.add.text(cx + 3, 50, 'VICTORY', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '48px',
       color: '#000000'
-    }).setOrigin(0.5).setAlpha(0).setDepth(9);
+    }).setOrigin(0.5).setAlpha(0).setDepth(8);
 
-    // Main title
-    const title = this.add.text(cx, 45, 'VICTORY', {
+    // Warm outer glow layer (large, soft)
+    const outerGlow = this.add.text(cx, 48, 'VICTORY', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '48px',
-      color: COLORS.gold
-    }).setOrigin(0.5).setScale(3).setAlpha(0).setDepth(10);
+      fontSize: '52px',
+      color: '#d4af37'
+    }).setOrigin(0.5).setScale(3).setAlpha(0).setDepth(8);
 
-    // Gold glow underneath title
-    const titleGlow = this.add.text(cx, 45, 'VICTORY', {
+    // Inner bright glow layer
+    const titleGlow = this.add.text(cx, 48, 'VICTORY', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '50px',
-      color: '#ffdd66'
+      color: '#ffe680'
     }).setOrigin(0.5).setScale(3).setAlpha(0).setDepth(9);
+
+    // Main title
+    const title = this.add.text(cx, 48, 'VICTORY', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '48px',
+      color: '#d4af37'
+    }).setOrigin(0.5).setScale(3).setAlpha(0).setDepth(10);
 
     // Slam-in animation: start big, bounce to final size
     this.tweens.add({
-      targets: [title, shadow, titleGlow],
+      targets: [title, shadow, titleGlow, outerGlow],
       scale: 1,
       alpha: { value: 1, duration: 200 },
       duration: 700,
@@ -138,10 +158,23 @@ export class VictoryScene extends Phaser.Scene {
       ease: 'Bounce.easeOut'
     });
 
-    // Pulsing gold glow on the title
+    // Pulsing outer glow on the title
+    this.tweens.add({
+      targets: outerGlow,
+      alpha: 0.15,
+      scaleX: 1.04,
+      scaleY: 1.04,
+      duration: 1500,
+      delay: 900,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    // Pulsing inner glow
     this.tweens.add({
       targets: titleGlow,
-      alpha: 0.3,
+      alpha: 0.35,
       scaleX: 1.02,
       scaleY: 1.02,
       duration: 1200,
@@ -151,9 +184,9 @@ export class VictoryScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    // Decorative line separators
-    const lineLeft = this.add.rectangle(cx - 180, 75, 120, 2, 0xf0c040, 0).setDepth(10);
-    const lineRight = this.add.rectangle(cx + 180, 75, 120, 2, 0xf0c040, 0).setDepth(10);
+    // Decorative line separators (gold)
+    const lineLeft = this.add.rectangle(cx - 190, 80, 130, 2, 0xd4af37, 0).setDepth(10);
+    const lineRight = this.add.rectangle(cx + 190, 80, 130, 2, 0xd4af37, 0).setDepth(10);
     this.tweens.add({
       targets: [lineLeft, lineRight],
       alpha: 0.8,
@@ -162,11 +195,11 @@ export class VictoryScene extends Phaser.Scene {
     });
 
     // Small star decorations beside title
-    const starLeft = this.add.text(cx - 155, 40, '\u2726', {
-      fontSize: '20px', color: COLORS.gold
+    const starLeft = this.add.text(cx - 165, 43, '\u2726', {
+      fontSize: '22px', color: '#d4af37'
     }).setOrigin(0.5).setAlpha(0).setDepth(10);
-    const starRight = this.add.text(cx + 155, 40, '\u2726', {
-      fontSize: '20px', color: COLORS.gold
+    const starRight = this.add.text(cx + 165, 43, '\u2726', {
+      fontSize: '22px', color: '#d4af37'
     }).setOrigin(0.5).setAlpha(0).setDepth(10);
     this.tweens.add({
       targets: [starLeft, starRight],
@@ -189,7 +222,7 @@ export class VictoryScene extends Phaser.Scene {
 
   addKnightCelebration(cx) {
     // Knight with glow halo
-    const knightGlow = this.add.circle(cx, 150, 50, 0xf0c040, 0.12).setDepth(1);
+    const knightGlow = this.add.circle(cx, 150, 50, 0xd4af37, 0.12).setDepth(1);
     this.tweens.add({
       targets: knightGlow,
       scaleX: 1.2,
@@ -267,33 +300,36 @@ export class VictoryScene extends Phaser.Scene {
 
   addLootPanel(cx) {
     const panelY = 250;
-    const panelW = 540;
-    const panelH = 200;
+    const panelW = 560;
+    const panelH = 210;
 
+    // Outer gold border glow
+    const outerGlow = this.add.rectangle(cx, panelY + 50, panelW + 14, panelH + 14, 0xd4af37, 0.15).setDepth(4);
     // Outer stone border
     const outerBorder = this.add.rectangle(cx, panelY + 50, panelW + 8, panelH + 8, 0x3a3a5e).setDepth(5);
     // Inner dark panel
-    const innerPanel = this.add.rectangle(cx, panelY + 50, panelW, panelH, 0x12122a, 0.97).setDepth(5);
-    innerPanel.setStrokeStyle(2, 0x6a5a30);
+    const innerPanel = this.add.rectangle(cx, panelY + 50, panelW, panelH, 0x0e0e20, 0.97).setDepth(5);
+    innerPanel.setStrokeStyle(2, 0xd4af37);
     // Top ornamental bar (treasure chest lid feel)
-    const topBar = this.add.rectangle(cx, panelY - 48, panelW + 8, 10, 0x6a5a30).setDepth(5);
+    const topBar = this.add.rectangle(cx, panelY - 53, panelW + 8, 10, 0xd4af37).setDepth(5);
     // Corner rivets
     const rivetPositions = [
-      [cx - panelW / 2 - 1, panelY - 48],
-      [cx + panelW / 2 + 1, panelY - 48],
+      [cx - panelW / 2 - 1, panelY - 53],
+      [cx + panelW / 2 + 1, panelY - 53],
       [cx - panelW / 2 - 1, panelY + 50 + panelH / 2 + 1],
       [cx + panelW / 2 + 1, panelY + 50 + panelH / 2 + 1]
     ];
     rivetPositions.forEach(([rx, ry]) => {
-      this.add.circle(rx, ry, 4, 0x8a7a40, 0.8).setDepth(6);
+      this.add.circle(rx, ry, 5, 0xd4af37, 0.7).setDepth(6);
     });
 
     // Animate panel opening (scale from thin line)
+    outerGlow.setScaleY(0);
     outerBorder.setScaleY(0);
     innerPanel.setScaleY(0);
     topBar.setAlpha(0);
     this.tweens.add({
-      targets: [outerBorder, innerPanel],
+      targets: [outerGlow, outerBorder, innerPanel],
       scaleY: 1,
       duration: 400,
       delay: 600,
@@ -309,17 +345,17 @@ export class VictoryScene extends Phaser.Scene {
     // ── Content inside panel (faded in after panel opens) ──
 
     // "DEMON VANQUISHED" header with swords
-    const vanquishedText = this.add.text(cx, panelY - 22, '\u2694  DEMON VANQUISHED  \u2694', {
+    const vanquishedText = this.add.text(cx, panelY - 25, '\u2694  DEMON VANQUISHED  \u2694', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '14px',
       color: '#e04040'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // Issue title
-    const issueTitle = this.add.text(cx, panelY + 8, this.issue.title, {
+    const issueTitle = this.add.text(cx, panelY + 6, this.issue.title, {
       fontFamily: 'monospace',
       fontSize: '15px',
-      color: COLORS.white,
+      color: '#ffffff',
       fontStyle: 'bold',
       wordWrap: { width: panelW - 40 }
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
@@ -327,19 +363,19 @@ export class VictoryScene extends Phaser.Scene {
     // Issue description
     const issueDesc = this.add.text(cx, panelY + 32, this.issue.description, {
       fontFamily: 'monospace',
-      fontSize: '11px',
-      color: '#a0a0b0',
+      fontSize: '13px',
+      color: '#b0b0c0',
       wordWrap: { width: panelW - 60 }
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
-    // Separator line
-    const separator = this.add.rectangle(cx, panelY + 54, panelW - 60, 1, 0x4a4a6e, 0).setDepth(7);
+    // Separator line (gold themed)
+    const separator = this.add.rectangle(cx, panelY + 56, panelW - 60, 1, 0xd4af37, 0).setDepth(7);
 
     // "Spoils of War" header
-    const spoilsHeader = this.add.text(cx, panelY + 68, '\u2500\u2500  Spoils of War  \u2500\u2500', {
+    const spoilsHeader = this.add.text(cx, panelY + 72, '\u2500\u2500  Spoils of War  \u2500\u2500', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '10px',
-      color: COLORS.gold
+      fontSize: '12px',
+      color: '#d4af37'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // XP calculation
@@ -348,38 +384,38 @@ export class VictoryScene extends Phaser.Scene {
     const bonus = severityBonus[this.issue.severity] || 100;
 
     // XP display with count-up
-    const xpLabel = this.add.text(cx - 100, panelY + 92, 'EXP:', {
+    const xpLabel = this.add.text(cx - 110, panelY + 98, 'EXP:', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '12px',
+      fontSize: '13px',
       color: '#40c0c0'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
-    const xpValue = this.add.text(cx - 40, panelY + 92, '+0', {
+    const xpValue = this.add.text(cx - 45, panelY + 98, '+0', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '12px',
+      fontSize: '13px',
       color: '#40c0c0'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
-    const bonusLabel = this.add.text(cx + 80, panelY + 92, 'Bonus:', {
+    const bonusLabel = this.add.text(cx + 65, panelY + 98, 'Bonus:', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '12px',
-      color: '#a050d0'
+      fontSize: '13px',
+      color: '#e88020'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
-    const bonusValue = this.add.text(cx + 155, panelY + 92, '+0', {
+    const bonusValue = this.add.text(cx + 150, panelY + 98, '+0', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '12px',
-      color: '#a050d0'
+      fontSize: '13px',
+      color: '#e88020'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // Severity badge
     const sevColors = {
-      critical: '#ff2040', high: '#e06020', medium: '#f0c040', low: '#40c040', info: '#4080e0'
+      critical: '#ff2040', high: '#e06020', medium: '#d4af37', low: '#40c040', info: '#4080e0'
     };
     const sevColor = sevColors[this.issue.severity] || '#808090';
-    const sevBadge = this.add.text(cx, panelY + 120, `[ ${(this.issue.severity || 'medium').toUpperCase()} ]`, {
+    const sevBadge = this.add.text(cx, panelY + 126, `[ ${(this.issue.severity || 'medium').toUpperCase()} ]`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '9px',
+      fontSize: '11px',
       color: sevColor
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
@@ -411,31 +447,31 @@ export class VictoryScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════════════
 
   addProgressSection(cx, defeated, total, allClear) {
-    const progressY = 420;
+    const progressY = 430;
 
     // Progress text
     const progText = this.add.text(cx, progressY, `Demons defeated: ${defeated} / ${total}`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '11px',
-      color: allClear ? COLORS.green : COLORS.white
+      fontSize: '12px',
+      color: allClear ? '#d4af37' : '#e8e8e8'
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // Progress bar background
     const barW = 340;
-    const barH = 16;
-    const barBg = this.add.rectangle(cx, progressY + 24, barW + 4, barH + 4, 0x0a0a1a).setDepth(6).setAlpha(0);
+    const barH = 18;
+    const barBg = this.add.rectangle(cx, progressY + 26, barW + 4, barH + 4, 0x0a0a1a).setDepth(6).setAlpha(0);
     barBg.setStrokeStyle(2, 0x4a4a6e);
 
     // Progress bar track
-    const barTrack = this.add.rectangle(cx, progressY + 24, barW, barH, 0x1a1a2e).setDepth(7).setAlpha(0);
+    const barTrack = this.add.rectangle(cx, progressY + 26, barW, barH, 0x1a1a2e).setDepth(7).setAlpha(0);
 
     // Progress bar fill (animated)
     const targetWidth = barW * (defeated / total);
-    const barColor = allClear ? 0x40c040 : 0xf0c040;
-    const barFill = this.add.rectangle(cx - barW / 2, progressY + 24, 0, barH - 2, barColor).setOrigin(0, 0.5).setDepth(8).setAlpha(0);
+    const barColor = allClear ? 0xd4af37 : 0xd4af37;
+    const barFill = this.add.rectangle(cx - barW / 2, progressY + 26, 0, barH - 2, barColor).setOrigin(0, 0.5).setDepth(8).setAlpha(0);
 
     // Shimmer overlay on the progress bar
-    const shimmer = this.add.rectangle(cx - barW / 2, progressY + 24, 30, barH - 2, 0xffffff, 0.15).setOrigin(0, 0.5).setDepth(9).setAlpha(0);
+    const shimmer = this.add.rectangle(cx - barW / 2, progressY + 26, 30, barH - 2, 0xffffff, 0.2).setOrigin(0, 0.5).setDepth(9).setAlpha(0);
 
     // Animate in
     this.tweens.add({
@@ -477,7 +513,7 @@ export class VictoryScene extends Phaser.Scene {
             delay: 3000,
             loop: true,
             callback: () => {
-              shimmer.setPosition(cx - barW / 2, progressY + 24);
+              shimmer.setPosition(cx - barW / 2, progressY + 26);
               shimmer.setAlpha(1);
               this.tweens.add({
                 targets: shimmer,
@@ -493,11 +529,11 @@ export class VictoryScene extends Phaser.Scene {
     });
 
     // Percentage text at end of bar
-    const pctText = this.add.text(cx + barW / 2 + 20, progressY + 24,
+    const pctText = this.add.text(cx + barW / 2 + 20, progressY + 26,
       Math.round((defeated / total) * 100) + '%', {
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: '10px',
-        color: COLORS.gold
+        fontSize: '11px',
+        color: '#d4af37'
       }).setOrigin(0, 0.5).setAlpha(0).setDepth(7);
 
     this.tweens.add({
@@ -509,40 +545,64 @@ export class VictoryScene extends Phaser.Scene {
 
     // All clear celebration text
     if (allClear) {
-      const clearText = this.add.text(cx, progressY + 50, '\u2605 ALL DEMONS VANQUISHED \u2605', {
+      // Big gold "DUNGEON CLEARED" as the hero text
+      const clearShadow = this.add.text(cx + 2, progressY + 58, '\u2605  DUNGEON CLEARED  \u2605', {
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: '13px',
-        color: COLORS.gold
-      }).setOrigin(0.5).setAlpha(0).setDepth(10);
-
-      const clearGlow = this.add.text(cx, progressY + 50, '\u2605 ALL DEMONS VANQUISHED \u2605', {
-        fontFamily: '"Press Start 2P", monospace',
-        fontSize: '14px',
-        color: '#ffee88'
+        fontSize: '18px',
+        color: '#000000'
       }).setOrigin(0.5).setAlpha(0).setDepth(9);
 
+      const clearText = this.add.text(cx, progressY + 56, '\u2605  DUNGEON CLEARED  \u2605', {
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: '18px',
+        color: '#d4af37'
+      }).setOrigin(0.5).setAlpha(0).setDepth(10);
+
+      const clearGlow = this.add.text(cx, progressY + 56, '\u2605  DUNGEON CLEARED  \u2605', {
+        fontFamily: '"Press Start 2P", monospace',
+        fontSize: '20px',
+        color: '#ffe680'
+      }).setOrigin(0.5).setAlpha(0).setDepth(9);
+
+      // Slam in with bounce like the victory title
+      clearShadow.setScale(2);
+      clearText.setScale(2);
+      clearGlow.setScale(2);
+
       this.tweens.add({
-        targets: clearText,
+        targets: [clearText, clearShadow],
+        scale: 1,
         alpha: 1,
         duration: 600,
         delay: 3500,
-        ease: 'Quad.easeOut'
+        ease: 'Bounce.easeOut'
       });
 
       // Pulsing glow behind the text
       this.tweens.add({
         targets: clearGlow,
+        scale: 1,
         alpha: 0.4,
         duration: 800,
         delay: 3500,
+        ease: 'Bounce.easeOut'
+      });
+
+      this.tweens.add({
+        targets: clearGlow,
+        alpha: 0.15,
+        scaleX: 1.03,
+        scaleY: 1.03,
+        duration: 900,
+        delay: 4100,
         yoyo: true,
         repeat: -1,
         ease: 'Sine.easeInOut'
       });
 
-      const subClear = this.add.text(cx, progressY + 72, 'DUNGEON CLEARED!', {
+      const subClear = this.add.text(cx, progressY + 82, 'ALL DEMONS VANQUISHED', {
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: '10px',
+        fontSize: '11px',
         color: '#40c040'
       }).setOrigin(0.5).setAlpha(0).setDepth(10);
 
@@ -550,7 +610,7 @@ export class VictoryScene extends Phaser.Scene {
         targets: subClear,
         alpha: 1,
         duration: 400,
-        delay: 3800
+        delay: 3900
       });
     }
   }
@@ -560,23 +620,25 @@ export class VictoryScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════════════
 
   addContinueButton(cx, remaining, allClear) {
-    const btnY = allClear ? 540 : 500;
+    const btnY = allClear ? 548 : 510;
 
     if (allClear) {
       // "Return to the surface" button
-      const btnBg = this.add.rectangle(cx, btnY, 380, 40, 0x1a1a2e, 0.95).setDepth(10);
-      btnBg.setStrokeStyle(2, 0x6a5a30);
+      const btnGlow = this.add.rectangle(cx, btnY, 390, 46, 0xd4af37, 0.1).setDepth(9);
+      const btnBg = this.add.rectangle(cx, btnY, 380, 42, 0x1a1a2e, 0.95).setDepth(10);
+      btnBg.setStrokeStyle(2, 0xd4af37);
       const btnText = this.add.text(cx, btnY, 'Return to the Surface', {
         fontFamily: '"Press Start 2P", monospace',
         fontSize: '12px',
-        color: COLORS.gold
+        color: '#d4af37'
       }).setOrigin(0.5).setDepth(11);
 
       // Fade in
+      btnGlow.setAlpha(0);
       btnBg.setAlpha(0);
       btnText.setAlpha(0);
       this.tweens.add({
-        targets: [btnBg, btnText],
+        targets: [btnGlow, btnBg, btnText],
         alpha: 1,
         duration: 500,
         delay: 4200
@@ -584,10 +646,10 @@ export class VictoryScene extends Phaser.Scene {
 
       // Pulse invitation
       this.tweens.add({
-        targets: btnBg,
-        scaleX: 1.03,
-        scaleY: 1.05,
-        duration: 1000,
+        targets: [btnBg, btnGlow],
+        scaleX: 1.04,
+        scaleY: 1.08,
+        duration: 900,
         delay: 4700,
         yoyo: true,
         repeat: -1,
@@ -595,8 +657,8 @@ export class VictoryScene extends Phaser.Scene {
       });
       this.tweens.add({
         targets: btnText,
-        alpha: 0.6,
-        duration: 1000,
+        alpha: 0.55,
+        duration: 900,
         delay: 4700,
         yoyo: true,
         repeat: -1,
@@ -617,30 +679,32 @@ export class VictoryScene extends Phaser.Scene {
       btnText.on('pointerdown', doReturn);
 
       // Hover effects
-      btnBg.on('pointerover', () => { btnBg.setFillStyle(0x2a2a3e, 0.95); btnBg.setStrokeStyle(2, 0xf0c040); });
-      btnBg.on('pointerout', () => { btnBg.setFillStyle(0x1a1a2e, 0.95); btnBg.setStrokeStyle(2, 0x6a5a30); });
+      btnBg.on('pointerover', () => { btnBg.setFillStyle(0x2a2a3e, 0.95); btnBg.setStrokeStyle(2, 0xffe680); });
+      btnBg.on('pointerout', () => { btnBg.setFillStyle(0x1a1a2e, 0.95); btnBg.setStrokeStyle(2, 0xd4af37); });
 
     } else {
       // "Continue to dungeon" button
-      const btnBg = this.add.rectangle(cx, btnY, 420, 40, 0x1a1a2e, 0.95).setDepth(10);
-      btnBg.setStrokeStyle(2, 0x4a4a6e);
+      const btnGlow = this.add.rectangle(cx, btnY, 430, 46, 0xd4af37, 0.08).setDepth(9);
+      const btnBg = this.add.rectangle(cx, btnY, 420, 42, 0x1a1a2e, 0.95).setDepth(10);
+      btnBg.setStrokeStyle(2, 0xd4af37);
       const btnText = this.add.text(cx, btnY - 2, `${remaining} demon${remaining > 1 ? 's' : ''} remain`, {
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: '11px',
-        color: COLORS.gold
+        fontSize: '12px',
+        color: '#d4af37'
       }).setOrigin(0.5).setDepth(11);
-      const btnSub = this.add.text(cx, btnY + 13, 'Click to continue', {
+      const btnSub = this.add.text(cx, btnY + 14, 'Click to continue', {
         fontFamily: 'monospace',
-        fontSize: '10px',
-        color: '#808090'
+        fontSize: '13px',
+        color: '#a0a0b0'
       }).setOrigin(0.5).setDepth(11);
 
       // Fade in
+      btnGlow.setAlpha(0);
       btnBg.setAlpha(0);
       btnText.setAlpha(0);
       btnSub.setAlpha(0);
       this.tweens.add({
-        targets: [btnBg, btnText, btnSub],
+        targets: [btnGlow, btnBg, btnText, btnSub],
         alpha: 1,
         duration: 500,
         delay: 3200
@@ -648,9 +712,9 @@ export class VictoryScene extends Phaser.Scene {
 
       // Pulse invitation
       this.tweens.add({
-        targets: btnBg,
-        scaleX: 1.02,
-        scaleY: 1.06,
+        targets: [btnBg, btnGlow],
+        scaleX: 1.03,
+        scaleY: 1.07,
         duration: 900,
         delay: 3700,
         yoyo: true,
@@ -680,8 +744,8 @@ export class VictoryScene extends Phaser.Scene {
       btnText.on('pointerdown', doContinue);
 
       // Hover effects
-      btnBg.on('pointerover', () => { btnBg.setFillStyle(0x2a2a3e, 0.95); btnBg.setStrokeStyle(2, 0xf0c040); });
-      btnBg.on('pointerout', () => { btnBg.setFillStyle(0x1a1a2e, 0.95); btnBg.setStrokeStyle(2, 0x4a4a6e); });
+      btnBg.on('pointerover', () => { btnBg.setFillStyle(0x2a2a3e, 0.95); btnBg.setStrokeStyle(2, 0xffe680); });
+      btnBg.on('pointerout', () => { btnBg.setFillStyle(0x1a1a2e, 0.95); btnBg.setStrokeStyle(2, 0xd4af37); });
     }
   }
 
@@ -690,29 +754,29 @@ export class VictoryScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════════════
 
   addCelebrationParticles(isExtraBurst) {
-    const colors = [0xf0c040, 0xe04040, 0x40c040, 0x4080e0, 0xa050d0, 0xffffff, 0xff8020];
-    const count = isExtraBurst ? 60 : 50;
+    const colors = [0xd4af37, 0xe04040, 0x40c040, 0x4080e0, 0xa050d0, 0xffffff, 0xe88020, 0xffe680];
+    const count = isExtraBurst ? 70 : 55;
 
     for (let i = 0; i < count; i++) {
       const x = Phaser.Math.Between(50, 750);
       const color = colors[Phaser.Math.Between(0, colors.length - 1)];
-      const size = Phaser.Math.Between(2, 5);
+      const size = Phaser.Math.Between(2, 6);
 
       // Mix of circles and small rectangles for confetti feel
       let particle;
       if (Math.random() > 0.5) {
         particle = this.add.circle(x, -Phaser.Math.Between(5, 30), size, color, 0.9);
       } else {
-        const w = Phaser.Math.Between(3, 8);
-        const h = Phaser.Math.Between(2, 4);
+        const w = Phaser.Math.Between(3, 9);
+        const h = Phaser.Math.Between(2, 5);
         particle = this.add.rectangle(x, -Phaser.Math.Between(5, 30), w, h, color, 0.9);
         particle.setAngle(Phaser.Math.Between(0, 360));
       }
       particle.setDepth(20);
 
       const targetY = Phaser.Math.Between(150, 620);
-      const drift = Phaser.Math.Between(-120, 120);
-      const duration = Phaser.Math.Between(1800, 4000);
+      const drift = Phaser.Math.Between(-140, 140);
+      const duration = Phaser.Math.Between(1800, 4200);
       const delay = isExtraBurst ? Phaser.Math.Between(0, 400) : Phaser.Math.Between(0, 2000);
 
       // Falling with drift and spin
@@ -733,12 +797,12 @@ export class VictoryScene extends Phaser.Scene {
     if (isExtraBurst) {
       for (let side = 0; side < 2; side++) {
         const baseX = side === 0 ? 80 : 720;
-        for (let j = 0; j < 8; j++) {
-          const spark = this.add.circle(baseX, 300, 3, 0xf0c040, 1).setDepth(20);
+        for (let j = 0; j < 12; j++) {
+          const spark = this.add.circle(baseX, 300, 3, 0xd4af37, 1).setDepth(20);
           const angle = (side === 0 ? -1 : 1) * Phaser.Math.Between(20, 70);
           this.tweens.add({
             targets: spark,
-            x: baseX + Math.cos(angle * Math.PI / 180) * Phaser.Math.Between(60, 200) * (side === 0 ? -1 : 1),
+            x: baseX + Math.cos(angle * Math.PI / 180) * Phaser.Math.Between(60, 220) * (side === 0 ? -1 : 1),
             y: 300 + Math.sin(angle * Math.PI / 180) * Phaser.Math.Between(-150, 150),
             alpha: 0,
             scaleX: 0.2,
