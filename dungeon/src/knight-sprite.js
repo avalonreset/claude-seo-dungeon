@@ -90,7 +90,7 @@ function animateAll() {
       state.frame = (state.frame + 1) % char.idleFrames;
     }
 
-    const scale = 2;
+    const scale = 6;
     const dw = char.frameW * scale;
     const dh = char.frameH * scale;
     state.ctx.canvas.width = dw;
