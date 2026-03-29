@@ -11,10 +11,21 @@ A gamified 16-bit dungeon crawler that turns SEO audits into boss battles. Choos
 [![Built with Phaser](https://img.shields.io/badge/built%20with-Phaser%203-orange)](https://phaser.io/)
 [![Powered by Claude](https://img.shields.io/badge/powered%20by-Claude%20Code-blueviolet)](https://claude.ai/claude-code)
 
-![Gate Scene](screenshots/gate-scene.png)
+## Screenshots
+
+| Gate Scene | Dungeon Hall |
+|:---:|:---:|
+| ![Gate Scene](screenshots/gate-scene-game.png) | ![Dungeon Hall](screenshots/dungeon-hall.png) |
+| Choose your warrior and quest | Browse SEO demons sorted by severity |
+
+| Battle Scene |
+|:---:|
+| ![Battle Scene](screenshots/battle-scene.png) |
+| Turn-based combat with real-time Guild Ledger and AI-powered channeling |
 
 ## Table of Contents
 
+- [Screenshots](#screenshots)
 - [How It Works](#how-it-works)
 - [Features](#features)
 - [Quick Start](#quick-start)
