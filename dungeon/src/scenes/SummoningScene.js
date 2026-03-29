@@ -795,38 +795,46 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   async runAudit() {
-    // Milestone-based progress from real audit data.
-    // Calibrated from a full claude-github.com audit (149 total events):
-    //   Skill/ToolSearch: 5 events (setup)
-    //   WebFetch: 24 events (page scanning + subagent fetches)
-    //   Agent: 12 events (subagent launches)
-    //   Bash: 78 events (subagent work — curls, greps, scripts)
-    //   Read: 24 events (file reads, result reads)
-    //   Write/Todo: 6 events (report writing)
-    //   [Complete]: 1 event (final signal)
+    // Three-phase progress model calibrated from real audits:
     //
-    // Strategy: use logarithmic curve based on total event count.
-    // This naturally slows down as it approaches 90%, works for any site size.
-    // A small site (~80 events) will fill more per event.
-    // A large site (~300 events) will fill less per event.
-    // The bar never exceeds 92% until [Complete] is received.
+    // Phase 1: Setup & Agent Launch (0–25%)
+    //   First ~20 events: skill invocation, tool searches, initial fetches,
+    //   agent spawn messages. Every event is worth a lot here.
+    //
+    // Phase 2: Agent Work (25–80%)
+    //   Bulk of the audit — agents running bash, fetch, read, grep commands.
+    //   ~100-250 events depending on site. Logarithmic curve so it moves
+    //   steadily but slows as it approaches the ceiling.
+    //
+    // Phase 3: Completion (80–100%)
+    //   Agent completion signals, consolidation, JSON output.
+    //
     let totalEvents = 0;
     let completeReceived = false;
+    let agentsLaunched = 0;
     let agentsCompleted = 0;
-    const TOTAL_AGENTS = 8; // typical subagent count for a full audit
 
     const updateProgress = () => {
       if (completeReceived) {
-        this.setProgress(0.95);
+        this.setProgress(0.92);
         return;
       }
-      // Two-factor progress:
-      //   1. Agent completions (each worth ~10% of the bar, up to 80%)
-      //   2. Event count fills the gaps between agent completions
-      const agentProgress = Math.min(agentsCompleted / TOTAL_AGENTS, 1) * 0.85;
-      // Event-based sub-progress within current agent phase (fills remaining ~7%)
-      const eventBonus = Math.min(totalEvents / 200, 1) * 0.07;
-      const raw = Math.min(agentProgress + eventBonus, 0.92);
+
+      // Phase 1: first 20 events ramp quickly to 25%
+      // Each early event is worth ~1.25% (feels responsive immediately)
+      const setupProgress = Math.min(totalEvents / 20, 1) * 0.25;
+
+      // Phase 2: events 20+ fill 25%–80% on a log curve
+      // log(1) = 0, log(~150) ≈ 5 — normalized to 0–1 range
+      const workEvents = Math.max(totalEvents - 20, 0);
+      const workProgress = workEvents > 0
+        ? Math.min(Math.log(1 + workEvents) / Math.log(180), 1) * 0.55
+        : 0;
+
+      // Phase 3: agent completions add bonus on top (up to 12%)
+      const completionBonus = Math.min(agentsCompleted / 8, 1) * 0.12;
+
+      const raw = Math.min(setupProgress + workProgress + completionBonus, 0.90);
       this.setProgress(raw);
     };
 
@@ -843,14 +851,18 @@ export class SummoningScene extends Phaser.Scene {
           this.streamText.setText(clean.substring(0, 60));
           if (this.game.addLog) this.game.addLog(clean);
 
-          // Count all meaningful events
           totalEvents++;
 
           if (clean === '[Complete]') {
             completeReceived = true;
           }
 
-          // Detect subagent completions for major progress jumps
+          // Detect agent launches
+          if (/^\[Agent\]/i.test(clean)) {
+            agentsLaunched++;
+          }
+
+          // Detect agent completions
           if (/audit complete|agent complete|agents?\s+remaining/i.test(clean)) {
             agentsCompleted++;
           }
@@ -858,12 +870,13 @@ export class SummoningScene extends Phaser.Scene {
           updateProgress();
         }
 
-        // Contextual status messages based on agent progress
+        // Contextual status messages
         const phase = completeReceived ? 'Assembling results...'
-          : agentsCompleted > 0 ? `${agentsCompleted} of ${TOTAL_AGENTS} agents complete`
-          : totalEvents > 5 ? 'Subagents scanning...'
-          : totalEvents > 0 ? 'Initializing audit...'
-          : 'Connecting...';
+          : agentsCompleted > 0 ? `${agentsCompleted} agents returned`
+          : agentsLaunched > 0 ? `${agentsLaunched} agents deployed`
+          : totalEvents > 3 ? 'Initializing audit...'
+          : totalEvents > 0 ? 'Connecting...'
+          : 'Summoning...';
         this.demonCounter.setText(phase);
       }, model);
 
