@@ -84,9 +84,14 @@ export class BootScene extends Phaser.Scene {
     }
 
     // Remove old animations if they exist (handles character swap re-entry)
-    this.anims.getAnimationNames().forEach(name => {
-      if (name.startsWith('char_')) this.anims.remove(name);
-    });
+    const oldAnimKeys = [
+      'char_idle_anim', 'char_run_anim', 'char_attack_anim',
+      'char_hit_anim', 'char_death_anim',
+      'char_attack2_anim', 'char_attack3_anim', 'char_jump_anim'
+    ];
+    for (const key of oldAnimKeys) {
+      if (this.anims.exists(key)) this.anims.remove(key);
+    }
 
     this.anims.create({ key: 'char_idle_anim', frames: this.anims.generateFrameNumbers('char_idle', { start: 0, end: cfg.idleFrames - 1 }), frameRate: 8, repeat: -1 });
     this.anims.create({ key: 'char_run_anim', frames: this.anims.generateFrameNumbers('char_run', { start: 0, end: cfg.runFrames - 1 }), frameRate: 10, repeat: -1 });
