@@ -1,18 +1,57 @@
 /**
  * WebSocket client for communicating with the bridge server.
+ * Auto-reconnects on disconnect and exposes connection state.
  */
 export class BridgeClient {
   constructor() {
     this.ws = null;
     this.handlers = new Map();
     this.requestId = 0;
+    this.connected = false;
+    this._url = 'ws://localhost:3001';
+    this._reconnectTimer = null;
+    this._onStatusChange = []; // callbacks: (connected: boolean) => void
   }
 
-  connect(url = 'ws://localhost:3001') {
+  /** Register a callback that fires whenever connection status changes. */
+  onStatusChange(fn) {
+    this._onStatusChange.push(fn);
+    fn(this.connected); // fire immediately with current state
+  }
+
+  _setConnected(val) {
+    if (this.connected === val) return;
+    this.connected = val;
+    for (const fn of this._onStatusChange) {
+      try { fn(val); } catch (_) {}
+    }
+  }
+
+  connect(url) {
+    if (url) this._url = url;
     return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(url);
-      this.ws.onopen = () => resolve();
-      this.ws.onerror = (err) => reject(err);
+      this.ws = new WebSocket(this._url);
+
+      this.ws.onopen = () => {
+        this._setConnected(true);
+        this._clearReconnect();
+        resolve();
+      };
+
+      this.ws.onerror = (err) => {
+        if (!this.connected) reject(err);
+      };
+
+      this.ws.onclose = () => {
+        this._setConnected(false);
+        // Reject all pending handlers so callers don't hang forever
+        for (const [id, handler] of this.handlers) {
+          handler.reject(new Error('Bridge connection lost'));
+          this.handlers.delete(id);
+        }
+        this._scheduleReconnect();
+      };
+
       this.ws.onmessage = (event) => {
         let data;
         try { data = JSON.parse(event.data); } catch (e) { console.warn('WS: bad JSON', e); return; }
@@ -32,14 +71,36 @@ export class BridgeClient {
     });
   }
 
+  _scheduleReconnect() {
+    if (this._reconnectTimer) return;
+    this._reconnectTimer = setInterval(() => {
+      if (this.connected) { this._clearReconnect(); return; }
+      console.log('Bridge: attempting reconnect...');
+      try {
+        this.connect().catch(() => {}); // swallow — onclose will retry again
+      } catch (_) {}
+    }, 3000);
+  }
+
+  _clearReconnect() {
+    if (this._reconnectTimer) {
+      clearInterval(this._reconnectTimer);
+      this._reconnectTimer = null;
+    }
+  }
+
+  _ensureOpen() {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      throw new Error('Bridge server is not connected. Start it with: npm run server');
+    }
+  }
+
   /**
    * Send a command to Claude CLI via the bridge.
-   * @param {string} command - The prompt/command to send
-   * @param {object} opts - Options like { onStream }
-   * @returns {Promise<object>} The result
    */
   send(command, opts = {}) {
     return new Promise((resolve, reject) => {
+      try { this._ensureOpen(); } catch (e) { return reject(e); }
       const id = ++this.requestId;
       this.handlers.set(id, { resolve, reject, onStream: opts.onStream });
       this.ws.send(JSON.stringify({ id, command }));
@@ -51,6 +112,7 @@ export class BridgeClient {
    */
   audit(domain, projectPath, onStream, model) {
     return new Promise((resolve, reject) => {
+      try { this._ensureOpen(); } catch (e) { return reject(e); }
       const id = ++this.requestId;
       this.activeAuditId = id;
       this.handlers.set(id, { resolve, reject, onStream });
@@ -63,6 +125,7 @@ export class BridgeClient {
    */
   fix(issue, projectPath, onStream, model) {
     return new Promise((resolve, reject) => {
+      try { this._ensureOpen(); } catch (e) { return reject(e); }
       const id = ++this.requestId;
       this.handlers.set(id, { resolve, reject, onStream });
       this.ws.send(JSON.stringify({
@@ -80,6 +143,7 @@ export class BridgeClient {
    */
   commit(message, projectPath, onStream, model) {
     return new Promise((resolve, reject) => {
+      try { this._ensureOpen(); } catch (e) { return reject(e); }
       const id = ++this.requestId;
       this.handlers.set(id, { resolve, reject, onStream });
       this.ws.send(JSON.stringify({ id, type: 'commit', command: message, projectPath, model }));
@@ -87,13 +151,12 @@ export class BridgeClient {
   }
 
   /**
-   * Cancel a running request by its ID. Kills the server-side process.
+   * Cancel a running request by its ID.
    */
   cancel(id) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ id, type: 'cancel' }));
     }
-    // Reject the pending handler so the caller's await unblocks
     const handler = this.handlers.get(id);
     if (handler) {
       handler.reject(new Error('Cancelled by user'));
@@ -111,6 +174,7 @@ export class BridgeClient {
   }
 
   disconnect() {
+    this._clearReconnect();
     if (this.ws) this.ws.close();
   }
 }

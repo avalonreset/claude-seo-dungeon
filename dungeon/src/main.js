@@ -43,12 +43,62 @@ function returnToTitle() {
 window.returnToTitle = returnToTitle;
 
 // ── Bridge Connection ──────────────────────────
+function _createDisconnectBanner() {
+  if (document.getElementById('bridge-disconnect-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'bridge-disconnect-banner';
+  banner.innerHTML = '&#9888; BRIDGE SERVER DISCONNECTED &mdash; Run <code>npm run server</code> in the dungeon/ directory';
+  banner.style.cssText = `
+    position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
+    background: linear-gradient(90deg, #8b0000, #cc2200, #8b0000);
+    color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    font-weight: bold; text-align: center; padding: 10px 20px;
+    letter-spacing: 1px; box-shadow: 0 2px 20px rgba(200, 0, 0, 0.6);
+    animation: bannerPulse 2s ease-in-out infinite;
+  `;
+  if (!document.getElementById('banner-pulse-style')) {
+    const s = document.createElement('style');
+    s.id = 'banner-pulse-style';
+    s.textContent = `
+      @keyframes bannerPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.8; } }
+      #bridge-disconnect-banner code {
+        background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 3px; font-size: 13px;
+      }
+    `;
+    document.head.appendChild(s);
+  }
+  document.body.appendChild(banner);
+}
+
+function _removeDisconnectBanner() {
+  const banner = document.getElementById('bridge-disconnect-banner');
+  if (banner) banner.remove();
+}
+
 async function connectBridge() {
   const status = document.getElementById('bridge-status');
+
+  // Listen for connection state changes globally
+  bridge.onStatusChange((connected) => {
+    if (connected) {
+      _removeDisconnectBanner();
+      // Update title screen status if visible
+      if (status) {
+        status.textContent = 'Ready.';
+        status.className = 'connected';
+      }
+    } else {
+      _createDisconnectBanner();
+      addLog('Bridge disconnected!');
+      if (status) {
+        status.textContent = 'Bridge disconnected — reconnecting...';
+        status.className = 'error';
+      }
+    }
+  });
+
   try {
     await bridge.connect();
-    status.textContent = 'Ready.';
-    status.className = 'connected';
     addLog('Ready to kill');
   } catch (err) {
     status.textContent = 'The dungeon is unreachable. Start the server.';
@@ -264,12 +314,15 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateButtonState() {
     const domainOk = isDomainValid(domainInput.value);
     const pathOk = isPathValid(pathInput.value);
-    btn.disabled = !(domainOk && pathOk);
+    btn.disabled = !(domainOk && pathOk && bridge.connected);
     // Clear error area when both valid
     if (domainOk && pathOk) {
-      errorArea.textContent = '';
+      errorArea.textContent = bridge.connected ? '' : 'Bridge server not connected';
     }
   }
+
+  // Re-check button state when bridge connection changes
+  bridge.onStatusChange(() => updateButtonState());
 
   // ── Live validation on input ────────────────
   domainInput.addEventListener('input', () => {
