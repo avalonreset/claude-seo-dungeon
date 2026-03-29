@@ -7,7 +7,7 @@ description: >
   "international SEO", "multi-language", "multi-region", or "language tags".
 user-invokable: true
 argument-hint: "[url]"
-license: MIT
+license: Proprietary
 allowed-tools: Read, Grep, Glob, Bash, WebFetch
 metadata:
   author: avalonreset-pro

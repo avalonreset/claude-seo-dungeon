@@ -11,7 +11,7 @@ description: >
   or "real search data".
 user-invokable: true
 argument-hint: "[command] [query]"
-license: MIT
+license: Proprietary
 allowed-tools: Read, Grep, Glob, Bash, WebFetch, Write
 compatibility: "Requires DataForSEO MCP server"
 metadata:

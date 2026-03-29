@@ -7,7 +7,7 @@ description: >
   "full SEO check", "analyze my site", or "website health check".
 user-invokable: true
 argument-hint: "[url]"
-license: MIT
+license: Proprietary
 allowed-tools: Read, Grep, Glob, Bash, WebFetch, Agent
 metadata:
   author: avalonreset-pro

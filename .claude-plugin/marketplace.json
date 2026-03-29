@@ -2,7 +2,7 @@
   "name": "claude-seo-marketplace",
   "owner": {
     "name": "avalonreset-pro",
-    "email": "agricidaniel@users.noreply.github.com"
+    "email": "avalonreset-pro@users.noreply.github.com"
   },
   "metadata": {
     "description": "SEO analysis tools for Claude Code",
@@ -15,7 +15,7 @@
       "description": "Comprehensive SEO analysis skill for Claude Code. Covers technical SEO, content quality (E-E-A-T), schema markup, image optimization, sitemap architecture, AI search optimization (GEO), local SEO, maps intelligence, and strategic planning across all industries.",
       "homepage": "https://github.com/avalonreset-pro/claude-seo-dungeon",
       "repository": "https://github.com/avalonreset-pro/claude-seo-dungeon",
-      "license": "MIT",
+      "license": "Proprietary",
       "keywords": ["seo", "technical-seo", "e-e-a-t", "schema-markup", "local-seo", "geo", "ai-search"],
       "category": "seo",
       "tags": ["seo", "audit", "technical", "content", "schema", "local", "geo"]

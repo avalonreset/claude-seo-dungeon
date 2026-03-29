@@ -11,7 +11,21 @@ A gamified 16-bit dungeon crawler that turns SEO audits into boss battles. Choos
 [![Built with Phaser](https://img.shields.io/badge/built%20with-Phaser%203-orange)](https://phaser.io/)
 [![Powered by Claude](https://img.shields.io/badge/powered%20by-Claude%20Code-blueviolet)](https://claude.ai/claude-code)
 
-![Gate Scene](screenshots/gate-2cached.png)
+![Gate Scene](screenshots/gate-scene.png)
+
+## Table of Contents
+
+- [How It Works](#how-it-works)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [What's Included](#whats-included)
+- [Character Classes](#character-classes)
+- [Tech Stack](#tech-stack)
+- [How the Bridge Works](#how-the-bridge-works)
+- [Hackathon Context](#hackathon-context)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## How It Works
 

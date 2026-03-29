@@ -14,7 +14,7 @@ description: >
   "technical SEO", "content quality", "page speed", "structured data".
 user-invokable: true
 argument-hint: "[command] [url]"
-license: MIT
+license: Proprietary
 allowed-tools: Read, Grep, Glob, Bash, WebFetch, Agent
 metadata:
   author: avalonreset-pro

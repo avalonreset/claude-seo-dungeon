@@ -12,7 +12,7 @@ description: >
   or "local search".
 user-invokable: true
 argument-hint: "[url]"
-license: MIT
+license: Proprietary
 allowed-tools: Read, Grep, Glob, Bash, WebFetch, Write
 metadata:
   author: avalonreset-pro

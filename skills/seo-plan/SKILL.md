@@ -8,7 +8,7 @@ description: >
   "site architecture", or "SEO roadmap".
 user-invokable: true
 argument-hint: "[business-type]"
-license: MIT
+license: Proprietary
 allowed-tools: Read, Grep, Glob, Bash, WebFetch, Write
 metadata:
   author: avalonreset-pro

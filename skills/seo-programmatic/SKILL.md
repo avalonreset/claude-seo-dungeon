@@ -8,7 +8,7 @@ description: >
   "generated pages", or "data-driven SEO".
 user-invokable: true
 argument-hint: "[url or plan]"
-license: MIT
+license: Proprietary
 allowed-tools: Read, Grep, Glob, Bash, WebFetch, Write
 metadata:
   author: avalonreset-pro

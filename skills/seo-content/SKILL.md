@@ -6,7 +6,7 @@ description: >
   "readability check", "thin content", or "content audit".
 user-invokable: true
 argument-hint: "[url]"
-license: MIT
+license: Proprietary
 allowed-tools: Read, Grep, Glob, Bash, WebFetch
 metadata:
   author: avalonreset-pro

@@ -7,7 +7,7 @@ description: >
   "robots.txt", "Core Web Vitals", "site speed", or "security headers".
 user-invokable: true
 argument-hint: "[url]"
-license: MIT
+license: Proprietary
 allowed-tools: Read, Grep, Glob, Bash, WebFetch
 metadata:
   author: avalonreset-pro

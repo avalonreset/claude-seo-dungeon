@@ -8,7 +8,7 @@ description: >
   "compare competitors", or "alternative to".
 user-invokable: true
 argument-hint: "[url or generate] [competitor]"
-license: MIT
+license: Proprietary
 allowed-tools: Read, Grep, Glob, Bash, WebFetch
 metadata:
   author: avalonreset-pro

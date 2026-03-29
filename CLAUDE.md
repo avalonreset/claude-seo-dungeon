@@ -76,21 +76,21 @@ npm run dev          # Starts Vite + WebSocket bridge
 
 ### Dev Shortcuts
 
-- `?battle=1` — Skip to battle scene with first cached demon
-- `?battle=1&issue=2` — Skip to specific issue index
+- `?battle=1` - Skip to battle scene with first cached demon
+- `?battle=1&issue=2` - Skip to specific issue index
 
 ### Key Files
 
-- `dungeon/src/scenes/BattleScene.js` — Main combat logic (~2400 lines)
-- `dungeon/src/utils/sound-manager.js` — 25+ procedural sound effects
-- `dungeon/src/knight-sprite.js` — Character select animations
-- `dungeon/server/index.js` — WebSocket bridge to Claude Code
+- `dungeon/src/scenes/BattleScene.js` - Main combat logic (~2400 lines)
+- `dungeon/src/utils/sound-manager.js` - 25+ procedural sound effects
+- `dungeon/src/knight-sprite.js` - Character select animations
+- `dungeon/server/index.js` - WebSocket bridge to Claude Code
 
 ### Rules
 
 - Phaser scenes go in `dungeon/src/scenes/`
 - Utility modules go in `dungeon/src/utils/`
-- All audio is procedural (Web Audio API) — no audio files
+- All audio is procedural (Web Audio API) - no audio files
 - Canvas renders at 3x DPR minimum for 4K text clarity
 - Sprite assets stay under `dungeon/assets/luizmelo/`
 
@@ -110,6 +110,6 @@ These run server-side through the WebSocket bridge when a player starts an audit
 ## Ecosystem
 
 Part of the avalonreset-pro tool suite:
-- [Claude SEO](https://github.com/avalonreset-pro/claude-seo-dungeon) — this project
-- [Claude GitHub](https://github.com/avalonreset-pro/claude-github) — GitHub repo optimization
-- [Codex SEO](https://github.com/avalonreset-pro/codex-seo) — SEO tools for Codex CLI
+- [Claude SEO](https://github.com/avalonreset-pro/claude-seo-dungeon) - this project
+- [Claude GitHub](https://github.com/avalonreset-pro/claude-github) - GitHub repo optimization
+- [Codex SEO](https://github.com/avalonreset-pro/codex-seo) - SEO tools for Codex CLI

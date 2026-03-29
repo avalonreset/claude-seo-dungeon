@@ -14,7 +14,7 @@ Live SEO data via the [DataForSEO MCP server](https://github.com/dataforseo/mcp-
 
 ```bash
 git clone https://github.com/avalonreset-pro/claude-seo-dungeon.git
-cd claude-seo
+cd claude-seo-dungeon
 ./extensions/dataforseo/install.sh
 ```
 
@@ -22,7 +22,7 @@ cd claude-seo
 
 ```powershell
 git clone https://github.com/avalonreset-pro/claude-seo-dungeon.git
-cd claude-seo
+cd claude-seo-dungeon
 .\extensions\dataforseo\install.ps1
 ```
 
