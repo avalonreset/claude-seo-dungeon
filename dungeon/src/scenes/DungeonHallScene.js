@@ -12,13 +12,13 @@ const LIST_TOP = 94;
 const LIST_BOTTOM = 518;
 const LIST_VISIBLE = LIST_BOTTOM - LIST_TOP; // 424px
 
-// Demon sprite scales per severity (real 32x32 PNGs scaled up)
+// Demon sprite scales per severity (real 32x32 PNGs, fit within row height)
 const SPRITE_SCALES = {
-  critical: 4,
-  high: 3.5,
-  medium: 3,
-  low: 2.5,
-  info: 2
+  critical: 1.8,
+  high: 1.6,
+  medium: 1.5,
+  low: 1.4,
+  info: 1.3
 };
 
 /**
