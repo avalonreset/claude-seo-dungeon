@@ -16,19 +16,19 @@ A gamified 16-bit dungeon crawler that turns SEO audits into boss battles. Built
 ## Screenshots
 
 ### Title Screen
-![Title Screen](screenshots/title-screen.png)
+![Title Screen](screenshots/title-screen.webp)
 *Pick a character class, enter a domain and project path, seal your fate*
 
 ### Gate Scene
-![Gate Scene](screenshots/gate-scene-full.png)
+![Gate Scene](screenshots/gate-scene-full.webp)
 *Continue a previous quest or begin a new one*
 
 ### Dungeon Hall
-![Dungeon Hall](screenshots/dungeon-hall.png)
+![Dungeon Hall](screenshots/dungeon-hall.webp)
 *Browse SEO demons sorted by severity with flickering torches and ambient particles*
 
 ### Battle Scene
-![Battle Scene](screenshots/battle-scene.png)
+![Battle Scene](screenshots/battle-scene.webp)
 *Turn-based combat with real-time Guild Ledger and AI-powered channeling*
 
 ## Table of Contents
