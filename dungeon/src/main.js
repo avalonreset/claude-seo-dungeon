@@ -407,6 +407,85 @@ document.addEventListener('DOMContentLoaded', () => {
   connectBridge();
   setTimeout(() => domainInput.focus(), 300);
 
+  // ── Ledger Terminal ─────────────────────────
+  const logInput = document.getElementById('log-input');
+  const logInputBar = document.getElementById('log-input-bar');
+  const logCancel = document.getElementById('log-cancel');
+  let ledgerRequestId = null;
+  let lastEscTime = 0;
+
+  const sendLedgerCommand = async (text) => {
+    if (!text.trim() || !bridge.connected) return;
+    logInput.value = '';
+    logInputBar.classList.add('running');
+    addLog('> ' + text);
+
+    try {
+      const projectPath = document.getElementById('path-input')?.value?.trim() || '.';
+      const model = window.selectedCharacter?.model || 'claude-sonnet-4-6';
+
+      ledgerRequestId = bridge.requestId + 1;
+      const result = await bridge.send(text, {
+        onStream: (chunk) => {
+          const clean = chunk.replace(/[\n\r]+/g, ' ').trim();
+          if (clean.length > 0) addLog(clean);
+        }
+      });
+
+      // Show result if there's a summary
+      if (result?.data?.summary) {
+        addLog(result.data.summary);
+      }
+    } catch (err) {
+      if (err.message !== 'Cancelled by user') {
+        addLog('Error: ' + (err.message || 'unknown'));
+      }
+    } finally {
+      ledgerRequestId = null;
+      logInputBar.classList.remove('running');
+    }
+  };
+
+  logInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && logInput.value.trim()) {
+      e.preventDefault();
+      sendLedgerCommand(logInput.value);
+    }
+    if (e.key === 'Escape') {
+      const now = Date.now();
+      if (now - lastEscTime < 500 && ledgerRequestId) {
+        // Double-tap Escape = cancel
+        bridge.cancel(ledgerRequestId);
+        addLog('Cancelled.');
+        logInputBar.classList.remove('running');
+      }
+      lastEscTime = now;
+    }
+  });
+
+  // Global Escape handler for cancel
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const now = Date.now();
+      if (now - lastEscTime < 500 && ledgerRequestId) {
+        bridge.cancel(ledgerRequestId);
+        addLog('Cancelled.');
+        logInputBar.classList.remove('running');
+        ledgerRequestId = null;
+      }
+      lastEscTime = now;
+    }
+  });
+
+  logCancel.addEventListener('click', () => {
+    if (ledgerRequestId) {
+      bridge.cancel(ledgerRequestId);
+      addLog('Cancelled.');
+      logInputBar.classList.remove('running');
+      ledgerRequestId = null;
+    }
+  });
+
   // ── Dev shortcut: ?battle=1 skips to battle with first cached demon ──
   const params = new URLSearchParams(window.location.search);
   if (params.get('battle')) {
