@@ -118,9 +118,11 @@ wss.on('connection', (ws) => {
 async function runAudit(domain, onStream, cwd, requestId, model) {
   const prompt = `Run /seo audit on ${domain}. This will trigger the full SEO audit skill which spawns multiple subagents for technical SEO, content quality, schema markup, performance, crawlability, images, and more.
 
-After the audit completes, take ALL the findings and format them as a single JSON object. Return ONLY valid JSON at the very end (no markdown fences): {"domain":"${domain}","score":<overall 0-100>,"totalIssues":<n>,"issues":[{"id":<n>,"severity":"<critical|high|medium|low|info>","title":"<short title>","description":"<one sentence>","category":"<category>","hp":<10-100 based on effort to fix>}]}
+After the audit completes, CONSOLIDATE the findings into actionable groups. Do NOT list every granular finding as a separate issue. Instead, group related problems that would be fixed together into a single issue. For example, all mobile responsiveness problems (touch targets, font sizes, overflow) become one issue. All missing meta tags become one issue. Aim for 8-15 total issues maximum — each one should represent a meaningful, distinct area of work.
 
-Include every issue found by every subagent. Be thorough.`;
+Format as a single JSON object. Return ONLY valid JSON at the very end (no markdown fences): {"domain":"${domain}","score":<overall 0-100>,"totalIssues":<n>,"issues":[{"id":<n>,"severity":"<critical|high|medium|low|info>","title":"<clear actionable title>","description":"<what specifically is wrong and what needs to be fixed — include key details so the fix agent knows what to do>","category":"<category>","hp":<10-100 based on combined effort to fix all items in this group>}]}
+
+Quality over quantity. Each issue should be a real battle worth fighting, not busywork.`;
 
   const raw = await runClaude(prompt, onStream, undefined, requestId, model);
 
@@ -160,9 +162,9 @@ Include every issue found by every subagent. Be thorough.`;
  * Runs inside the user's project directory so Claude can edit real files.
  */
 async function runFix(issueDescription, projectCwd, onStream, requestId, model) {
-  const prompt = `You are working in a website project directory. Fix this specific SEO issue by editing the actual source files: ${issueDescription}
+  const prompt = `You are working in a website project directory. Fix this SEO issue by editing the actual source files: ${issueDescription}
 
-Look at the project files, identify what needs to change, and make the edits. Be precise and minimal — only change what's needed to fix this specific issue. After making changes, return a JSON summary: {"fixed":true,"summary":"<what was changed>","filesChanged":["<list of files>"]}
+This issue may represent a group of related problems. Fix ALL aspects described — not just one. Look at the project files, identify everything that needs to change, and make the edits. Be thorough but precise — fix what's described, nothing more. After making changes, return a JSON summary: {"fixed":true,"summary":"<what was changed>","filesChanged":["<list of files>"]}
 
 Return the JSON summary at the very end after making all changes.`;
 
