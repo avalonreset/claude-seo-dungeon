@@ -1,4 +1,5 @@
 import { CHARACTERS } from '../knight-sprite.js';
+import { SFX } from '../utils/sound-manager.js';
 
 // Lookup: model ID → character key
 const MODEL_TO_CHAR = {};
@@ -36,6 +37,11 @@ export class GateScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor(0x05050f);
     this.cameras.main.fadeIn(600, 0, 0, 0);
+
+    // Show volume control on this scene, hide on exit
+    const sfxEl = document.getElementById('sfx-control');
+    if (sfxEl) sfxEl.style.display = 'flex';
+    this.events.once('shutdown', () => { if (sfxEl) sfxEl.style.display = 'none'; });
 
     // Only check cache for the SELECTED character/model
     const currentModel = this.game.characterConfig?.model || 'claude-sonnet-4-6';
@@ -79,6 +85,8 @@ export class GateScene extends Phaser.Scene {
     if (!this.cachedRun) {
       this._drawBackground(W, H);
       this.time.delayedCall(400, () => {
+        SFX.play('doorOpen');
+        SFX.play('sceneTransition');
         this.cameras.main.fadeOut(400, 0, 0, 0);
         this.time.delayedCall(400, () => {
           this.scene.start('Summoning', {
@@ -100,7 +108,7 @@ export class GateScene extends Phaser.Scene {
     const cfg = this.game.characterConfig;
     const feetY = cfg.runGroundY || cfg.groundY;
     const originY = feetY / cfg.frameH;
-    this.knight = this.add.sprite(cx, H * 0.52, 'char_idle')
+    this.knight = this.add.sprite(cx, H * 0.54, 'char_idle')
       .setOrigin(0.5, originY)
       .setScale(2.5)
       .setDepth(10)
@@ -178,38 +186,28 @@ export class GateScene extends Phaser.Scene {
     const total = issues.length;
     const defeated = total - remaining;
 
-    const columnsHTML = `
-      <div class="gate-column" style="--accent: ${m.color};">
-        <div class="gate-col-header">
-          <div class="gate-col-name" style="color: ${m.color};">${m.charName}</div>
-          <div class="gate-col-model" style="color: ${m.color}; border-color: ${m.color}40;">${m.label}</div>
-        </div>
-        <div class="gate-col-cards">
-          <div class="gate-row-top">
-            <div class="gate-card gate-card-continue" data-model="${m.key}" data-action="resume" style="--accent: ${m.color};">
-              <div class="gate-card-label" style="color: ${m.color};">Continue Quest</div>
-              <div class="gate-card-time dim">${timeAgo} &middot; ${dateStr}</div>
-              <div class="gate-card-stat">
-                <span class="stat-demons">${remaining} demons remain</span>
-                ${defeated > 0 ? `<span class="stat-slain">${defeated} of ${total} slain</span>` : ''}
-              </div>
-            </div>
-          </div>
-          <div class="gate-row-bottom">
-            <div class="gate-card gate-card-new" data-model="${m.key}" data-action="rerun" style="--accent: ${m.color};">
-              <div class="gate-card-label gate-card-label-new">New Quest</div>
-              <div class="gate-card-sub dim">Abandon progress. Descend anew.</div>
-            </div>
-          </div>
-        </div>
-      </div>`;
-
     overlay.innerHTML = `
       <div class="gate-title">THE GATE AWAITS</div>
       <div class="gate-domain">${this.domain}</div>
-      <div class="gate-section-label">A Quest Awaits</div>
-      <div class="gate-columns">${columnsHTML}</div>
-      <div class="gate-rune" id="gate-rune" title="Sever the link">&#x2715;</div>
+      <div class="gate-row">
+        <div class="gate-card gate-card-continue" data-model="${m.key}" data-action="resume" style="--accent: ${m.color};">
+          <div class="gate-card-label" style="color: ${m.color};">Continue Quest</div>
+          <div class="gate-card-time dim">${timeAgo} &middot; ${dateStr}</div>
+          <div class="gate-card-stat">
+            <span class="stat-demons">${remaining} demons remain</span>
+            ${defeated > 0 ? `<span class="stat-slain">${defeated} of ${total} slain</span>` : ''}
+          </div>
+        </div>
+        <div class="gate-center-spacer">
+          <div class="gate-col-name" style="color: ${m.color};">${m.charName}</div>
+          <div class="gate-col-model" style="color: ${m.color}; border-color: ${m.color}40;">${m.label}</div>
+        </div>
+        <div class="gate-card gate-card-new" data-model="${m.key}" data-action="rerun" style="--accent: ${m.color};">
+          <div class="gate-card-label gate-card-label-new">New Quest</div>
+          <div class="gate-card-sub dim">Abandon progress.<br>Descend anew.</div>
+        </div>
+      </div>
+      <div class="gate-return" id="gate-rune">Return to the Guild Hall</div>
     `;
 
     const style = document.createElement('style');
@@ -218,101 +216,80 @@ export class GateScene extends Phaser.Scene {
       #gate-overlay {
         position: absolute;
         pointer-events: none;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
         font-family: 'JetBrains Mono', monospace;
         z-index: 10;
-        padding-top: 3%;
         box-sizing: border-box;
-        overflow: hidden auto;
       }
       #gate-overlay > * { pointer-events: auto; }
 
       .gate-title {
+        position: absolute;
+        top: 4%;
+        left: 0; right: 0;
+        text-align: center;
         font-size: clamp(14px, 2.8vw, 22px);
         font-weight: 600;
         color: #d4af37;
         letter-spacing: 8px;
         text-shadow: 0 0 40px rgba(212, 175, 55, 0.15);
-        margin-bottom: 4px;
       }
       .gate-domain {
+        position: absolute;
+        top: 9%;
+        left: 0; right: 0;
+        text-align: center;
         font-size: clamp(10px, 1.6vw, 13px);
         color: #88bbff;
-        margin-bottom: 14px;
-      }
-      .gate-section-label {
-        font-size: clamp(9px, 1.3vw, 11px);
-        letter-spacing: 3px;
-        text-transform: uppercase;
-        color: #606078;
-        margin-bottom: 16px;
       }
 
-      /* ── Three-column layout ── */
-      .gate-columns {
+      .gate-row {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         display: flex;
-        gap: 20px;
-        margin-top: auto;
-        padding-bottom: 3%;
-      }
-      .gate-column {
-        width: 80%;
-        max-width: 420px;
-        display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: 14px;
+        justify-content: center;
+        gap: 18px;
+        width: 88%;
+        max-width: 720px;
       }
-      .gate-col-header {
+
+      .gate-center-spacer {
+        flex: 0 0 180px;
         text-align: center;
-        margin-bottom: 6px;
+        pointer-events: none;
+        padding-top: 190px;
       }
       .gate-col-name {
-        font-size: 22px;
+        font-size: clamp(14px, 2vw, 20px);
         font-weight: 600;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
         letter-spacing: 2px;
       }
       .gate-col-model {
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 600;
         letter-spacing: 3px;
         text-transform: uppercase;
         border: 1.5px solid;
         border-radius: 4px;
-        padding: 3px 12px;
+        padding: 2px 10px;
         display: inline-block;
       }
-      .gate-col-cards {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        width: 100%;
-      }
-      .gate-row-top > * { width: 100%; }
-      .gate-row-bottom > * { width: 100%; }
 
-      /* ── Individual cards ── */
       .gate-card {
-        width: 100%;
-        padding: 20px 24px;
+        flex: 1;
+        padding: 18px 16px;
         background: rgba(12, 12, 20, 0.88);
         border-radius: 6px;
         cursor: pointer;
         text-align: center;
         transition: border-color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.15s;
       }
-      .gate-card:hover {
-        transform: translateY(-2px);
-      }
-      .gate-card:active {
-        transform: translateY(0);
-      }
+      .gate-card:hover { transform: translateY(-2px); }
+      .gate-card:active { transform: translateY(0); }
 
-      /* Continue Quest card — prominent */
       .gate-card-continue {
         border: 1.5px solid color-mix(in srgb, var(--accent) 30%, transparent);
       }
@@ -322,7 +299,6 @@ export class GateScene extends Phaser.Scene {
         box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 12%, transparent);
       }
 
-      /* New Quest (re-run) card — subdued */
       .gate-card-new {
         border: 1px solid #2a2030;
       }
@@ -332,7 +308,6 @@ export class GateScene extends Phaser.Scene {
         box-shadow: 0 0 16px rgba(204, 68, 68, 0.06);
       }
 
-      /* Begin Quest (unexplored) card */
       .gate-card-begin {
         border: 1.5px dashed color-mix(in srgb, var(--accent) 22%, transparent);
       }
@@ -344,17 +319,36 @@ export class GateScene extends Phaser.Scene {
       }
 
       .gate-card-label {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 600;
         margin-bottom: 6px;
       }
-      .gate-card-label-new {
-        color: #aa5555;
-      }
+      .gate-card-label-new { color: #aa5555; }
       .gate-card-sub {
-        font-size: 13px;
+        font-size: 12px;
         line-height: 1.5;
         color: #808098;
+      }
+
+      .gate-return {
+        position: absolute;
+        bottom: 6%;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 8px 28px;
+        font-size: clamp(10px, 1.3vw, 12px);
+        color: #505068;
+        letter-spacing: 2px;
+        cursor: pointer;
+        border: 1px solid #1a1a2e;
+        border-radius: 4px;
+        transition: color 0.2s, border-color 0.2s;
+        pointer-events: auto;
+        white-space: nowrap;
+      }
+      .gate-return:hover {
+        color: #9090a8;
+        border-color: #3a3a50;
       }
       .gate-card-time {
         font-size: 12px;
@@ -371,27 +365,7 @@ export class GateScene extends Phaser.Scene {
 
       .dim { color: #606078; }
 
-      .gate-rune {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        width: 32px;
-        height: 32px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        color: #661111;
-        border: 1.5px solid #661111;
-        border-radius: 50%;
-        cursor: pointer;
-        transition: color 0.2s, border-color 0.2s;
-        pointer-events: auto;
-      }
-      .gate-rune:hover {
-        color: #dd3333;
-        border-color: #aa2222;
-      }
+      /* removed old gate-rune — replaced by gate-return */
     `;
 
     const container = document.getElementById('game-container');
@@ -422,13 +396,19 @@ export class GateScene extends Phaser.Scene {
 
     // ── Click handlers ──
 
+    // Hover sounds on all interactive cards
+    overlay.querySelectorAll('.gate-card').forEach(card => {
+      card.addEventListener('mouseenter', () => SFX.play('menuHover'));
+    });
+
     // Resume (continue cached quest)
     overlay.querySelectorAll('[data-action="resume"]').forEach(card => {
       card.addEventListener('click', () => {
+        SFX.play('menuConfirm');
         this.game.auditData = this.cachedRun.auditData;
-        this._removeOverlay();
-        this.cameras.main.fadeOut(500, 0, 0, 0);
-        this.time.delayedCall(500, () => {
+        SFX.play('doorOpen');
+        SFX.play('sceneTransition');
+        this._transitionOut(() => {
           this.scene.start('DungeonHall', {
             domain: this.domain,
             projectPath: this.projectPath
@@ -440,10 +420,10 @@ export class GateScene extends Phaser.Scene {
     // Re-run (wipe cache, run fresh)
     overlay.querySelectorAll('[data-action="rerun"]').forEach(card => {
       card.addEventListener('click', () => {
+        SFX.play('menuConfirm');
         try { localStorage.removeItem(`seo_dungeon_audit_${this.domain}_${this.selectedModel.key}`); } catch (_) {}
-        this._removeOverlay();
-        this.cameras.main.fadeOut(500, 0, 0, 0);
-        this.time.delayedCall(500, () => {
+        SFX.play('sceneTransition');
+        this._transitionOut(() => {
           this.scene.start('Summoning', {
             domain: this.domain,
             projectPath: this.projectPath
@@ -453,11 +433,13 @@ export class GateScene extends Phaser.Scene {
     });
 
     // Abandon (return to title)
-    document.getElementById('gate-rune').addEventListener('click', () => {
+    const runeEl = document.getElementById('gate-rune');
+    runeEl.addEventListener('mouseenter', () => SFX.play('menuHover'));
+    runeEl.addEventListener('click', () => {
+      SFX.play('menuConfirm');
       if (this.game.addLog) this.game.addLog('The link is severed.');
-      this._removeOverlay();
-      this.cameras.main.fadeOut(600, 30, 0, 0);
-      this.time.delayedCall(600, () => {
+      SFX.play('sceneTransition');
+      this._transitionOut(() => {
         window.returnToTitle();
       });
     });
@@ -489,6 +471,7 @@ export class GateScene extends Phaser.Scene {
       this.game.pendingDestination = { scene: destScene, data: destData };
 
       this._removeOverlay();
+      SFX.play('sceneTransition');
       this.cameras.main.fadeOut(400, 0, 0, 0);
       this.time.delayedCall(400, () => {
         this.scene.start('Boot');
@@ -496,6 +479,8 @@ export class GateScene extends Phaser.Scene {
     } else {
       // Same character — go directly, no reload needed
       this._removeOverlay();
+      SFX.play('doorOpen');
+      SFX.play('sceneTransition');
       this.cameras.main.fadeOut(500, 0, 0, 0);
       this.time.delayedCall(500, () => {
         this.scene.start(destScene, {
@@ -505,6 +490,40 @@ export class GateScene extends Phaser.Scene {
         });
       });
     }
+  }
+
+  _transitionOut(callback) {
+    if (!this._overlayEl) { callback(); return; }
+
+    // Stagger-fade all cards and interactive elements
+    const cards = this._overlayEl.querySelectorAll('.gate-card, .gate-return, .gate-title, .gate-domain, .gate-center-spacer');
+    cards.forEach((el, i) => {
+      el.style.transition = `opacity 0.3s ease-in ${i * 0.05}s, transform 0.3s ease-in ${i * 0.05}s`;
+      el.style.opacity = '0';
+      el.style.transform = 'scale(0.92) translateY(6px)';
+    });
+
+    // Knight does a little flourish
+    if (this.knight && this.knight.active) {
+      this.knight.play('char_attack_anim');
+      this.knight.once('animationcomplete', () => {
+        if (this.knight && this.knight.active) this.knight.play('char_idle_anim');
+      });
+    }
+
+    // After cards vanish, fade the overlay background and fire callback
+    const totalDelay = Math.min(cards.length * 50 + 300, 600);
+    this.time.delayedCall(totalDelay, () => {
+      if (this._overlayEl) {
+        this._overlayEl.style.transition = 'opacity 0.3s ease-in';
+        this._overlayEl.style.opacity = '0';
+      }
+      this.cameras.main.fadeOut(500, 0, 0, 0);
+      this.time.delayedCall(500, () => {
+        this._removeOverlay();
+        callback();
+      });
+    });
   }
 
   _removeOverlay() {

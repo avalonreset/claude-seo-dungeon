@@ -1,5 +1,6 @@
 import { COLORS, FONTS } from '../utils/colors.js';
 import { bridge } from '../utils/ws.js';
+import { SFX } from '../utils/sound-manager.js';
 
 /**
  * Title screen — clean retro design with domain + project path inputs.
@@ -173,6 +174,7 @@ export class TitleScene extends Phaser.Scene {
 
     const launch = () => {
       if (domainInput.value.trim() && pathInput.value.trim()) {
+        SFX.play('menuConfirm');
         this.launchAudit(domainInput.value.trim(), pathInput.value.trim());
       }
     };
@@ -207,6 +209,7 @@ export class TitleScene extends Phaser.Scene {
     this.game.domain = domain;
     this.game.projectPath = projectPath;
 
+    SFX.play('sceneTransition');
     this.cameras.main.fadeOut(600, 0, 0, 0);
     this.time.delayedCall(600, () => {
       this.scene.start('Summoning', { domain, projectPath });

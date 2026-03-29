@@ -2,6 +2,7 @@
  * Character select sprites for the title screen.
  * Crops out transparent padding and displays characters at proper size.
  */
+import { SFX } from './utils/sound-manager.js';
 
 export const CHARACTERS = {
   warrior: {
@@ -71,9 +72,64 @@ const animState = {};
 
 function setSelected(charKey) {
   window.selectedCharacter = { ...CHARACTERS[charKey] };
+  SFX.play('menuConfirm');
   document.querySelectorAll('.char-option').forEach(el => {
-    el.classList.toggle('selected', el.dataset.char === charKey);
+    const isTarget = el.dataset.char === charKey;
+    el.classList.toggle('selected', isTarget);
+    if (isTarget) _selectionBurst(el);
   });
+}
+
+function _selectionBurst(el) {
+  // Brief white flash overlay
+  const flash = document.createElement('div');
+  flash.style.cssText = `
+    position: absolute; inset: 0; border-radius: 8px;
+    background: radial-gradient(circle, rgba(212,175,55,0.25) 0%, transparent 70%);
+    pointer-events: none; z-index: 10;
+    animation: charFlash 0.4s ease-out forwards;
+  `;
+  el.style.position = 'relative';
+  el.appendChild(flash);
+  setTimeout(() => flash.remove(), 500);
+
+  // Emit gold sparkle particles
+  const rect = el.getBoundingClientRect();
+  const cx = rect.width / 2;
+  const cy = rect.height * 0.45;
+
+  for (let i = 0; i < 12; i++) {
+    const spark = document.createElement('div');
+    const angle = (i / 12) * Math.PI * 2;
+    const dist = 40 + Math.random() * 60;
+    const size = 2 + Math.random() * 4;
+    const dx = Math.cos(angle) * dist;
+    const dy = Math.sin(angle) * dist;
+
+    spark.style.cssText = `
+      position: absolute; left: ${cx}px; top: ${cy}px;
+      width: ${size}px; height: ${size}px; border-radius: 50%;
+      background: #d4af37; pointer-events: none; z-index: 11;
+      opacity: 1; transition: all 0.5s ease-out;
+    `;
+    el.appendChild(spark);
+
+    requestAnimationFrame(() => {
+      spark.style.transform = `translate(${dx}px, ${dy}px)`;
+      spark.style.opacity = '0';
+    });
+    setTimeout(() => spark.remove(), 600);
+  }
+
+  // Subtle scale bounce on the canvas
+  const canvas = el.querySelector('canvas');
+  if (canvas) {
+    canvas.style.transition = 'transform 0.15s ease-out';
+    canvas.style.transform = 'translateY(12px) scale(2.15)';
+    setTimeout(() => {
+      canvas.style.transform = 'translateY(12px) scale(2)';
+    }, 150);
+  }
 }
 
 function setupCharCanvas(charKey) {
@@ -144,6 +200,9 @@ export function initKnightSprite() {
   document.querySelectorAll('.char-option').forEach(el => {
     el.addEventListener('click', () => {
       setSelected(el.dataset.char);
+    });
+    el.addEventListener('mouseenter', () => {
+      SFX.play('menuHover');
     });
   });
 

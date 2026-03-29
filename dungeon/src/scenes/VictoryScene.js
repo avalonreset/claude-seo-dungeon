@@ -1,5 +1,6 @@
 import { COLORS, FONTS } from '../utils/colors.js';
 import { VICTORY_MESSAGES } from '../utils/flavor-text.js';
+import { SFX } from '../utils/sound-manager.js';
 
 /**
  * Victory scene — epic loot screen after defeating a demon.
@@ -11,7 +12,7 @@ export class VictoryScene extends Phaser.Scene {
   }
 
   init(data) {
-    this.issue = data.issue;
+    this.issue = data?.issue || { title: 'Unknown', description: '', severity: 'medium', hp: 10 };
   }
 
   create() {
@@ -25,6 +26,10 @@ export class VictoryScene extends Phaser.Scene {
     const H = 600;
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
+
+    // ── Sound effects on entry ──────────────────────────────
+    SFX.play('demonDeath');
+    SFX.play('victory');
 
     // ── Dramatic flash on entry ──────────────────────────────
     const flash = this.add.rectangle(cx, 300, W, H, 0xffffff, 1).setDepth(100);
@@ -459,8 +464,14 @@ export class VictoryScene extends Phaser.Scene {
       });
     });
 
+    // Loot drop sound when spoils section appears
+    this.time.delayedCall(1000 + 5 * 80, () => {
+      SFX.play('lootDrop');
+    });
+
     // Count-up animation for XP
     this.time.delayedCall(1400, () => {
+      SFX.play('xpGain');
       this.countUp(xpValue, 0, xp, 800, '+');
     });
 
@@ -704,6 +715,8 @@ export class VictoryScene extends Phaser.Scene {
       btnText.setInteractive({ useHandCursor: true });
 
       const doReturn = () => {
+        SFX.play('menuConfirm');
+        SFX.play('sceneTransition');
         this.cameras.main.fadeOut(1000, 0, 0, 0);
         this.time.delayedCall(1000, () => {
           this.game.auditData = null;
@@ -772,6 +785,8 @@ export class VictoryScene extends Phaser.Scene {
       btnText.setInteractive({ useHandCursor: true });
 
       const doContinue = () => {
+        SFX.play('menuConfirm');
+        SFX.play('sceneTransition');
         this.cameras.main.fadeOut(500, 0, 0, 0);
         this.time.delayedCall(500, () => {
           this.scene.start('DungeonHall');

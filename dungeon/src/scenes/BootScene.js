@@ -15,13 +15,28 @@ export class BootScene extends Phaser.Scene {
       console.warn(`Failed to load asset: ${file.key} (${file.url})`);
     });
 
-    // Load real pixel art PNG sprites (32x32 each)
+    // Load real pixel art PNG sprites (32x32 each) — static fallbacks
     this.load.image('knight_real', 'assets/monsters/knight.png');
     this.load.image('demon_critical_real', 'assets/monsters/demon_critical.png');
     this.load.image('demon_high_real', 'assets/monsters/demon_high.png');
     this.load.image('demon_medium_real', 'assets/monsters/demon_medium.png');
     this.load.image('demon_low_real', 'assets/monsters/demon_low.png');
     this.load.image('demon_info_real', 'assets/monsters/demon_info.png');
+
+    // Load animated 0x72 demon idle frames (4 frames each)
+    const demonTypes = {
+      critical: { name: 'big_demon', w: 32, h: 36 },
+      high:     { name: 'orc_warrior', w: 16, h: 23 },
+      medium:   { name: 'chort', w: 16, h: 23 },
+      low:      { name: 'orc_shaman', w: 16, h: 23 },
+      info:     { name: 'goblin', w: 16, h: 16 }
+    };
+    for (const [sev, cfg] of Object.entries(demonTypes)) {
+      for (let f = 0; f < 4; f++) {
+        this.load.image(`demon_${sev}_f${f}`, `assets/0x72/frames/${cfg.name}_idle_anim_f${f}.png`);
+      }
+    }
+    this.game._demonAnimConfig = demonTypes;
 
     // Remove old character textures if this is a re-entry (character swap from Gate).
     // Phaser caches textures by key — without removal, load() silently skips the new files
@@ -81,6 +96,10 @@ export class BootScene extends Phaser.Scene {
       'demon_medium_real', 'demon_low_real', 'demon_info_real',
       'char_idle', 'char_run', 'char_attack', 'char_hit', 'char_death'
     ];
+    // Add animated demon frame textures
+    for (const sev of ['critical', 'high', 'medium', 'low', 'info']) {
+      for (let f = 0; f < 4; f++) texKeys.push(`demon_${sev}_f${f}`);
+    }
     // Add extra anim texture keys
     if (cfg.extraAnims) {
       for (const anim of cfg.extraAnims) texKeys.push(anim.key);
@@ -107,6 +126,23 @@ export class BootScene extends Phaser.Scene {
     this.anims.create({ key: 'char_attack_anim', frames: this.anims.generateFrameNumbers('char_attack', { start: 0, end: cfg.attackFrames - 1 }), frameRate: 12, repeat: 0 });
     this.anims.create({ key: 'char_hit_anim', frames: this.anims.generateFrameNumbers('char_hit', { start: 0, end: cfg.hitFrames - 1 }), frameRate: 8, repeat: 0 });
     this.anims.create({ key: 'char_death_anim', frames: this.anims.generateFrameNumbers('char_death', { start: 0, end: cfg.deathFrames - 1 }), frameRate: 8, repeat: 0 });
+
+    // Create demon idle animations (4 frames per severity, using individual images)
+    for (const sev of ['critical', 'high', 'medium', 'low', 'info']) {
+      const animKey = `demon_${sev}_idle`;
+      if (this.anims.exists(animKey)) this.anims.remove(animKey);
+      this.anims.create({
+        key: animKey,
+        frames: [
+          { key: `demon_${sev}_f0` },
+          { key: `demon_${sev}_f1` },
+          { key: `demon_${sev}_f2` },
+          { key: `demon_${sev}_f3` }
+        ],
+        frameRate: 6,
+        repeat: -1
+      });
+    }
 
     // Register extra animation variants
     if (cfg.extraAnims) {

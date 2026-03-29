@@ -1,6 +1,7 @@
 import { COLORS, FONTS } from '../utils/colors.js';
 import { bridge } from '../utils/ws.js';
 import { DESCENT_MESSAGES } from '../utils/flavor-text.js';
+import { SFX } from '../utils/sound-manager.js';
 
 /**
  * Summoning scene — Castlevania-style side-scroller.
@@ -192,6 +193,7 @@ export class SummoningScene extends Phaser.Scene {
         this.messageGlow.setText(msg);
         this.messageText.setAlpha(0);
         this.messageGlow.setAlpha(0);
+        SFX.play('textType');
         this.tweens.add({
           targets: this.messageText,
           alpha: 1,
@@ -676,6 +678,28 @@ export class SummoningScene extends Phaser.Scene {
   update(time, delta) {
     const dt = delta / 1000;
 
+    // ── Sound effect timers ───────────────────────────────────
+    // Footsteps — every ~350ms while the knight runs
+    this._footstepTimer = (this._footstepTimer || 0) + delta;
+    if (this._footstepTimer > 350) {
+      this._footstepTimer = 0;
+      SFX.play('footstep');
+    }
+
+    // Torch crackle — every ~1.5s for ambient atmosphere
+    this._torchTimer = (this._torchTimer || 0) + delta;
+    if (this._torchTimer > 1500) {
+      this._torchTimer = 0;
+      SFX.play('torchCrackle');
+    }
+
+    // Summoning pulse — every ~2.5s for the mystical hum
+    this._pulseTimer = (this._pulseTimer || 0) + delta;
+    if (this._pulseTimer > 2500) {
+      this._pulseTimer = 0;
+      SFX.play('summoningPulse');
+    }
+
     // Scroll far wall LEFT (slowest)
     if (this.farWallTile) {
       this.farWallTile.tilePositionX += this.farWallSpeed * dt;
@@ -960,8 +984,10 @@ export class SummoningScene extends Phaser.Scene {
     this.demonCounter.setColor('#f0c040');
 
     // Dramatic pause before transition
+    SFX.play('auditComplete');
     this.cameras.main.flash(300, 200, 50, 50);
     this.time.delayedCall(2000, () => {
+      SFX.play('sceneTransition');
       this.cameras.main.fadeOut(1000, 0, 0, 0);
       this.time.delayedCall(1000, () => {
         this.scene.start('DungeonHall');

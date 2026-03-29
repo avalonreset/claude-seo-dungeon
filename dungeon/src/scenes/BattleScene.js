@@ -1,6 +1,7 @@
 import { COLORS } from '../utils/colors.js';
 import { bridge } from '../utils/ws.js';
 import { ENCOUNTER_MESSAGES, VICTORY_MESSAGES } from '../utils/flavor-text.js';
+import { SFX } from '../utils/sound-manager.js';
 
 /**
  * Battle scene — Final Fantasy style turn-based combat.
@@ -77,7 +78,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Stone brick pattern
     for (let row = 0; row < 9; row++) {
-      for (let col = 0; col < 16; col++) {
+      for (let col = -1; col < 17; col++) {
         const offset = (row % 2 === 0) ? 0 : 25;
         const x = col * 50 + offset;
         const y = row * 40;
@@ -95,24 +96,125 @@ export class BattleScene extends Phaser.Scene {
     }
     for (let row = 0; row < 9; row++) {
       const offset = (row % 2 === 0) ? 0 : 25;
-      for (let col = 0; col <= 16; col++) {
+      for (let col = -1; col <= 17; col++) {
         const x = col * 50 + offset;
         bgGfx.lineBetween(x, row * 40, x, (row + 1) * 40);
       }
     }
 
-    // Vignette overlay - darker edges
-    const vignette = this.add.graphics();
-    vignette.fillStyle(0x000000, 0.4);
-    vignette.fillRect(0, 0, 80, 360);
-    vignette.fillRect(720, 0, 80, 360);
-    vignette.fillStyle(0x000000, 0.3);
-    vignette.fillRect(0, 0, 800, 30);
-
     // Torch glow areas (left and right)
     this.createTorchGlow(100, 80);
     this.createTorchGlow(700, 80);
     this.createTorchGlow(400, 50);
+
+    // Ambient dust motes drifting through the dungeon
+    this._spawnDustMotes();
+
+    // Faint embers drifting up from the floor
+    this._spawnEmbers();
+
+    // Occasional wisp of fog rolling across the ground
+    this._spawnGroundFog();
+  }
+
+  _spawnDustMotes() {
+    // Spawn a handful of dust particles on a slow loop
+    this.time.addEvent({
+      delay: 800,
+      repeat: -1,
+      callback: () => {
+        // Keep at most ~12 motes alive at a time
+        if (this._dustCount >= 12) return;
+        this._dustCount = (this._dustCount || 0) + 1;
+
+        const startX = Phaser.Math.Between(0, 800);
+        const startY = Phaser.Math.Between(20, 340);
+        const size = Phaser.Math.FloatBetween(0.5, 1.5);
+        const alpha = Phaser.Math.FloatBetween(0.08, 0.2);
+        const color = Phaser.Utils.Array.GetRandom([0xccccdd, 0xaaaacc, 0x998877]);
+
+        const mote = this.add.circle(startX, startY, size, color, alpha).setDepth(1);
+
+        // Slow, gentle drift — slightly upward and sideways
+        const driftX = Phaser.Math.Between(-40, 40);
+        const driftY = Phaser.Math.Between(-30, -60);
+        const duration = Phaser.Math.Between(4000, 8000);
+
+        this.tweens.add({
+          targets: mote,
+          x: startX + driftX,
+          y: startY + driftY,
+          alpha: 0,
+          duration: duration,
+          ease: 'Sine.easeInOut',
+          onComplete: () => {
+            mote.destroy();
+            this._dustCount = Math.max(0, (this._dustCount || 1) - 1);
+          }
+        });
+      }
+    });
+  }
+
+  _spawnEmbers() {
+    this.time.addEvent({
+      delay: 1400,
+      repeat: -1,
+      callback: () => {
+        if (this._emberCount >= 6) return;
+        this._emberCount = (this._emberCount || 0) + 1;
+
+        const startX = Phaser.Math.Between(60, 740);
+        const startY = Phaser.Math.Between(290, 320);
+        const ember = this.add.circle(startX, startY, Phaser.Math.FloatBetween(0.8, 1.2),
+          Phaser.Utils.Array.GetRandom([0xff6622, 0xff8844, 0xffaa44]),
+          Phaser.Math.FloatBetween(0.15, 0.3)
+        ).setDepth(2);
+
+        this.tweens.add({
+          targets: ember,
+          x: startX + Phaser.Math.Between(-20, 20),
+          y: startY - Phaser.Math.Between(60, 140),
+          alpha: 0,
+          duration: Phaser.Math.Between(3000, 5000),
+          ease: 'Sine.easeOut',
+          onComplete: () => {
+            ember.destroy();
+            this._emberCount = Math.max(0, (this._emberCount || 1) - 1);
+          }
+        });
+      }
+    });
+  }
+
+  _spawnGroundFog() {
+    this.time.addEvent({
+      delay: 3500,
+      repeat: -1,
+      callback: () => {
+        if (this._fogCount >= 3) return;
+        this._fogCount = (this._fogCount || 0) + 1;
+
+        const startX = Phaser.Math.Between(-40, 0);
+        const fogY = Phaser.Math.Between(290, 310);
+        const fog = this.add.ellipse(startX, fogY,
+          Phaser.Math.Between(80, 140), Phaser.Math.Between(12, 20),
+          0x8888aa, Phaser.Math.FloatBetween(0.03, 0.06)
+        ).setDepth(1);
+
+        this.tweens.add({
+          targets: fog,
+          x: 840,
+          alpha: 0,
+          duration: Phaser.Math.Between(10000, 16000),
+          ease: 'Linear',
+          onComplete: () => {
+            fog.destroy();
+            this._fogCount = Math.max(0, (this._fogCount || 1) - 1);
+          }
+        });
+      }
+    });
   }
 
   createTorchGlow(x, y) {
@@ -186,47 +288,28 @@ export class BattleScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════
 
   createDemon() {
-    const demonKey = `demon_${this.issue.severity}_real`;
-    const demonScales = { critical: 4, high: 3.5, medium: 3, low: 2.5, info: 2 };
-    const demonScale = demonScales[this.issue.severity] || 3;
+    // 0x72 animated demons — scale so visual height reflects severity hierarchy
+    // Target heights: critical ~180px, high ~130px, medium ~100px, low ~75px, info ~55px
+    const demonSizes = { critical: 36, high: 23, medium: 23, low: 23, info: 16 };
+    const demonScales = { critical: 5, high: 5.5, medium: 4.3, low: 3.2, info: 3.2 };
+    const demonScale = demonScales[this.issue.severity] || 4;
     const sevColor = this.getSeverityHexColor();
 
     // Ground line is y=300; place demon feet on it
-    const spriteH = 32 * demonScale;
+    const nativeH = demonSizes[this.issue.severity] || 32;
+    const spriteH = nativeH * demonScale;
     const demonY = 320 - spriteH * 0.5;
     this.demonGroundY = demonY;
 
-    // Menacing aura / glow
-    this.demonAuraOuter = this.add.ellipse(580, demonY, 130, 140, sevColor, 0.06);
-    this.demonAuraInner = this.add.ellipse(580, demonY, 90, 100, sevColor, 0.1);
-
-    this.tweens.add({
-      targets: this.demonAuraOuter,
-      scaleX: 1.3,
-      scaleY: 1.2,
-      alpha: 0.02,
-      duration: 1800,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-    this.tweens.add({
-      targets: this.demonAuraInner,
-      scaleX: 1.15,
-      scaleY: 1.1,
-      alpha: 0.15,
-      duration: 1200,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-      delay: 200
-    });
-
-    // Demon sprite — feet on ground line y=300
-    this.demon = this.add.image(580, demonY, demonKey).setScale(demonScale);
-    this.demon.setAlpha(0); // for entrance anim
-
-    // No bobbing — demon stays grounded
+    // Demon sprite — animated idle, feet on ground line y=300
+    const animKey = `demon_${this.issue.severity}_idle`;
+    this.demon = this.add.sprite(620, demonY, `demon_${this.issue.severity}_f0`)
+      .setScale(demonScale)
+      .setFlipX(true)
+      .setAlpha(0); // for entrance anim
+    if (this.anims.exists(animKey)) {
+      this.demon.play(animKey);
+    }
   }
 
   createKnight() {
@@ -239,6 +322,7 @@ export class BattleScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════
 
   playEntranceAnimation() {
+    SFX.play('encounterStart');
     // Knight slides in from left
     this.knight.setX(-60);
 
@@ -276,7 +360,7 @@ export class BattleScene extends Phaser.Scene {
     const sevColor = COLORS[this.issue.severity] || COLORS.red;
 
     // ── Demon HP (below demon sprite) ──
-    const dp = { x: 480, y: 340, w: 260, h: 48 };
+    const dp = { x: 510, y: 340, w: 260, h: 48 };
 
     const dPanel = this.add.graphics();
     // Glow behind panel
@@ -499,13 +583,13 @@ export class BattleScene extends Phaser.Scene {
     const encounterMsg = ENCOUNTER_MESSAGES[Math.floor(Math.random() * ENCOUNTER_MESSAGES.length)];
     this.appendLog(encounterMsg);
 
-    // Blinking indicator
+    // Blinking indicator (hidden until big mode is available)
     this.logIndicator = this.add.text(logX + logW - 22, logY + logH - 20, '\u25BC', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '10px',
       color: COLORS.gold,
       resolution: window.GAME_DPR
-    });
+    }).setVisible(false);
     this.tweens.add({
       targets: this.logIndicator,
       alpha: 0.2,
@@ -541,7 +625,7 @@ export class BattleScene extends Phaser.Scene {
       fontSize: '7px',
       color: '#6060a0',
       resolution: window.GAME_DPR
-    }).setDepth(20);
+    }).setDepth(20).setVisible(false);
     this.tweens.add({
       targets: this.logExpandLabel,
       alpha: { from: 0.5, to: 1 },
@@ -711,15 +795,22 @@ export class BattleScene extends Phaser.Scene {
     });
     if (this.cursor) this.cursor.setVisible(false);
     if (this.menuTooltip) this.menuTooltip.setVisible(false);
+    if (this.logExpandLabel) this.logExpandLabel.setVisible(false);
+    if (this.logIndicator) this.logIndicator.setVisible(false);
   }
 
   _enableMenu() {
     if (this.cursor) this.cursor.setVisible(true);
     if (this.menuTooltip) this.menuTooltip.setVisible(true);
+    if (this._hasAttacked) {
+      if (this.logExpandLabel) this.logExpandLabel.setVisible(true);
+      if (this.logIndicator) this.logIndicator.setVisible(true);
+    }
     this.selectMenuItem(this.selectedMenuItem);
   }
 
   selectMenuItem(index) {
+    SFX.play('menuHover');
     this.selectedMenuItem = index;
     this.menuItems.forEach((item, i) => {
       if (i === index) {
@@ -768,16 +859,36 @@ export class BattleScene extends Phaser.Scene {
     const detW = 780;
     const pad = 10;
 
-    // Category badge
-    const catBadge = this.add.text(detX + pad, detY + pad, this.issue.category.toUpperCase(), {
-      fontFamily: '"JetBrains Mono", monospace',
-      fontSize: '9px',
-      color: COLORS.cyan,
+    // Category title — fantasy RPG style
+    const catTitle = this.issue.category.toUpperCase();
+    const catBadge = this.add.text(detX + pad, detY + pad - 2, catTitle, {
+      fontFamily: '"Cinzel", "Palatino Linotype", "Book Antiqua", "Georgia", serif',
+      fontSize: '16px',
+      color: '#f0c848',
+      fontStyle: 'bold',
+      shadow: { offsetX: 0, offsetY: 0, color: '#f0a020', blur: 12, fill: true },
       resolution: window.GAME_DPR
     }).setDepth(51);
 
+    // Sweeping light shimmer across the title
+    const shimmerBar = this.add.rectangle(detX - 20, detY + pad + 6, 20, 20, 0xffffff, 0.25).setDepth(52);
+    const titleBounds = catBadge.getBounds();
+    const shimmerMaskShape = this.make.graphics({ x: 0, y: 0, add: false });
+    shimmerMaskShape.fillStyle(0xffffff);
+    shimmerMaskShape.fillRect(titleBounds.x, titleBounds.y, titleBounds.width, titleBounds.height);
+    shimmerBar.setMask(new Phaser.Display.Masks.GeometryMask(this, shimmerMaskShape));
+    this.tweens.add({
+      targets: shimmerBar,
+      x: titleBounds.x + titleBounds.width + 30,
+      duration: 2500,
+      delay: 1000,
+      repeat: -1,
+      repeatDelay: 4000,
+      ease: 'Sine.easeInOut'
+    });
+
     // Description (full width, wraps)
-    const descObj = this.add.text(detX + pad, detY + pad + 16, this.issue.description, {
+    const descObj = this.add.text(detX + pad, detY + pad + 22, this.issue.description, {
       fontFamily: 'monospace',
       fontSize: '10px',
       color: '#b0b0c8',
@@ -787,7 +898,7 @@ export class BattleScene extends Phaser.Scene {
     }).setDepth(51);
 
     // Dynamic height based on actual content
-    const detH = pad + 16 + descObj.height + pad;
+    const detH = pad + 22 + descObj.height + pad;
 
     // Draw panel background sized to fit
     const detGfx = this.add.graphics().setDepth(50);
@@ -855,6 +966,7 @@ export class BattleScene extends Phaser.Scene {
   _openBigMode() {
     if (this._bigModeOpen) return;
     this._bigModeOpen = true;
+    SFX.play('logExpand');
 
     const container = document.getElementById('game-container');
     container.style.position = 'relative';
@@ -1099,6 +1211,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   _closeBigMode() {
+    SFX.play('logClose');
     this._bigModeOpen = false;
     if (this._bigModeOverlayEl) {
       this._bigModeOverlayEl.remove();
@@ -1141,6 +1254,7 @@ export class BattleScene extends Phaser.Scene {
 
   showAttackPrompt() {
     if (!this.isPlayerTurn || this.battleOver) return;
+    SFX.play('menuConfirm');
     // Disable menu interaction while overlay is open
     this._attackOverlayOpen = true;
     this._createAttackOverlay();
@@ -1385,6 +1499,7 @@ export class BattleScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════
 
   _startChanneling() {
+    SFX.play('channelStart');
     // Blue tint pulsing on the knight
     this._channelingActive = true;
     this.knight.setTint(0x4080ff);
@@ -1516,6 +1631,7 @@ export class BattleScene extends Phaser.Scene {
 
       // 3. Claude finished — stop channeling, THEN play the slash
       this._stopChanneling();
+      SFX.play('channelComplete');
       this.streamText.setText('');
 
       await this.slashAnimation();
@@ -1536,12 +1652,14 @@ export class BattleScene extends Phaser.Scene {
     } catch (err) {
       // Fix failed — stop channeling, no slash, no damage
       this._stopChanneling();
+      SFX.play('spellFizzle');
       this.streamText.setText('');
       this.setLog(`The spell fizzles... ${err.message || 'Connection error'}. Try again.`);
       if (this.game.addLog) this.game.addLog('Fix error: ' + (err.message || 'unknown'));
     }
 
     // Turn returns to player — re-enable menu
+    this._hasAttacked = true;
     this.isPlayerTurn = true;
     this._enableMenu();
   }
@@ -1560,16 +1678,17 @@ export class BattleScene extends Phaser.Scene {
         onComplete: () => {
           // Screen flash
           this.cameras.main.flash(150, 255, 255, 255, true);
+          SFX.play('swordSlash');
 
           // Multiple slash lines
           const dy = this.demon.y;
-          this.createSlashEffect(580, dy, 0);
-          this.time.delayedCall(60, () => this.createSlashEffect(580, dy, -30));
-          this.time.delayedCall(120, () => this.createSlashEffect(580, dy, 30));
+          this.createSlashEffect(620, dy, 0);
+          this.time.delayedCall(60, () => this.createSlashEffect(620, dy, -30));
+          this.time.delayedCall(120, () => this.createSlashEffect(620, dy, 30));
 
           // Hit particles
-          this.createHitParticles(580, dy, 0xffffff);
-          this.createHitParticles(580, dy, this.getSeverityHexColor());
+          this.createHitParticles(620, dy, 0xffffff);
+          this.createHitParticles(620, dy, this.getSeverityHexColor());
 
           // Demon knockback + red flash
           this.demon.setTint(0xff0000);
@@ -1691,6 +1810,7 @@ export class BattleScene extends Phaser.Scene {
 
   dealDamage(amount) {
     this.demonHp = Math.max(0, this.demonHp - amount);
+    SFX.play('hit');
     const pct = this.demonHp / this.demonMaxHp;
 
     // Animate HP bar smoothly
@@ -1705,7 +1825,7 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // Damage number - dramatic float with scale
-    const dmgText = this.add.text(580, 200, `-${amount}`, {
+    const dmgText = this.add.text(620, 200, `-${amount}`, {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '22px',
       color: '#ff4040',
@@ -1748,7 +1868,7 @@ export class BattleScene extends Phaser.Scene {
     this.cameras.main.shake(150, 0.01);
 
     // Red flash overlay
-    const redFlash = this.add.rectangle(580, this.demon.y, 120, 120, 0xff0000, 0.3);
+    const redFlash = this.add.rectangle(620, this.demon.y, 120, 120, 0xff0000, 0.3);
     this.tweens.add({
       targets: redFlash,
       alpha: 0,
@@ -1757,7 +1877,7 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // Hit particles
-    this.createHitParticles(580, this.demon.y, 0xff4040);
+    this.createHitParticles(620, this.demon.y, 0xff4040);
   }
 
   // ═══════════════════════════════════════════════════
@@ -1770,12 +1890,14 @@ export class BattleScene extends Phaser.Scene {
     this.setLog('The demon retaliates!');
 
     // Demon lunge attack
+    SFX.play('demonAttack');
     this.tweens.add({
       targets: this.demon,
       x: 380,
       duration: 250,
       ease: 'Power3',
       onComplete: () => {
+        SFX.play('takeDamage');
         const damage = Phaser.Math.Between(3, 8);
         this.knightHp = Math.max(0, this.knightHp - damage);
         const pct = this.knightHp / 100;
@@ -1850,12 +1972,13 @@ export class BattleScene extends Phaser.Scene {
         // Demon returns
         this.tweens.add({
           targets: this.demon,
-          x: 580,
+          x: 620,
           duration: 400,
           ease: 'Power2',
           delay: 150,
           onComplete: () => {
             if (this.knightHp <= 0) {
+              SFX.play('defeat');
               this.battleOver = true;
               this._disableMenu();
               this.setLog(`The ${this.charName} falls! Retreating to regroup...`);
@@ -1869,6 +1992,7 @@ export class BattleScene extends Phaser.Scene {
             } else {
               this.setLog(`Demon deals ${damage} damage! Your turn. Command the ${this.charName} again...`);
               this.isPlayerTurn = true;
+              this._enableMenu();
             }
           }
         });
@@ -1884,6 +2008,7 @@ export class BattleScene extends Phaser.Scene {
     if (!this.isPlayerTurn || this.battleOver) return;
     this.isPlayerTurn = false;
     this._disableMenu();
+    SFX.play('vanquish');
 
     this.setLog(`\u2694 EXECUTION STRIKE! The ${this.charName} delivers the final blow!`);
 
@@ -1920,7 +2045,7 @@ export class BattleScene extends Phaser.Scene {
       // Knight lunges forward dramatically
       this.tweens.add({
         targets: this.knight,
-        x: '+=180',
+        x: '+=220',
         duration: 150,
         ease: 'Power4',
         onComplete: () => {
@@ -1929,22 +2054,22 @@ export class BattleScene extends Phaser.Scene {
 
           // Multiple slash effects (5 slashes for the killing blow)
           const dy = this.demon.y;
-          this.createSlashEffect(580, dy, 0);
-          this.time.delayedCall(60, () => this.createSlashEffect(580, dy, -40));
-          this.time.delayedCall(120, () => this.createSlashEffect(580, dy, 40));
-          this.time.delayedCall(180, () => this.createSlashEffect(580, dy, -20));
-          this.time.delayedCall(240, () => this.createSlashEffect(580, dy, 20));
+          this.createSlashEffect(620, dy, 0);
+          this.time.delayedCall(60, () => this.createSlashEffect(620, dy, -40));
+          this.time.delayedCall(120, () => this.createSlashEffect(620, dy, 40));
+          this.time.delayedCall(180, () => this.createSlashEffect(620, dy, -20));
+          this.time.delayedCall(240, () => this.createSlashEffect(620, dy, 20));
 
           // Massive hit particles (3 bursts)
-          this.createHitParticles(580, dy, 0xffffff);
-          this.createHitParticles(580, dy, 0xf0c040);
-          this.createHitParticles(580, dy, 0xff4040);
+          this.createHitParticles(620, dy, 0xffffff);
+          this.createHitParticles(620, dy, 0xf0c040);
+          this.createHitParticles(620, dy, 0xff4040);
 
           // Demon recoils hard
           this.demon.setTint(0xff0000);
           this.tweens.add({
             targets: this.demon,
-            x: 640, duration: 100, yoyo: true, ease: 'Power2'
+            x: 680, duration: 100, yoyo: true, ease: 'Power2'
           });
 
           // Set HP to 0
@@ -1975,6 +2100,7 @@ export class BattleScene extends Phaser.Scene {
   doDefend() {
     if (!this.isPlayerTurn || this.battleOver) return;
     this.isPlayerTurn = false;
+    SFX.play('defend');
 
     this.setLog(`${this.charName} braces for impact!`);
     this._disableMenu();
@@ -2021,6 +2147,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Shield materializes — scale from 0
     shieldGfx.setScale(0);
+    SFX.play('shieldBlock');
     this.tweens.add({
       targets: shieldGfx,
       scaleX: 1, scaleY: 1,
@@ -2093,7 +2220,7 @@ export class BattleScene extends Phaser.Scene {
     // Inspect scanning ring
     const scanRing = this.add.graphics();
     scanRing.lineStyle(2, 0x4080e0, 0.7);
-    scanRing.strokeCircle(580, this.demon.y, 30);
+    scanRing.strokeCircle(620, this.demon.y, 30);
     this.tweens.add({
       targets: scanRing,
       scaleX: 2.5,
@@ -2107,7 +2234,7 @@ export class BattleScene extends Phaser.Scene {
     // Inspect eye particles
     for (let i = 0; i < 8; i++) {
       const p = this.add.circle(
-        580 + Phaser.Math.Between(-40, 40),
+        620 + Phaser.Math.Between(-40, 40),
         240 + Phaser.Math.Between(-40, 40),
         3, 0x4080e0, 0.7
       );
@@ -2131,20 +2258,24 @@ export class BattleScene extends Phaser.Scene {
     if (!this.isPlayerTurn || this.battleOver) return;
     this.isPlayerTurn = false;
     this.battleOver = true;
+    SFX.play('flee');
 
     this.setLog('You retreat from battle...');
+    this._disableMenu();
 
-    // Knight runs off screen left
+    // Knight turns and runs off screen left
+    this.knight.setFlipX(true);
+    this.knight.play('char_run_anim');
+
     this.tweens.add({
       targets: this.knight,
-      x: '-=300',
-      alpha: 0,
-      duration: 600,
-      ease: 'Power2'
+      x: -100,
+      duration: 800,
+      ease: 'Power1'
     });
 
-    this.cameras.main.fadeOut(800, 0, 0, 0);
-    this.time.delayedCall(800, () => {
+    this.cameras.main.fadeOut(1000, 0, 0, 0);
+    this.time.delayedCall(1000, () => {
       this.scene.start('DungeonHall');
     });
   }
@@ -2177,7 +2308,7 @@ export class BattleScene extends Phaser.Scene {
           const size = Phaser.Math.Between(2, 8);
 
           const p = this.add.rectangle(
-            580 + Phaser.Math.Between(-15, 15),
+            620 + Phaser.Math.Between(-15, 15),
             this.demon.y + Phaser.Math.Between(-15, 15),
             size, size, color, 1
           ).setDepth(20);
@@ -2202,7 +2333,7 @@ export class BattleScene extends Phaser.Scene {
       this.time.delayedCall(r * 120, () => {
         const ring = this.add.graphics().setDepth(19);
         ring.lineStyle(3 - r, 0xffffff, 0.7 - r * 0.2);
-        ring.strokeCircle(580, this.demonGroundY, 20);
+        ring.strokeCircle(620, this.demonGroundY, 20);
         this.tweens.add({
           targets: ring,
           scaleX: 4 + r,
@@ -2234,14 +2365,6 @@ export class BattleScene extends Phaser.Scene {
           ease: 'Power3'
         });
       }
-    });
-
-    // Aura dissolve
-    this.tweens.add({
-      targets: [this.demonAuraOuter, this.demonAuraInner],
-      alpha: 0,
-      duration: 800,
-      delay: 500
     });
 
     // Second screen flash for extra drama

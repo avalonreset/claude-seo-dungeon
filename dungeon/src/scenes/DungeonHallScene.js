@@ -1,5 +1,6 @@
 import { COLORS } from '../utils/colors.js';
 import { HALL_MESSAGES } from '../utils/flavor-text.js';
+import { SFX } from '../utils/sound-manager.js';
 
 const HEADER_FONT = '"JetBrains Mono", monospace';
 const BODY_FONT = 'monospace';
@@ -10,13 +11,13 @@ const LIST_TOP = 94;
 const LIST_BOTTOM = 518;
 const LIST_VISIBLE = LIST_BOTTOM - LIST_TOP; // 424px
 
-// Demon sprite scales per severity (real 32x32 PNGs, fit within row height)
+// Demon sprite scales per severity — bigger = scarier
 const SPRITE_SCALES = {
-  critical: 1.8,
-  high: 1.6,
-  medium: 1.5,
-  low: 1.4,
-  info: 1.3
+  critical: 2.4,  // 32x36 native → ~86px tall (biggest)
+  high: 3.2,      // 16x23 native → ~74px tall
+  medium: 2.6,    // 16x23 native → ~60px tall
+  low: 2.0,       // 16x23 native → ~46px tall
+  info: 2.2       // 16x16 native → ~35px tall (smallest)
 };
 
 /**
@@ -26,6 +27,8 @@ const SPRITE_SCALES = {
 export class DungeonHallScene extends Phaser.Scene {
   constructor() {
     super('DungeonHall');
+    this._lastHoveredRow = -1;
+    this._lastScrollSfxTime = 0;
   }
 
   create() {
@@ -34,9 +37,19 @@ export class DungeonHallScene extends Phaser.Scene {
     this.cameras.main.scrollX = 400 * (1 - dpr);
     this.cameras.main.scrollY = 300 * (1 - dpr);
     this.cameras.main.setBackgroundColor(0x05050e);
-    this.cameras.main.fadeIn(1200, 0, 0, 0);
 
-    const data = this.game.auditData;
+    const isFirstVisit = !this.game._dungeonHallVisited;
+    this.game._dungeonHallVisited = true;
+
+    if (isFirstVisit) {
+      this.cameras.main.fadeIn(1200, 0, 0, 0);
+    } else {
+      // Blood drip transition for returning from battle
+      this.cameras.main.fadeIn(600, 40, 0, 0);
+      this._bloodDripTransition();
+    }
+
+    const data = this.game.auditData || { issues: [] };
 
     // ---------- STONE WALL BACKGROUND ----------
     this.drawStoneWalls();
@@ -82,6 +95,12 @@ export class DungeonHallScene extends Phaser.Scene {
       this.targetScrollOffset = Phaser.Math.Clamp(
         this.targetScrollOffset - dy * 1.2, -maxScroll(), 0
       );
+      // Throttled scroll sound
+      const now = Date.now();
+      if (now - this._lastScrollSfxTime > 120) {
+        this._lastScrollSfxTime = now;
+        SFX.play('menuHover');
+      }
     });
 
     // Touch / click-drag scroll (use worldY for camera-zoom-safe coords)
@@ -215,6 +234,15 @@ export class DungeonHallScene extends Phaser.Scene {
         });
       }
     });
+
+    // Periodic torch crackle ambience
+    this.time.addEvent({
+      delay: 1500,
+      loop: true,
+      callback: () => {
+        SFX.play('torchCrackle');
+      }
+    });
   }
 
   drawFlame(g, x, y, intensity) {
@@ -240,6 +268,60 @@ export class DungeonHallScene extends Phaser.Scene {
   }
 
   // =====================================================================
+  // BLOOD DRIP TRANSITION (returning from battle)
+  // =====================================================================
+  _bloodDripTransition() {
+    const W = 800, H = 600;
+
+    // Blood wash overlay — dark red that fades
+    const wash = this.add.rectangle(400, 300, W, H, 0x400000, 0.6).setDepth(2000);
+    this.tweens.add({
+      targets: wash,
+      alpha: 0,
+      duration: 1200,
+      ease: 'Power2',
+      onComplete: () => wash.destroy()
+    });
+
+    // Blood drips falling from the top
+    const dripCount = 18;
+    for (let i = 0; i < dripCount; i++) {
+      const x = Phaser.Math.Between(20, W - 20);
+      const dripW = Phaser.Math.Between(3, 8);
+      const dripH = Phaser.Math.Between(40, 160);
+      const delay = Phaser.Math.Between(0, 400);
+      const speed = Phaser.Math.Between(600, 1200);
+
+      const drip = this.add.rectangle(x, -dripH, dripW, dripH, 0x8b0000, 0.7).setDepth(1999);
+      this.tweens.add({
+        targets: drip,
+        y: H + dripH,
+        duration: speed,
+        delay: delay,
+        ease: 'Power1',
+        onComplete: () => drip.destroy()
+      });
+    }
+
+    // A few thick blood streaks
+    for (let i = 0; i < 5; i++) {
+      const x = Phaser.Math.Between(50, W - 50);
+      const streakW = Phaser.Math.Between(12, 24);
+      const delay = Phaser.Math.Between(50, 300);
+
+      const streak = this.add.rectangle(x, -100, streakW, 200, 0x660000, 0.5).setDepth(1998);
+      this.tweens.add({
+        targets: streak,
+        y: H + 200,
+        alpha: 0,
+        duration: 900,
+        delay: delay,
+        ease: 'Cubic.easeIn',
+        onComplete: () => streak.destroy()
+      });
+    }
+  }
+
   // VIGNETTE
   // =====================================================================
   drawVignette() {
@@ -548,8 +630,12 @@ export class DungeonHallScene extends Phaser.Scene {
     // LAYER 2: DEMON SPRITE
     // =========================
     const spriteScale = SPRITE_SCALES[issue.severity] || 1.0;
-    const demon = this.add.image(spriteX, centerY, severitySprite)
+    const demonAnimKey = `demon_${issue.severity}_idle`;
+    const demon = this.add.sprite(spriteX, centerY, `demon_${issue.severity}_f0`)
       .setScale(0).setAlpha(0);
+    if (this.anims.exists(demonAnimKey)) {
+      demon.play(demonAnimKey);
+    }
 
     this.tweens.add({
       targets: demon,
@@ -685,6 +771,11 @@ export class DungeonHallScene extends Phaser.Scene {
     // HOVER / CLICK — bg redraws BEHIND content via z-order in container
     // =========================
     hitArea.on('pointerover', () => {
+      // Throttled hover sound — only plays once per row change
+      if (this._lastHoveredRow !== index) {
+        this._lastHoveredRow = index;
+        SFX.play('demonRowHover');
+      }
       rowBg.clear();
       rowBg.fillStyle(sev.bgTint, 0.95);
       rowBg.fillRoundedRect(rowX, y, rowW, rowH, 6);
@@ -723,9 +814,11 @@ export class DungeonHallScene extends Phaser.Scene {
       }
     });
     hitArea.on('pointerdown', () => {
+      SFX.play('menuConfirm');
       this.cameras.main.flash(400, 255, 50, 50);
       this.cameras.main.shake(200, 0.006);
       this.time.delayedCall(500, () => {
+        SFX.play('encounterStart');
         this.cameras.main.fadeOut(600, 0, 0, 0);
         this.time.delayedCall(600, () => this.scene.start('Battle', { issue }));
       });
@@ -745,8 +838,9 @@ export class DungeonHallScene extends Phaser.Scene {
       }
     });
 
-    // Screen shake for critical
-    if (issue.severity === 'critical') {
+    // Screen shake for critical (first visit only — gets jarring on repeat)
+    if (issue.severity === 'critical' && !this.game._dungeonHallShakeDone) {
+      this.game._dungeonHallShakeDone = true;
       this.time.delayedCall(250, () => {
         this.cameras.main.shake(300, 0.004);
         this.cameras.main.flash(150, 60, 0, 0);

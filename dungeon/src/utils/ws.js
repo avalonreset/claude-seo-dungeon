@@ -14,7 +14,8 @@ export class BridgeClient {
       this.ws.onopen = () => resolve();
       this.ws.onerror = (err) => reject(err);
       this.ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+        let data;
+        try { data = JSON.parse(event.data); } catch (e) { console.warn('WS: bad JSON', e); return; }
         const handler = this.handlers.get(data.id);
         if (handler) {
           if (data.type === 'stream') {

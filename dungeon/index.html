@@ -116,6 +116,11 @@
       color: #d4af37;
     }
 
+    @keyframes charFlash {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
     .char-model {
       font-family: 'JetBrains Mono', monospace;
       font-size: 9px;
@@ -252,6 +257,62 @@
     #bridge-status.connected { color: #60c060; }
     #bridge-status.error { color: #d06060; }
 
+    /* ── SFX Volume Control ──────────────────── */
+    #sfx-control {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 200;
+      background: rgba(10, 10, 30, 0.7);
+      border: 1px solid #2a2a4e;
+      border-radius: 6px;
+      padding: 4px 10px;
+    }
+
+    #sfx-toggle {
+      background: none;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px;
+      line-height: 1;
+      filter: grayscale(0);
+      transition: filter 0.2s;
+    }
+    #sfx-toggle.muted {
+      filter: grayscale(1) opacity(0.4);
+    }
+
+    #sfx-volume {
+      width: 70px;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #2a2a4e;
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+    #sfx-volume::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #d4af37;
+      cursor: pointer;
+    }
+    #sfx-volume::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #d4af37;
+      border: none;
+      cursor: pointer;
+    }
+
     /* ── Right: Activity Log ─────────────────── */
     #log-panel {
       width: 33.33%;
@@ -358,6 +419,12 @@
 
     <!-- Phaser game canvas (hidden until game starts) -->
     <div id="game-container"></div>
+
+    <!-- Volume control -->
+    <div id="sfx-control">
+      <button id="sfx-toggle" title="Toggle sound effects">&#x1F50A;</button>
+      <input id="sfx-volume" type="range" min="0" max="100" value="35" title="Volume">
+    </div>
   </div>
 
   <div id="log-panel">
