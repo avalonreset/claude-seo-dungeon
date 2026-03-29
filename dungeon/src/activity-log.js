@@ -4,7 +4,7 @@
  * contextual icons for different event types.
  */
 
-const CHAR_DELAY = 14;       // ms per character for typewriter
+const CHAR_DELAY_BASE = 12;  // ms per character for typewriter (speeds up when queue is backed up)
 const GLOW_DURATION = 2000;  // ms for the new-line glow to fade
 
 let logEl = null;
@@ -110,18 +110,23 @@ function typewriterLine(text, cls) {
     }
 
     let i = 0;
+    // Speed up typewriter when queue is backed up so messages don't pile up
+    const speed = queue.length > 10 ? 1 : queue.length > 5 ? 4 : queue.length > 2 ? 8 : CHAR_DELAY_BASE;
     const interval = setInterval(() => {
-      if (i < text.length) {
+      // Type multiple chars per tick when speed is very fast
+      const charsPerTick = speed <= 2 ? 4 : speed <= 5 ? 2 : 1;
+      for (let c = 0; c < charsPerTick && i < text.length; c++) {
         content.textContent += text[i];
         i++;
-        scrollToBottom();
-      } else {
+      }
+      scrollToBottom();
+      if (i >= text.length) {
         clearInterval(interval);
         line.classList.remove('typing');
         setTimeout(() => line.classList.remove('glow'), GLOW_DURATION);
         resolve();
       }
-    }, CHAR_DELAY);
+    }, speed);
   });
 }
 
@@ -362,10 +367,11 @@ export function addLog(msg) {
   if (!msg || !logEl) return;
 
   let clean = msg.replace(/[\n\r]+/g, ' ').trim();
-  if (!clean || clean.length < 3) return;
+  if (!clean || clean.length < 2) return;
   if (clean === '[working...]') return;
-  if (clean.startsWith('{') || clean.startsWith('"')) return;
-  if (clean.includes('":"') && clean.includes('","')) return;
+  // Only filter pure JSON blobs, not text that happens to contain quotes
+  if (clean.startsWith('{') && clean.endsWith('}') && clean.includes('":"')) return;
+  if (clean.startsWith('[{') && clean.includes('":"')) return;
 
   const cls = classify(clean);
   queue.push({ text: clean, cls });

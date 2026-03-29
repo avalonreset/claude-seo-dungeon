@@ -235,28 +235,28 @@ function runClaude(prompt, onStream, cwd, requestId, model) {
         try {
           const event = JSON.parse(line);
 
-          // Extract meaningful info from stream events
+          // Extract info from all stream event types
           if (event.type === 'assistant' && event.message) {
             const content = event.message.content;
             if (Array.isArray(content)) {
               for (const block of content) {
                 if (block.type === 'text' && block.text) {
                   fullText += block.text;
-                  // Send text in small chunks for the log
                   const lines = block.text.split('\n').filter(l => l.trim());
                   for (const line of lines) {
                     onStream(line.trim());
                   }
                 }
                 if (block.type === 'tool_use') {
-                  // Show tool name + key input details
                   const input = block.input || {};
                   let detail = '';
                   if (input.url) detail = input.url;
                   else if (input.query) detail = input.query;
-                  else if (input.command) detail = input.command.substring(0, 60);
+                  else if (input.command) detail = input.command.substring(0, 80);
                   else if (input.pattern) detail = input.pattern;
                   else if (input.file_path) detail = input.file_path;
+                  else if (input.prompt) detail = input.prompt.substring(0, 60);
+                  else if (input.description) detail = input.description;
 
                   const toolMsg = detail
                     ? `[${block.name}] ${detail}`
@@ -266,11 +266,27 @@ function runClaude(prompt, onStream, cwd, requestId, model) {
                 }
               }
             }
+          } else if (event.type === 'tool_result' || event.type === 'tool_output') {
+            // Stream tool results — show truncated output so user sees activity
+            const content = event.content || event.output;
+            if (typeof content === 'string' && content.trim()) {
+              const preview = content.trim().split('\n')[0].substring(0, 80);
+              if (preview.length > 5) onStream(preview);
+            } else if (Array.isArray(content)) {
+              for (const block of content) {
+                if (block.type === 'text' && block.text) {
+                  const preview = block.text.trim().split('\n')[0].substring(0, 80);
+                  if (preview.length > 5) onStream(preview);
+                }
+              }
+            }
           } else if (event.type === 'result') {
             if (event.result) {
               fullText = event.result;
               onStream('[Complete]');
             }
+          } else if (event.type === 'system' && event.message) {
+            onStream(event.message);
           }
         } catch (e) {
           // Not valid JSON, might be partial — skip
