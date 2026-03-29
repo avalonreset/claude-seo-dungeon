@@ -27,6 +27,9 @@ export class VictoryScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor(COLORS.bg);
 
+    // ── Fade in from the battle fadeOut ──────────────────────
+    this.cameras.main.fadeIn(600, 0, 0, 0);
+
     // ── Sound effects on entry ──────────────────────────────
     SFX.play('demonDeath');
     SFX.play('victory');
