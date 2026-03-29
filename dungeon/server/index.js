@@ -201,35 +201,82 @@ Quality over quantity. Each issue should be a real battle worth fighting, not bu
 
   const raw = await runClaude(prompt, onStream, undefined, requestId, model);
 
+  // Try to extract structured audit data from Claude's response
+  const parsed = _tryParseAudit(raw, domain);
+  if (parsed) return parsed;
+
+  // RETRY: Ask Claude to reformat the raw output as JSON
+  console.log('  First parse failed — retrying with reformat prompt...');
+  onStream('[Reformatting results...]');
+  const rawText = typeof raw === 'string' ? raw : (raw.raw || JSON.stringify(raw));
+  const retryPrompt = `The following is the raw output of an SEO audit on ${domain}. Convert it into a single valid JSON object with this exact structure (no markdown fences, no extra text — ONLY the JSON):
+{"domain":"${domain}","score":<0-100>,"totalIssues":<n>,"issues":[{"id":<n>,"severity":"<critical|high|medium|low|info>","title":"<title>","description":"<description>","category":"<category>","hp":<10-100>}]}
+
+Raw audit output:
+${rawText.slice(-12000)}`;
+
+  const retryRaw = await runClaude(retryPrompt, onStream, undefined, requestId, model);
+  const retryParsed = _tryParseAudit(retryRaw, domain);
+  if (retryParsed) return retryParsed;
+
+  // Last resort: return a single issue so the game doesn't get stuck
+  console.error('  Retry also failed — returning fallback issue');
+  return {
+    domain,
+    score: 50,
+    totalIssues: 1,
+    issues: [{
+      id: 1, severity: 'high', title: 'SEO Audit Parse Error',
+      description: 'The audit completed but the results could not be parsed into structured data. Try running the audit again.',
+      category: 'General', hp: 30
+    }]
+  };
+}
+
+/**
+ * Attempt to extract a valid audit JSON from Claude's output.
+ * Returns the parsed object or null if extraction fails.
+ */
+function _tryParseAudit(raw, domain) {
   try {
-    if (raw.issues) return raw;
+    if (raw && raw.issues) return _normalizeAudit(raw, domain);
 
     const text = typeof raw === 'string' ? raw : (raw.raw || JSON.stringify(raw));
 
-    // Extract JSON — handle markdown fences and preamble text
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      if (parsed.issues && Array.isArray(parsed.issues)) {
-        parsed.issues = parsed.issues.map((issue, i) => ({
-          id: issue.id || i + 1,
-          severity: issue.severity || 'medium',
-          title: issue.title || 'Unknown Issue',
-          description: issue.description || 'No description',
-          category: issue.category || 'General',
-          hp: issue.hp || 50
-        }));
-        parsed.domain = parsed.domain || domain;
-        parsed.score = parsed.score || 50;
-        parsed.totalIssues = parsed.issues.length;
-        return parsed;
+    // Try progressively looser JSON extraction
+    const patterns = [
+      /\{[\s\S]*"issues"\s*:\s*\[[\s\S]*\][\s\S]*\}/,  // Strict: must have "issues":[]
+      /\{[\s\S]*\}/                                       // Loose: any JSON object
+    ];
+
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (parsed.issues && Array.isArray(parsed.issues)) {
+          return _normalizeAudit(parsed, domain);
+        }
       }
     }
-    throw new Error('No valid JSON found');
-  } catch (parseErr) {
-    console.error('Parse error:', parseErr.message);
-    throw new Error(`Audit completed but results could not be parsed: ${parseErr.message}`);
+  } catch (e) {
+    console.error('  Parse attempt failed:', e.message);
   }
+  return null;
+}
+
+function _normalizeAudit(parsed, domain) {
+  parsed.issues = parsed.issues.map((issue, i) => ({
+    id: issue.id || i + 1,
+    severity: issue.severity || 'medium',
+    title: issue.title || 'Unknown Issue',
+    description: issue.description || 'No description',
+    category: issue.category || 'General',
+    hp: issue.hp || 50
+  }));
+  parsed.domain = parsed.domain || domain;
+  parsed.score = parsed.score || 50;
+  parsed.totalIssues = parsed.issues.length;
+  return parsed;
 }
 
 /**
