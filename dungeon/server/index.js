@@ -15,6 +15,9 @@ const PORT = 3001;
 // Project root: server/ -> dungeon/ -> claude-seo-dungeon/
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 
+// Track active child processes so they can be cancelled
+const activeProcesses = new Map(); // id -> ChildProcess
+
 // Catch crashes so server stays alive
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception (server stays alive):', err.message);
@@ -44,41 +47,57 @@ wss.on('connection', (ws) => {
 
   ws.on('message', async (raw) => {
     const msg = JSON.parse(raw.toString());
-    const { id, command, type, projectPath } = msg;
+    const { id, command, type, projectPath, model } = msg;
 
     // Use project path for fixes, project root for audits
     const fixCwd = projectPath || PROJECT_ROOT;
 
-    console.log(`Command #${id} [${type}]: ${command.substring(0, 80)}`);
+    console.log(`Command #${id} [${type}]: ${command ? command.substring(0, 80) : '(no command)'}`);
+    if (model) console.log(`  Model: ${model}`);
     if (projectPath) console.log(`  Project: ${projectPath}`);
+
+    // Cancel — kill the child process for a given request
+    if (type === 'cancel') {
+      const proc = activeProcesses.get(id);
+      if (proc) {
+        console.log(`Cancelling process #${id}`);
+        proc.kill('SIGTERM');
+        activeProcesses.delete(id);
+      }
+      safeSend(JSON.stringify({ id, type: 'error', message: 'Cancelled by user' }));
+      return;
+    }
 
     try {
       if (type === 'audit') {
         const result = await runAudit(command, (chunk) => {
           safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
-        });
+        }, undefined, id, model);
+        activeProcesses.delete(id);
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
         console.log(`Audit done: ${result.issues.length} issues, score ${result.score}`);
 
       } else if (type === 'fix') {
-        // Create a branch for the fix, then run Claude in the project directory
         const result = await runFix(command, fixCwd, (chunk) => {
           safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
-        });
+        }, id, model);
+        activeProcesses.delete(id);
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
         console.log(`Fix done: ${command.substring(0, 50)}`);
 
       } else if (type === 'commit') {
         const result = await runCommit(command, fixCwd, (chunk) => {
           safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
-        });
+        }, id, model);
+        activeProcesses.delete(id);
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
         console.log(`Commit done in ${fixCwd}`);
 
       } else {
         const result = await runClaude(command, (chunk) => {
           safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
-        });
+        }, undefined, id, model);
+        activeProcesses.delete(id);
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
       }
     } catch (err) {
@@ -96,14 +115,14 @@ wss.on('connection', (ws) => {
 /**
  * Run an SEO audit via Claude CLI.
  */
-async function runAudit(domain, onStream) {
+async function runAudit(domain, onStream, cwd, requestId, model) {
   const prompt = `Run /seo audit on ${domain}. This will trigger the full SEO audit skill which spawns multiple subagents for technical SEO, content quality, schema markup, performance, crawlability, images, and more.
 
 After the audit completes, take ALL the findings and format them as a single JSON object. Return ONLY valid JSON at the very end (no markdown fences): {"domain":"${domain}","score":<overall 0-100>,"totalIssues":<n>,"issues":[{"id":<n>,"severity":"<critical|high|medium|low|info>","title":"<short title>","description":"<one sentence>","category":"<category>","hp":<10-100 based on effort to fix>}]}
 
 Include every issue found by every subagent. Be thorough.`;
 
-  const raw = await runClaude(prompt, onStream);
+  const raw = await runClaude(prompt, onStream, undefined, requestId, model);
 
   try {
     if (raw.issues) return raw;
@@ -149,14 +168,14 @@ Include every issue found by every subagent. Be thorough.`;
  * Fix a specific SEO issue via Claude CLI.
  * Runs inside the user's project directory so Claude can edit real files.
  */
-async function runFix(issueDescription, projectCwd, onStream) {
+async function runFix(issueDescription, projectCwd, onStream, requestId, model) {
   const prompt = `You are working in a website project directory. Fix this specific SEO issue by editing the actual source files: ${issueDescription}
 
 Look at the project files, identify what needs to change, and make the edits. Be precise and minimal — only change what's needed to fix this specific issue. After making changes, return a JSON summary: {"fixed":true,"summary":"<what was changed>","filesChanged":["<list of files>"]}
 
 Return the JSON summary at the very end after making all changes.`;
 
-  const raw = await runClaude(prompt, onStream, projectCwd);
+  const raw = await runClaude(prompt, onStream, projectCwd, requestId, model);
 
   try {
     const text = typeof raw === 'string' ? raw : (raw.raw || JSON.stringify(raw));
@@ -170,10 +189,10 @@ Return the JSON summary at the very end after making all changes.`;
 /**
  * Commit current changes in the project.
  */
-async function runCommit(message, projectCwd, onStream) {
+async function runCommit(message, projectCwd, onStream, requestId, model) {
   const prompt = `In this project directory, stage all changed files and create a git commit with this message: "${message}". Do NOT push. Return JSON: {"committed":true,"message":"<commit message>","hash":"<short hash>"}`;
 
-  const raw = await runClaude(prompt, onStream, projectCwd);
+  const raw = await runClaude(prompt, onStream, projectCwd, requestId, model);
 
   try {
     const text = typeof raw === 'string' ? raw : (raw.raw || JSON.stringify(raw));
@@ -190,16 +209,20 @@ async function runCommit(message, projectCwd, onStream) {
  * @param {function} onStream - Callback for streaming output
  * @param {string} [cwd] - Working directory (defaults to PROJECT_ROOT)
  */
-function runClaude(prompt, onStream, cwd) {
+function runClaude(prompt, onStream, cwd, requestId, model) {
   const workDir = cwd || PROJECT_ROOT;
   return new Promise((resolve, reject) => {
     const cliJs = path.join(process.env.APPDATA, 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
-    console.log(`  Running with stream-json`);
+    const modelName = model || 'claude-sonnet-4-6';
+    console.log(`  Running with stream-json (model: ${modelName})`);
     console.log(`  CWD: ${workDir}`);
-    const proc = spawn(process.execPath, [cliJs, '-p', prompt, '--output-format', 'stream-json', '--verbose'], {
+    const proc = spawn(process.execPath, [cliJs, '-p', prompt, '--model', modelName, '--output-format', 'stream-json', '--verbose'], {
       cwd: workDir,
       env: { ...process.env }
     });
+
+    // Register for cancellation
+    if (requestId) activeProcesses.set(requestId, proc);
 
     let fullText = '';
     let buffer = '';
@@ -291,11 +314,7 @@ function runClaude(prompt, onStream, cwd) {
       reject(new Error(`Failed to spawn claude: ${err.message}`));
     });
 
-    // 10 minute timeout — real SEO audits with subagents take a while
-    setTimeout(() => {
-      proc.kill();
-      reject(new Error('Claude command timed out (10 min)'));
-    }, 600000);
+    // No timeout — user can cancel manually via the abandon scroll
   });
 }
 

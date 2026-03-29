@@ -4,11 +4,27 @@ import { SummoningScene } from './scenes/SummoningScene.js';
 import { DungeonHallScene } from './scenes/DungeonHallScene.js';
 import { BattleScene } from './scenes/BattleScene.js';
 import { VictoryScene } from './scenes/VictoryScene.js';
+import { GateScene } from './scenes/GateScene.js';
 import { bridge } from './utils/ws.js';
 import { initKnightSprite } from './knight-sprite.js';
 import { initActivityLog, addLog, showLoadingIndicator, hideLoadingIndicator } from './activity-log.js';
 
 let game = null;
+
+// ── Abort & Return to Title ───────────────────
+function returnToTitle() {
+  bridge.cancelAll();
+  if (game) {
+    game.destroy(true);
+    game = null;
+  }
+  document.getElementById('game-container').style.display = 'none';
+  document.getElementById('title-screen').style.display = 'flex';
+  addLog('Recalled by scroll');
+}
+
+// Expose for Phaser scenes
+window.returnToTitle = returnToTitle;
 
 // ── Bridge Connection ──────────────────────────
 async function connectBridge() {
@@ -34,19 +50,21 @@ function launchGame(domain, projectPath) {
   addLog(`Source: ${projectPath}`);
   showLoadingIndicator();
 
+  const dpr = window.devicePixelRatio || 1;
   const config = {
     type: Phaser.AUTO,
     parent: 'game-container',
     width: 800,
     height: 600,
-    pixelArt: true,
+    resolution: dpr,
+    pixelArt: false,
     roundPixels: true,
     backgroundColor: '#0a0a1a',
     scale: {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    scene: [BootScene, SummoningScene, DungeonHallScene, BattleScene, VictoryScene]
+    scene: [BootScene, GateScene, SummoningScene, DungeonHallScene, BattleScene, VictoryScene]
   };
 
   game = new Phaser.Game(config);

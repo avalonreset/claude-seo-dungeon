@@ -3,9 +3,10 @@
  * Crops out transparent padding and displays characters at proper size.
  */
 
-const CHARACTERS = {
+export const CHARACTERS = {
   warrior: {
     name: 'warrior',
+    model: 'claude-opus-4-6',
     idlePath: 'assets/luizmelo/warrior/sprites/Idle.png',
     runPath: 'assets/luizmelo/warrior/sprites/Run.png',
     attackPath: 'assets/luizmelo/warrior/sprites/Attack1.png',
@@ -14,10 +15,18 @@ const CHARACTERS = {
     frameW: 162, frameH: 162,
     idleFrames: 10, runFrames: 8, attackFrames: 7, hitFrames: 3, deathFrames: 7,
     cropX: 42, cropY: 20, cropW: 80, cropH: 130,
-    groundY: 145  // Y in sprite where feet touch ground
+    groundY: 145,  // Y in sprite where feet touch ground (idle)
+    runGroundY: 100, // Y in run sprite where feet touch ground
+    // Extra animations for variety
+    extraAnims: [
+      { key: 'char_attack2', path: 'assets/luizmelo/warrior/sprites/Attack2.png', frames: 7 },
+      { key: 'char_attack3', path: 'assets/luizmelo/warrior/sprites/Attack3.png', frames: 8 },
+      { key: 'char_jump', path: 'assets/luizmelo/warrior/sprites/Jump.png', frames: 3 }
+    ]
   },
   samurai: {
     name: 'samurai',
+    model: 'claude-sonnet-4-6',
     idlePath: 'assets/luizmelo/samurai/sprites/Idle.png',
     runPath: 'assets/luizmelo/samurai/sprites/Run.png',
     attackPath: 'assets/luizmelo/samurai/sprites/Attack1.png',
@@ -26,10 +35,16 @@ const CHARACTERS = {
     frameW: 200, frameH: 200,
     idleFrames: 8, runFrames: 8, attackFrames: 6, hitFrames: 4, deathFrames: 6,
     cropX: 48, cropY: 30, cropW: 100, cropH: 140,
-    groundY: 173  // Y in sprite where feet touch ground
+    groundY: 173,  // Y in sprite where feet touch ground (idle)
+    runGroundY: 121, // Y in run sprite where feet touch ground
+    extraAnims: [
+      { key: 'char_attack2', path: 'assets/luizmelo/samurai/sprites/Attack2.png', frames: 6 },
+      { key: 'char_jump', path: 'assets/luizmelo/samurai/sprites/Jump.png', frames: 2 }
+    ]
   },
   knight: {
     name: 'knight',
+    model: 'claude-haiku-4-5-20251001',
     idlePath: 'assets/luizmelo/warrior-pack-2/player1/Idle.png',
     runPath: 'assets/luizmelo/warrior-pack-2/player1/Run.png',
     attackPath: 'assets/luizmelo/warrior-pack-2/player1/Attack2.png',
@@ -38,7 +53,11 @@ const CHARACTERS = {
     frameW: 180, frameH: 180,
     idleFrames: 11, runFrames: 8, attackFrames: 7, hitFrames: 4, deathFrames: 11,
     cropX: 40, cropY: 20, cropW: 110, cropH: 140,
-    groundY: 166  // Y in sprite where feet touch ground
+    groundY: 166,  // Y in sprite where feet touch ground (idle)
+    runGroundY: 114, // Y in run sprite where feet touch ground
+    extraAnims: [
+      { key: 'char_jump', path: 'assets/luizmelo/warrior-pack-2/player1/Jump.png', frames: 3 }
+    ]
   }
 };
 

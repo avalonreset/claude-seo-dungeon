@@ -48,18 +48,19 @@ export class BridgeClient {
   /**
    * Run an SEO audit on a domain.
    */
-  audit(domain, projectPath, onStream) {
+  audit(domain, projectPath, onStream, model) {
     return new Promise((resolve, reject) => {
       const id = ++this.requestId;
+      this.activeAuditId = id;
       this.handlers.set(id, { resolve, reject, onStream });
-      this.ws.send(JSON.stringify({ id, type: 'audit', command: domain, projectPath }));
+      this.ws.send(JSON.stringify({ id, type: 'audit', command: domain, projectPath, model }));
     });
   }
 
   /**
    * Fix a specific SEO issue in the project.
    */
-  fix(issue, projectPath, onStream) {
+  fix(issue, projectPath, onStream, model) {
     return new Promise((resolve, reject) => {
       const id = ++this.requestId;
       this.handlers.set(id, { resolve, reject, onStream });
@@ -67,7 +68,8 @@ export class BridgeClient {
         id,
         type: 'fix',
         command: `${issue.title}: ${issue.description}`,
-        projectPath
+        projectPath,
+        model
       }));
     });
   }
@@ -75,12 +77,36 @@ export class BridgeClient {
   /**
    * Commit the current fix to git.
    */
-  commit(message, projectPath, onStream) {
+  commit(message, projectPath, onStream, model) {
     return new Promise((resolve, reject) => {
       const id = ++this.requestId;
       this.handlers.set(id, { resolve, reject, onStream });
-      this.ws.send(JSON.stringify({ id, type: 'commit', command: message, projectPath }));
+      this.ws.send(JSON.stringify({ id, type: 'commit', command: message, projectPath, model }));
     });
+  }
+
+  /**
+   * Cancel a running request by its ID. Kills the server-side process.
+   */
+  cancel(id) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ id, type: 'cancel' }));
+    }
+    // Reject the pending handler so the caller's await unblocks
+    const handler = this.handlers.get(id);
+    if (handler) {
+      handler.reject(new Error('Cancelled by user'));
+      this.handlers.delete(id);
+    }
+  }
+
+  /**
+   * Cancel all pending requests.
+   */
+  cancelAll() {
+    for (const [id] of this.handlers) {
+      this.cancel(id);
+    }
   }
 
   disconnect() {

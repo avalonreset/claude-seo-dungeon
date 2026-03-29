@@ -18,6 +18,15 @@ export class BootScene extends Phaser.Scene {
     this.load.image('demon_low_real', 'assets/monsters/demon_low.png');
     this.load.image('demon_info_real', 'assets/monsters/demon_info.png');
 
+    // Remove old character textures if this is a re-entry (character swap from Gate).
+    // Phaser caches textures by key — without removal, load() silently skips the new files
+    // and the old character's sprites remain on screen.
+    for (const key of this.textures.getTextureKeys()) {
+      if (key.startsWith('char_')) {
+        this.textures.remove(key);
+      }
+    }
+
     // Load character sprite sheets dynamically based on selection
     const cfg = this.game.characterConfig || {
       name: 'warrior',
@@ -41,6 +50,13 @@ export class BootScene extends Phaser.Scene {
     this.load.spritesheet('char_attack', cfg.attackPath, { frameWidth: cfg.frameW, frameHeight: cfg.frameH });
     this.load.spritesheet('char_hit', cfg.hitPath, { frameWidth: cfg.frameW, frameHeight: cfg.frameH });
     this.load.spritesheet('char_death', cfg.deathPath, { frameWidth: cfg.frameW, frameHeight: cfg.frameH });
+
+    // Load extra animation variants (attack2, attack3, jump)
+    if (cfg.extraAnims) {
+      for (const anim of cfg.extraAnims) {
+        this.load.spritesheet(anim.key, anim.path, { frameWidth: cfg.frameW, frameHeight: cfg.frameH });
+      }
+    }
   }
 
   create() {
@@ -48,15 +64,68 @@ export class BootScene extends Phaser.Scene {
 
     // Create character animations from selected character config
     const cfg = this.game.characterConfig;
+
+    // Ensure all sprite textures use NEAREST filter for crisp pixel art
+    // (global pixelArt is off so text renders smoothly)
+    const texKeys = [
+      'knight_real', 'demon_critical_real', 'demon_high_real',
+      'demon_medium_real', 'demon_low_real', 'demon_info_real',
+      'char_idle', 'char_run', 'char_attack', 'char_hit', 'char_death'
+    ];
+    // Add extra anim texture keys
+    if (cfg.extraAnims) {
+      for (const anim of cfg.extraAnims) texKeys.push(anim.key);
+    }
+    for (const key of texKeys) {
+      const tex = this.textures.get(key);
+      if (tex && tex.source && tex.source[0]) {
+        tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+    }
+
+    // Remove old animations if they exist (handles character swap re-entry)
+    this.anims.getAnimationNames().forEach(name => {
+      if (name.startsWith('char_')) this.anims.remove(name);
+    });
+
     this.anims.create({ key: 'char_idle_anim', frames: this.anims.generateFrameNumbers('char_idle', { start: 0, end: cfg.idleFrames - 1 }), frameRate: 8, repeat: -1 });
     this.anims.create({ key: 'char_run_anim', frames: this.anims.generateFrameNumbers('char_run', { start: 0, end: cfg.runFrames - 1 }), frameRate: 10, repeat: -1 });
     this.anims.create({ key: 'char_attack_anim', frames: this.anims.generateFrameNumbers('char_attack', { start: 0, end: cfg.attackFrames - 1 }), frameRate: 12, repeat: 0 });
     this.anims.create({ key: 'char_hit_anim', frames: this.anims.generateFrameNumbers('char_hit', { start: 0, end: cfg.hitFrames - 1 }), frameRate: 8, repeat: 0 });
     this.anims.create({ key: 'char_death_anim', frames: this.anims.generateFrameNumbers('char_death', { start: 0, end: cfg.deathFrames - 1 }), frameRate: 8, repeat: 0 });
 
+    // Register extra animation variants
+    if (cfg.extraAnims) {
+      for (const anim of cfg.extraAnims) {
+        this.anims.create({
+          key: anim.key + '_anim',
+          frames: this.anims.generateFrameNumbers(anim.key, { start: 0, end: anim.frames - 1 }),
+          frameRate: 12,
+          repeat: 0
+        });
+      }
+    }
+
+    // Check if we're being re-entered from Gate with a pending destination
+    const dest = this.game.pendingDestination;
+    if (dest) {
+      const destScene = dest.scene;
+      const destData = dest.data || {};
+      this.game.pendingDestination = null;
+      this.cameras.main.fadeIn(300, 0, 0, 0);
+      this.time.delayedCall(300, () => {
+        this.scene.start(destScene, {
+          domain: this.game.domain,
+          projectPath: this.game.projectPath,
+          ...destData
+        });
+      });
+      return;
+    }
+
     this.cameras.main.fadeIn(500, 0, 0, 0);
     this.time.delayedCall(400, () => {
-      this.scene.start('Summoning', {
+      this.scene.start('Gate', {
         domain: this.game.domain,
         projectPath: this.game.projectPath
       });

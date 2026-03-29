@@ -29,8 +29,6 @@
     }
 
     #game-container {
-      image-rendering: pixelated;
-      image-rendering: crisp-edges;
       display: none;
     }
 
@@ -117,6 +115,22 @@
     .char-option.selected span {
       color: #d4af37;
     }
+
+    .char-model {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: -12px;
+      transform: translateY(-15px);
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+    .char-option.selected .char-model { opacity: 0.85; }
+    .char-model.gold { color: #d4af37; }
+    .char-model.blue { color: #88bbff; }
+    .char-model.green { color: #66ddaa; }
 
     #title-screen .tagline {
       font-size: 15px;
@@ -287,14 +301,17 @@
         <div class="char-option selected" data-char="warrior">
           <canvas id="char-warrior"></canvas>
           <span>WARRIOR</span>
+          <span class="char-model gold">OPUS</span>
         </div>
         <div class="char-option" data-char="samurai">
           <canvas id="char-samurai"></canvas>
           <span>SAMURAI</span>
+          <span class="char-model blue">SONNET</span>
         </div>
         <div class="char-option" data-char="knight">
           <canvas id="char-knight"></canvas>
           <span>KNIGHT</span>
+          <span class="char-model green">HAIKU</span>
         </div>
       </div>
 

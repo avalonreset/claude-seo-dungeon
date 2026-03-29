@@ -27,9 +27,9 @@ export class SummoningScene extends Phaser.Scene {
     this.cameras.main.fadeIn(800, 0, 0, 0);
 
     // Scroll speeds (pixels per second) — leftward
-    this.farWallSpeed = 30;
-    this.mainWallSpeed = 60;
-    this.floorSpeed = 80;
+    this.farWallSpeed = 60;
+    this.mainWallSpeed = 120;
+    this.floorSpeed = 170;
 
     // ── Far Wall (darkest, slowest parallax layer) ─────────────
     this._generateFarWallTexture();
@@ -64,28 +64,19 @@ export class SummoningScene extends Phaser.Scene {
     // ── Dust Motes ─────────────────────────────────────────────
     this._createDustMotes(W, H);
 
-    // ── Knight (centered, faces right, running) ────────────────
-    this.knight = this.add.sprite(300, 380, 'char_run')
-      .setScale(2.5)
+    // ── Character (centered, faces right, running) ──────────────
+    // Floor edge is at Y=440. Use runGroundY (actual pixel-scanned foot position
+    // in the run sprite) to place feet exactly on the floor line.
+    const cfg = this.game.characterConfig;
+    const scale = 2.5;
+    const floorY = 438;
+    const feetY = cfg.runGroundY || cfg.groundY;
+    const originY = feetY / cfg.frameH;
+    this.knight = this.add.sprite(300, floorY, 'char_run')
+      .setOrigin(0.5, originY)
+      .setScale(scale)
       .setDepth(10)
       .play('char_run_anim');
-
-    // Warm glow underneath the knight
-    this.knightGlow = this.add.circle(300, 400, 70, 0xff8833, 0.08).setDepth(9);
-    this.knightGlowInner = this.add.circle(300, 400, 35, 0xffaa44, 0.12).setDepth(9);
-
-    this.tweens.add({
-      targets: this.knightGlow,
-      scaleX: 1.4, scaleY: 1.4, alpha: 0.04,
-      duration: 1800, yoyo: true, repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-    this.tweens.add({
-      targets: this.knightGlowInner,
-      scaleX: 1.3, scaleY: 1.3, alpha: 0.06,
-      duration: 1200, yoyo: true, repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
 
     // ── Title Text ─────────────────────────────────────────────
     const titleText = this.add.text(cx, 38, 'DESCENDING INTO THE DUNGEON', {
@@ -204,6 +195,9 @@ export class SummoningScene extends Phaser.Scene {
       },
       loop: true
     });
+
+    // ── Abandon Scroll (cancel audit and return to title) ──────
+    this._createAbandonScroll(W);
 
     // Track stream activity
     this.streamChunks = 0;
@@ -721,107 +715,258 @@ export class SummoningScene extends Phaser.Scene {
     this.progressPctText.setText(Math.floor(clamped * 100) + '%');
   }
 
-  async runAudit() {
-    let progress = 0;
-    const progressTimer = this.time.addEvent({
-      delay: 500,
-      callback: () => {
-        progress = Math.min(progress + 0.008, 0.9);
-        this.setProgress(progress);
-      },
-      loop: true
+  /**
+   * Abandon Scroll — a dark rune in the corner that kills the audit and returns to title.
+   */
+  _createAbandonScroll(W) {
+    const scrollX = W - 50;
+    const scrollY = 30;
+
+    // Draw a small arcane rune / scroll icon using graphics
+    const rune = this.add.graphics().setDepth(60);
+
+    // Outer circle — dim blood red
+    rune.lineStyle(1.5, 0x661111, 0.6);
+    rune.strokeCircle(scrollX, scrollY, 16);
+
+    // Inner glyph — an X mark (rune of severance)
+    rune.lineStyle(2, 0x992222, 0.7);
+    rune.lineBetween(scrollX - 7, scrollY - 7, scrollX + 7, scrollY + 7);
+    rune.lineBetween(scrollX + 7, scrollY - 7, scrollX - 7, scrollY + 7);
+
+    // Small dots at cardinal points
+    rune.fillStyle(0x882222, 0.5);
+    rune.fillCircle(scrollX, scrollY - 16, 2);
+    rune.fillCircle(scrollX, scrollY + 16, 2);
+    rune.fillCircle(scrollX - 16, scrollY, 2);
+    rune.fillCircle(scrollX + 16, scrollY, 2);
+
+    // Label text (hidden by default, shown on hover)
+    const label = this.add.text(scrollX, scrollY + 28, 'Sever the link', {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '10px',
+      color: '#882222',
+    }).setOrigin(0.5).setDepth(60).setAlpha(0);
+
+    // Invisible hit area for interaction
+    const hitZone = this.add.zone(scrollX, scrollY, 44, 44)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(61);
+
+    // Hover effects
+    hitZone.on('pointerover', () => {
+      rune.clear();
+      rune.lineStyle(1.5, 0xaa2222, 0.9);
+      rune.strokeCircle(scrollX, scrollY, 16);
+      rune.lineStyle(2, 0xdd3333, 1);
+      rune.lineBetween(scrollX - 7, scrollY - 7, scrollX + 7, scrollY + 7);
+      rune.lineBetween(scrollX + 7, scrollY - 7, scrollX - 7, scrollY + 7);
+      rune.fillStyle(0xcc3333, 0.8);
+      rune.fillCircle(scrollX, scrollY - 16, 2);
+      rune.fillCircle(scrollX, scrollY + 16, 2);
+      rune.fillCircle(scrollX - 16, scrollY, 2);
+      rune.fillCircle(scrollX + 16, scrollY, 2);
+      label.setAlpha(1);
     });
 
+    hitZone.on('pointerout', () => {
+      rune.clear();
+      rune.lineStyle(1.5, 0x661111, 0.6);
+      rune.strokeCircle(scrollX, scrollY, 16);
+      rune.lineStyle(2, 0x992222, 0.7);
+      rune.lineBetween(scrollX - 7, scrollY - 7, scrollX + 7, scrollY + 7);
+      rune.lineBetween(scrollX + 7, scrollY - 7, scrollX - 7, scrollY + 7);
+      rune.fillStyle(0x882222, 0.5);
+      rune.fillCircle(scrollX, scrollY - 16, 2);
+      rune.fillCircle(scrollX, scrollY + 16, 2);
+      rune.fillCircle(scrollX - 16, scrollY, 2);
+      rune.fillCircle(scrollX + 16, scrollY, 2);
+      label.setAlpha(0);
+    });
+
+    // Click — sever the connection
+    hitZone.on('pointerdown', () => {
+      if (this.game.addLog) this.game.addLog('The link is severed.');
+      this.cameras.main.fadeOut(600, 30, 0, 0);
+      this.time.delayedCall(600, () => {
+        window.returnToTitle();
+      });
+    });
+  }
+
+  async runAudit() {
+    // Milestone-based progress from real audit data.
+    // Calibrated from a full claude-github.com audit (149 total events):
+    //   Skill/ToolSearch: 5 events (setup)
+    //   WebFetch: 24 events (page scanning + subagent fetches)
+    //   Agent: 12 events (subagent launches)
+    //   Bash: 78 events (subagent work — curls, greps, scripts)
+    //   Read: 24 events (file reads, result reads)
+    //   Write/Todo: 6 events (report writing)
+    //   [Complete]: 1 event (final signal)
+    //
+    // Strategy: use logarithmic curve based on total event count.
+    // This naturally slows down as it approaches 90%, works for any site size.
+    // A small site (~80 events) will fill more per event.
+    // A large site (~300 events) will fill less per event.
+    // The bar never exceeds 92% until [Complete] is received.
+    let totalEvents = 0;
+    let completeReceived = false;
+
+    // Expected total based on calibration. Larger sites may exceed this,
+    // which is fine — the log curve handles it gracefully.
+    const EXPECTED_EVENTS = 150;
+
+    const updateProgress = () => {
+      if (completeReceived) {
+        this.setProgress(0.95);
+        return;
+      }
+      // Logarithmic fill: progress = 0.92 * (1 - e^(-events/k))
+      // k controls how fast it fills. With k=80, it reaches:
+      //   50 events → 46%
+      //   100 events → 71%
+      //   150 events → 85%
+      //   200 events → 92% (capped)
+      const k = EXPECTED_EVENTS * 0.55;
+      const raw = 0.92 * (1 - Math.exp(-totalEvents / k));
+      this.setProgress(Math.min(raw, 0.92));
+    };
+
+    // Accumulate all streamed text so we can extract partial results on failure
+    let streamedText = '';
+
     try {
+      const model = this.game.characterConfig?.model;
       const result = await bridge.audit(this.domain, this.projectPath, (streamData) => {
         this.streamChunks++;
         const clean = streamData.replace(/[\n\r]+/g, ' ').trim();
         if (clean.length > 0) {
+          streamedText += clean + '\n';
           this.streamText.setText(clean.substring(0, 60));
           if (this.game.addLog) this.game.addLog(clean);
-        }
-        this.demonCounter.setText(`Claude is working... (${this.streamChunks} signals received)`);
-      });
 
-      progressTimer.remove();
+          // Count every tool-call event for progress
+          if (clean.startsWith('[')) {
+            totalEvents++;
+            if (clean === '[Complete]') {
+              completeReceived = true;
+            }
+            updateProgress();
+          }
+        }
+
+        // Contextual status messages based on what's happening
+        const phase = completeReceived ? 'Assembling results...'
+          : totalEvents > 30 ? `Subagents working... (${totalEvents} steps complete)`
+          : totalEvents > 10 ? `Scanning & analyzing... (${totalEvents} steps)`
+          : totalEvents > 0 ? `Initializing audit... (${totalEvents} steps)`
+          : 'Connecting...';
+        this.demonCounter.setText(phase);
+      }, model);
+
       this.setProgress(1);
 
       const auditData = result.data || result;
-      if (auditData && auditData.issues && auditData.issues.length > 0) {
-        this.game.auditData = auditData;
-        const revealMsg = 'The dungeon reveals itself...';
-        this.messageText.setText(revealMsg);
-        this.messageText.setColor('#f0c040');
-        this.messageGlow.setText(revealMsg);
-        this.messageGlow.setColor('#cc8800');
-        this.streamText.setText('');
-        this.demonCounter.setText(`${auditData.issues.length} demons detected! Score: ${auditData.score}/100`);
-        this.demonCounter.setColor('#f0c040');
-
-        // Dramatic pause before transition
-        this.cameras.main.flash(300, 200, 50, 50);
-        this.time.delayedCall(2000, () => {
-          this.cameras.main.fadeOut(1000, 0, 0, 0);
-          this.time.delayedCall(1000, () => {
-            this.scene.start('DungeonHall');
-          });
-        });
-      } else {
-        this.addLog('Audit returned no issues \u2014 entering demo mode');
-        await this.simulateAudit();
-      }
+      this._handleAuditResult(auditData, true);
 
     } catch (err) {
-      progressTimer.remove();
       console.error('Audit error:', err);
       if (this.game.addLog) this.game.addLog('ERROR: ' + err.message);
-      this.addLog('Bridge error \u2014 entering demo mode');
-      await this.simulateAudit();
+
+      // Try to extract partial results from whatever streamed in
+      const partial = this._extractPartialIssues(streamedText);
+      if (partial && partial.issues && partial.issues.length > 0) {
+        this.addLog(`Interrupted — ${partial.issues.length} demons found before failure`);
+        this._handleAuditResult(partial, false);
+      } else {
+        // Truly nothing came back
+        this.addLog('No data received');
+        this.messageText.setText('The dungeon is silent.');
+        this.messageText.setColor('#cc4444');
+        this.streamText.setText('No issues could be retrieved.');
+        this.demonCounter.setText('');
+      }
     }
   }
 
-  async simulateAudit() {
-    const demoIssues = [
-      { id: 1, severity: 'critical', title: 'Missing SSL Certificate', description: 'Site not served over HTTPS', category: 'Security', hp: 100 },
-      { id: 2, severity: 'critical', title: 'Blocked by robots.txt', description: 'Critical pages blocked from crawling', category: 'Crawlability', hp: 90 },
-      { id: 3, severity: 'high', title: 'Missing Meta Descriptions', description: '12 pages missing meta descriptions', category: 'On-Page', hp: 70 },
-      { id: 4, severity: 'high', title: 'Broken Internal Links', description: '8 broken links found across the site', category: 'Links', hp: 65 },
-      { id: 5, severity: 'high', title: 'No Schema Markup', description: 'Missing structured data on all pages', category: 'Schema', hp: 60 },
-      { id: 6, severity: 'medium', title: 'Slow Page Speed', description: 'LCP exceeds 4s on mobile', category: 'Performance', hp: 50 },
-      { id: 7, severity: 'medium', title: 'Missing Alt Text', description: '23 images missing alt attributes', category: 'Accessibility', hp: 45 },
-      { id: 8, severity: 'medium', title: 'Duplicate Title Tags', description: '5 pages share identical titles', category: 'On-Page', hp: 40 },
-      { id: 9, severity: 'low', title: 'Missing Open Graph Tags', description: 'Social sharing metadata absent', category: 'Social', hp: 30 },
-      { id: 10, severity: 'low', title: 'No XML Sitemap', description: 'Sitemap.xml not found', category: 'Crawlability', hp: 25 },
-      { id: 11, severity: 'info', title: 'HTTP/2 Not Enabled', description: 'Server using HTTP/1.1', category: 'Performance', hp: 20 },
-      { id: 12, severity: 'info', title: 'No Canonical Tags', description: 'Potential duplicate content issues', category: 'On-Page', hp: 20 }
-    ];
-
-    for (let i = 0; i <= 10; i++) {
-      await this.delay(400);
-      this.setProgress(i / 10);
-      if (i % 2 === 0 && i < 10) {
-        this.addLog(this.flavorMessages[Math.floor(i / 2)]);
-      }
+  /**
+   * Handle a successful or partial audit result — cache it and transition.
+   */
+  _handleAuditResult(auditData, cacheResult = false) {
+    if (!auditData || !auditData.issues || auditData.issues.length === 0) {
+      this.addLog('Audit completed but found no issues');
+      this.messageText.setText('The dungeon is empty.');
+      this.messageText.setColor('#60d060');
+      this.streamText.setText('No SEO issues detected.');
+      this.demonCounter.setText('');
+      return;
     }
 
-    this.game.auditData = {
-      domain: this.domain,
-      issues: demoIssues,
-      score: 35,
-      totalIssues: demoIssues.length
-    };
+    this.game.auditData = auditData;
+
+    // Only cache fully successful audits — not partial/interrupted results
+    if (cacheResult) {
+      try {
+        const modelKey = this.game.characterConfig?.model || 'unknown';
+        localStorage.setItem(`seo_dungeon_audit_${this.domain}_${modelKey}`, JSON.stringify({
+          domain: this.domain,
+          model: modelKey,
+          timestamp: Date.now(),
+          auditData: auditData
+        }));
+      } catch (e) { /* localStorage full or unavailable */ }
+    }
 
     const revealMsg = 'The dungeon reveals itself...';
     this.messageText.setText(revealMsg);
     this.messageText.setColor('#f0c040');
     this.messageGlow.setText(revealMsg);
     this.messageGlow.setColor('#cc8800');
-    this.time.delayedCall(1500, () => {
+    this.streamText.setText('');
+    this.demonCounter.setText(`${auditData.issues.length} demons detected! Score: ${auditData.score}/100`);
+    this.demonCounter.setColor('#f0c040');
+
+    // Dramatic pause before transition
+    this.cameras.main.flash(300, 200, 50, 50);
+    this.time.delayedCall(2000, () => {
       this.cameras.main.fadeOut(1000, 0, 0, 0);
       this.time.delayedCall(1000, () => {
         this.scene.start('DungeonHall');
       });
     });
+  }
+
+  /**
+   * Try to extract issue data from partial/interrupted stream text.
+   * Looks for JSON fragments containing issue arrays.
+   */
+  _extractPartialIssues(text) {
+    if (!text || text.length < 20) return null;
+    try {
+      // Look for a JSON block with issues array
+      const jsonMatch = text.match(/\{[\s\S]*"issues"\s*:\s*\[[\s\S]*\][\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        if (parsed.issues && Array.isArray(parsed.issues) && parsed.issues.length > 0) {
+          parsed.issues = parsed.issues.map((issue, i) => ({
+            id: issue.id || i + 1,
+            severity: issue.severity || 'medium',
+            title: issue.title || 'Unknown Issue',
+            description: issue.description || 'No description',
+            category: issue.category || 'General',
+            hp: issue.hp || 50
+          }));
+          parsed.domain = parsed.domain || this.domain;
+          parsed.score = parsed.score || 50;
+          parsed.totalIssues = parsed.issues.length;
+          return parsed;
+        }
+      }
+    } catch (e) {
+      // JSON incomplete — expected for interrupted audits
+    }
+    return null;
   }
 
   delay(ms) {

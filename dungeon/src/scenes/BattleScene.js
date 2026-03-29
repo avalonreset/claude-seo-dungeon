@@ -775,13 +775,14 @@ export class BattleScene extends Phaser.Scene {
 
     // Try real fix via bridge, fall back to demo
     try {
+      const model = this.game.characterConfig?.model;
       const result = await bridge.fix(this.issue, this.game.projectPath, (stream) => {
         const clean = stream.replace(/[\n\r]+/g, ' ').trim();
         if (clean.length > 0) {
           this.streamText.setText(clean.substring(0, 90) + '...');
           if (this.game.addLog) this.game.addLog(clean);
         }
-      });
+      }, model);
       this.streamText.setText('');
       const fixData = result.data || result;
       if (fixData && fixData.fixed) {
@@ -1305,8 +1306,9 @@ export class BattleScene extends Phaser.Scene {
   demonDefeated() {
     this.battleOver = true;
 
-    // Mark issue as defeated in game data
+    // Mark issue as defeated in game data and persist to cache
     this.issue.defeated = true;
+    this._persistProgress();
 
     this.setLog(VICTORY_MESSAGES[Math.floor(Math.random() * VICTORY_MESSAGES.length)]);
 
@@ -1461,5 +1463,23 @@ export class BattleScene extends Phaser.Scene {
       info: 0x4080e0
     };
     return map[this.issue.severity] || 0xe04040;
+  }
+
+  /**
+   * Persist current audit progress (defeated demons) back to localStorage
+   * so "Continue Quest" on the Gate screen reflects actual progress.
+   */
+  _persistProgress() {
+    try {
+      const modelKey = this.game.characterConfig?.model;
+      if (!modelKey || !this.game.domain || !this.game.auditData) return;
+      const cacheKey = `seo_dungeon_audit_${this.game.domain}_${modelKey}`;
+      localStorage.setItem(cacheKey, JSON.stringify({
+        domain: this.game.domain,
+        model: modelKey,
+        timestamp: Date.now(),
+        auditData: this.game.auditData
+      }));
+    } catch (_) { /* localStorage full or unavailable */ }
   }
 }
