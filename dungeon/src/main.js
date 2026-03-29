@@ -25,41 +25,8 @@ function returnToTitle() {
     game.destroy(true);
     game = null;
   }
-
-  // Fade to black, show "Ascending...", then reload
-  const gameArea = document.getElementById('game-area');
-  gameArea.style.transition = 'opacity 0.5s ease-in';
-  gameArea.style.opacity = '0';
-
-  setTimeout(() => {
-    // Show ascending label during black
-    const gameContainer = document.getElementById('game-container');
-    gameContainer.style.display = 'none';
-    const titleScreen = document.getElementById('title-screen');
-    titleScreen.innerHTML = '';
-    titleScreen.style.display = 'flex';
-    titleScreen.style.alignItems = 'center';
-    titleScreen.style.justifyContent = 'center';
-
-    const label = document.createElement('div');
-    label.textContent = 'Ascending...';
-    label.style.cssText = `
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 13px; color: #606078;
-      letter-spacing: 2px;
-    `;
-    titleScreen.appendChild(label);
-
-    gameArea.style.transition = 'opacity 0.5s ease-out';
-    gameArea.style.opacity = '1';
-
-    // Hold briefly then reload
-    setTimeout(() => {
-      gameArea.style.transition = 'opacity 0.5s ease-in';
-      gameArea.style.opacity = '0';
-      setTimeout(() => location.reload(), 550);
-    }, 1200);
-  }, 550);
+  document.getElementById('game-container').style.display = 'none';
+  _fullBlackTransition('Ascending...', () => location.reload());
 }
 
 // Expose for Phaser scenes
@@ -130,72 +97,78 @@ async function connectBridge() {
   }
 }
 
-// ── Cinematic Transition (shared by descend & ascend) ──
-function _cinematicTransition(labelText, onComplete) {
-  const titleScreen = document.getElementById('title-screen');
-  const gameArea = document.getElementById('game-area');
+// ── Full Black Transition ──────────────────────────────
+// True black overlay → label on black → fade out to next state.
+// No blue tint, no jump cuts, fully opaque black between states.
+function _fullBlackTransition(labelText, onComplete) {
+  // Create a true black overlay that covers everything
+  let overlay = document.getElementById('transition-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'transition-overlay';
+    overlay.style.cssText = `
+      position: fixed; inset: 0; z-index: 100000;
+      background: #000; display: flex; align-items: center;
+      justify-content: center; flex-direction: column; gap: 16px;
+      opacity: 0; pointer-events: all;
+      transition: opacity 0.6s ease-in-out;
+    `;
+    document.body.appendChild(overlay);
+  }
 
-  // 1. Fade the whole area to black first
-  gameArea.style.transition = 'opacity 0.5s ease-in';
-  gameArea.style.opacity = '0';
+  if (!document.getElementById('seal-spin-style')) {
+    const s = document.createElement('style');
+    s.id = 'seal-spin-style';
+    s.textContent = '@keyframes sealSpin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(s);
+  }
 
-  // 2. Once black, swap content to spinner + label, then fade up
+  // Phase 1: Fade overlay to black
+  overlay.innerHTML = '';
+  overlay.style.opacity = '0';
+  requestAnimationFrame(() => {
+    overlay.style.opacity = '1';
+  });
+
+  // Phase 2: Once fully black, show label + spinner
   setTimeout(() => {
-    titleScreen.innerHTML = '';
-    titleScreen.style.display = 'flex';
-    titleScreen.style.alignItems = 'center';
-    titleScreen.style.justifyContent = 'center';
-    titleScreen.style.flexDirection = 'column';
-    titleScreen.style.gap = '16px';
-
     const spinner = document.createElement('div');
     spinner.style.cssText = `
-      width: 32px; height: 32px; border-radius: 50%;
-      border: 2px solid #1a1a30;
-      border-top-color: #d4af37;
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid #1a1a30; border-top-color: #d4af37;
       animation: sealSpin 0.7s linear infinite;
     `;
     const label = document.createElement('div');
     label.textContent = labelText;
     label.style.cssText = `
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13px; color: #606078;
-      letter-spacing: 2px;
+      font-size: 13px; color: #606078; letter-spacing: 2px;
+      opacity: 0; transition: opacity 0.4s ease-out;
     `;
+    overlay.appendChild(spinner);
+    overlay.appendChild(label);
 
-    if (!document.getElementById('seal-spin-style')) {
-      const style = document.createElement('style');
-      style.id = 'seal-spin-style';
-      style.textContent = '@keyframes sealSpin { to { transform: rotate(360deg); } }';
-      document.head.appendChild(style);
-    }
+    // Fade label in gently
+    requestAnimationFrame(() => { label.style.opacity = '1'; });
 
-    titleScreen.appendChild(spinner);
-    titleScreen.appendChild(label);
-
-    // Fade up from black to reveal spinner + label
-    gameArea.style.transition = 'opacity 0.5s ease-out';
-    gameArea.style.opacity = '1';
-
-    // 3. Hold for a beat, then fade to black again and fire callback
+    // Phase 3: Hold, then fire callback behind the black overlay
     setTimeout(() => {
-      gameArea.style.transition = 'opacity 0.5s ease-in';
-      gameArea.style.opacity = '0';
+      onComplete();
 
+      // Phase 4: Fade overlay away to reveal new content
       setTimeout(() => {
-        onComplete();
-        gameArea.style.transition = 'opacity 0.5s ease-out';
-        gameArea.style.opacity = '1';
-      }, 550);
-    }, 1500);
-  }, 550);
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 650);
+      }, 300);
+    }, 1400);
+  }, 650);
 }
 
-// ── Blood Seal Transition (descend into dungeon) ──
+// ── Seal Your Fate Transition (descend into dungeon) ──
 function _sealTransition(onComplete) {
   const titleScreen = document.getElementById('title-screen');
 
-  // 1. Stagger-fade all title screen elements before the cinematic
+  // 1. Stagger-fade all title screen elements
   const elements = [
     titleScreen.querySelector('.tagline'),
     titleScreen.querySelector('#descend-btn'),
@@ -208,7 +181,7 @@ function _sealTransition(onComplete) {
   const charOptions = titleScreen.querySelectorAll('.char-option');
 
   elements.forEach((el, i) => {
-    el.style.transition = `opacity ${0.25}s ease-in ${i * 0.06}s, transform 0.3s ease-in ${i * 0.06}s`;
+    el.style.transition = `opacity 0.25s ease-in ${i * 0.06}s, transform 0.3s ease-in ${i * 0.06}s`;
     el.style.opacity = '0';
     el.style.transform = 'scale(0.95) translateY(8px)';
   });
@@ -219,9 +192,9 @@ function _sealTransition(onComplete) {
     el.style.transform = 'scale(0.8)';
   });
 
-  // After elements fade, run the shared cinematic
+  // 2. After elements fade, do the full black transition
   setTimeout(() => {
-    _cinematicTransition('Descending...', onComplete);
+    _fullBlackTransition('Descending...', onComplete);
   }, 700);
 }
 
