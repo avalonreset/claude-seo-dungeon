@@ -2,10 +2,11 @@
   <img src="assets/banner.webp" alt="Claude SEO Dungeon - Slay Your SEO Demons" width="100%">
 </p>
 
-# Claude SEO Dungeon
+# Claude SEO Dungeon - Gamified SEO Audit Tool for Claude Code
 
-A gamified 16-bit dungeon crawler that turns SEO audits into boss battles. Built on top of **Claude SEO v1.6.1** (17 skills, 11 subagents), this project bundles the entire SEO analysis pipeline into a Phaser.js game where every SEO issue becomes a demon you can fight, and every fix is a real commit to your codebase.
+A gamified 16-bit dungeon crawler that turns SEO audits into boss battles. Built on top of **Claude SEO v1.6.1** (17 skills, 11 subagents, 17 analysis dimensions), this project bundles the entire SEO analysis pipeline into a Phaser.js game where every SEO issue becomes a demon you can fight, and every fix is a real commit to your codebase.
 
+[![CI](https://github.com/avalonreset-pro/claude-seo-dungeon/actions/workflows/ci.yml/badge.svg)](https://github.com/avalonreset-pro/claude-seo-dungeon/actions/workflows/ci.yml)
 [![License: Proprietary](https://img.shields.io/badge/license-proprietary-red)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.1.0-blue)](CHANGELOG.md)
 [![Claude SEO](https://img.shields.io/badge/Claude%20SEO-v1.6.1-green)](skills/seo/SKILL.md)
