@@ -1602,7 +1602,9 @@ export class BattleScene extends Phaser.Scene {
     this.isPlayerTurn = false;
 
     this.appendLog('> ' + userPrompt);
+    if (this.game.addLog) this.game.addLog('> ' + userPrompt);
     this.appendLog(`${this.charName} channels the power of Claude...`);
+    if (this.game.addLog) this.game.addLog(`${this.charName} channels Claude...`);
 
     // 1. Disable menu and start channeling
     this._disableMenu();
