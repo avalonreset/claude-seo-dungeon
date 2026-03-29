@@ -151,16 +151,7 @@ Include every issue found by every subagent. Be thorough.`;
     throw new Error('No valid JSON found');
   } catch (parseErr) {
     console.error('Parse error:', parseErr.message);
-    return {
-      domain,
-      score: 50,
-      totalIssues: 1,
-      issues: [{
-        id: 1, severity: 'medium', title: 'Audit Parsing Error',
-        description: 'Claude returned data but it could not be parsed.',
-        category: 'General', hp: 50
-      }]
-    };
+    throw new Error(`Audit completed but results could not be parsed: ${parseErr.message}`);
   }
 }
 

@@ -795,11 +795,10 @@ export class BattleScene extends Phaser.Scene {
         this.setLog(`Claude strikes for ${damage} damage! ${fixData.summary || ''}`);
       }
     } catch (err) {
-      // Demo mode -- deal partial damage
+      // Fix failed — show error, no fake damage
       this.streamText.setText('');
-      const damage = Phaser.Math.Between(25, 50);
-      this.dealDamage(damage);
-      this.setLog(`Knight strikes for ${damage} damage!`);
+      this.setLog(`Fix failed: ${err.message || 'Connection error'}. Try again.`);
+      if (this.game.addLog) this.game.addLog('Fix error: ' + (err.message || 'unknown'));
     }
 
     // Check if demon is dead
