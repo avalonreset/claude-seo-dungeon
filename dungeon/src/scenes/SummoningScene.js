@@ -812,25 +812,22 @@ export class SummoningScene extends Phaser.Scene {
     // The bar never exceeds 92% until [Complete] is received.
     let totalEvents = 0;
     let completeReceived = false;
-
-    // Expected total based on calibration. Larger sites may exceed this,
-    // which is fine — the log curve handles it gracefully.
-    const EXPECTED_EVENTS = 150;
+    let agentsCompleted = 0;
+    const TOTAL_AGENTS = 8; // typical subagent count for a full audit
 
     const updateProgress = () => {
       if (completeReceived) {
         this.setProgress(0.95);
         return;
       }
-      // Logarithmic fill: progress = 0.92 * (1 - e^(-events/k))
-      // k controls how fast it fills. With k=80, it reaches:
-      //   50 events → 46%
-      //   100 events → 71%
-      //   150 events → 85%
-      //   200 events → 92% (capped)
-      const k = EXPECTED_EVENTS * 0.55;
-      const raw = 0.92 * (1 - Math.exp(-totalEvents / k));
-      this.setProgress(Math.min(raw, 0.92));
+      // Two-factor progress:
+      //   1. Agent completions (each worth ~10% of the bar, up to 80%)
+      //   2. Event count fills the gaps between agent completions
+      const agentProgress = Math.min(agentsCompleted / TOTAL_AGENTS, 1) * 0.85;
+      // Event-based sub-progress within current agent phase (fills remaining ~7%)
+      const eventBonus = Math.min(totalEvents / 200, 1) * 0.07;
+      const raw = Math.min(agentProgress + eventBonus, 0.92);
+      this.setProgress(raw);
     };
 
     // Accumulate all streamed text so we can extract partial results on failure
@@ -846,21 +843,26 @@ export class SummoningScene extends Phaser.Scene {
           this.streamText.setText(clean.substring(0, 60));
           if (this.game.addLog) this.game.addLog(clean);
 
-          // Count every tool-call event for progress
-          if (clean.startsWith('[')) {
-            totalEvents++;
-            if (clean === '[Complete]') {
-              completeReceived = true;
-            }
-            updateProgress();
+          // Count all meaningful events
+          totalEvents++;
+
+          if (clean === '[Complete]') {
+            completeReceived = true;
           }
+
+          // Detect subagent completions for major progress jumps
+          if (/audit complete|agent complete|agents?\s+remaining/i.test(clean)) {
+            agentsCompleted++;
+          }
+
+          updateProgress();
         }
 
-        // Contextual status messages based on what's happening
+        // Contextual status messages based on agent progress
         const phase = completeReceived ? 'Assembling results...'
-          : totalEvents > 30 ? `Subagents working... (${totalEvents} steps complete)`
-          : totalEvents > 10 ? `Scanning & analyzing... (${totalEvents} steps)`
-          : totalEvents > 0 ? `Initializing audit... (${totalEvents} steps)`
+          : agentsCompleted > 0 ? `${agentsCompleted} of ${TOTAL_AGENTS} agents complete`
+          : totalEvents > 5 ? 'Subagents scanning...'
+          : totalEvents > 0 ? 'Initializing audit...'
           : 'Connecting...';
         this.demonCounter.setText(phase);
       }, model);
