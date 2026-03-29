@@ -13,15 +13,17 @@ A gamified 16-bit dungeon crawler that turns SEO audits into boss battles. Choos
 
 ## Screenshots
 
-| Gate Scene | Dungeon Hall |
-|:---:|:---:|
-| ![Gate Scene](screenshots/gate-scene-game.png) | ![Dungeon Hall](screenshots/dungeon-hall.png) |
-| Choose your warrior and quest | Browse SEO demons sorted by severity |
+### Gate Scene
+![Gate Scene](screenshots/gate-scene-full.png)
+*Choose your warrior and quest path*
 
-| Battle Scene |
-|:---:|
-| ![Battle Scene](screenshots/battle-scene.png) |
-| Turn-based combat with real-time Guild Ledger and AI-powered channeling |
+### Dungeon Hall
+![Dungeon Hall](screenshots/dungeon-hall.png)
+*Browse SEO demons sorted by severity*
+
+### Battle Scene
+![Battle Scene](screenshots/battle-scene.png)
+*Turn-based combat with real-time Guild Ledger and AI-powered channeling*
 
 ## Table of Contents
 
