@@ -280,11 +280,16 @@ export class GateScene extends Phaser.Scene {
 
       .gate-card {
         flex: 1;
+        min-height: 120px;
         padding: 18px 16px;
         background: rgba(12, 12, 20, 0.88);
         border-radius: 6px;
         cursor: pointer;
         text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         transition: border-color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.15s;
       }
       .gate-card:hover { transform: translateY(-2px); }
