@@ -19,6 +19,11 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   create() {
+    const dpr = this.game.dpr || window.GAME_DPR;
+    this.cameras.main.setZoom(dpr);
+    this.cameras.main.scrollX = 400 * (1 - dpr);
+    this.cameras.main.scrollY = 300 * (1 - dpr);
+
     const W = 800;
     const H = 600;
     const cx = W / 2;
@@ -84,7 +89,8 @@ export class SummoningScene extends Phaser.Scene {
       fontStyle: '600',
       fontSize: '22px',
       color: '#d4af37',
-      letterSpacing: 6
+      letterSpacing: 6,
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(55);
 
     this.tweens.add({
@@ -100,7 +106,8 @@ export class SummoningScene extends Phaser.Scene {
       fontStyle: '600',
       fontSize: '22px',
       color: '#ff9900',
-      letterSpacing: 6
+      letterSpacing: 6,
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD).setDepth(54);
 
     this.tweens.add({
@@ -117,6 +124,7 @@ export class SummoningScene extends Phaser.Scene {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '16px',
       color: '#88bbff',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(55);
 
     this.tweens.add({
@@ -132,14 +140,16 @@ export class SummoningScene extends Phaser.Scene {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '15px',
       color: '#66cccc',
-      letterSpacing: 1
+      letterSpacing: 1,
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(55);
 
     this.messageGlow = this.add.text(cx, 470, DESCENT_MESSAGES[0], {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '15px',
       color: '#44aaaa',
-      letterSpacing: 1
+      letterSpacing: 1,
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(54).setAlpha(0.3).setBlendMode(Phaser.BlendModes.ADD);
 
     // ── Stream / Activity Text ─────────────────────────────────
@@ -147,14 +157,16 @@ export class SummoningScene extends Phaser.Scene {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '13px',
       color: '#7766aa',
-      wordWrap: { width: 650 }
+      wordWrap: { width: 650 },
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(55).setAlpha(0.8);
 
     // ── Demon Counter ──────────────────────────────────────────
     this.demonCounter = this.add.text(cx, 516, '', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '13px',
-      color: '#cc4444'
+      color: '#cc4444',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(55);
 
     // ── Log area ───────────────────────────────────────────────
@@ -562,6 +574,7 @@ export class SummoningScene extends Phaser.Scene {
       fontStyle: 'bold',
       fontSize: '14px',
       color: '#ffffff',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(58).setAlpha(0.9);
   }
 
@@ -678,13 +691,7 @@ export class SummoningScene extends Phaser.Scene {
       this.floorTile.tilePositionX += this.floorSpeed * dt;
     }
 
-    // Keep knight glow following the knight
-    if (this.knight && this.knightGlow) {
-      this.knightGlow.x = this.knight.x;
-      this.knightGlow.y = this.knight.y + 20;
-      this.knightGlowInner.x = this.knight.x;
-      this.knightGlowInner.y = this.knight.y + 20;
-    }
+    // Knight glow removed — was dead code
 
     // Animate shimmer across progress bar
     this.shimmerX = (this.shimmerX || 0) + delta * 0.08;
@@ -704,7 +711,8 @@ export class SummoningScene extends Phaser.Scene {
     const text = this.add.text(400, this.logY, `> ${msg}`, {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '12px',
-      color: '#667788'
+      color: '#667788',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(55).setAlpha(0.7);
     this.logTexts.push(text);
   }
@@ -746,6 +754,7 @@ export class SummoningScene extends Phaser.Scene {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '10px',
       color: '#882222',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(60).setAlpha(0);
 
     // Invisible hit area for interaction
@@ -784,8 +793,10 @@ export class SummoningScene extends Phaser.Scene {
       label.setAlpha(0);
     });
 
-    // Click — sever the connection
+    // Click — sever the connection and abort the audit
     hitZone.on('pointerdown', () => {
+      this.aborted = true;
+      bridge.cancelAll();
       if (this.game.addLog) this.game.addLog('The link is severed.');
       this.cameras.main.fadeOut(600, 30, 0, 0);
       this.time.delayedCall(600, () => {
@@ -795,6 +806,10 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   async runAudit() {
+    if (this.auditRunning) return; // Guard against double-audit
+    this.auditRunning = true;
+    this.aborted = false;
+
     // Three-phase progress model calibrated from real audits:
     //
     // Phase 1: Setup & Agent Launch (0–25%)
@@ -848,7 +863,7 @@ export class SummoningScene extends Phaser.Scene {
         const clean = streamData.replace(/[\n\r]+/g, ' ').trim();
         if (clean.length > 0) {
           streamedText += clean + '\n';
-          this.streamText.setText(clean.substring(0, 60));
+          this.streamText.setText(clean);
           if (this.game.addLog) this.game.addLog(clean);
 
           totalEvents++;
@@ -880,12 +895,14 @@ export class SummoningScene extends Phaser.Scene {
         this.demonCounter.setText(phase);
       }, model);
 
+      if (this.aborted) return; // User cancelled — don't transition
       this.setProgress(1);
 
       const auditData = result.data || result;
       this._handleAuditResult(auditData, true);
 
     } catch (err) {
+      if (this.aborted) return; // User cancelled — don't handle error
       console.error('Audit error:', err);
       if (this.game.addLog) this.game.addLog('ERROR: ' + err.message);
 

@@ -10,6 +10,11 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload() {
+    // Handle asset load failures gracefully
+    this.load.on('loaderror', (file) => {
+      console.warn(`Failed to load asset: ${file.key} (${file.url})`);
+    });
+
     // Load real pixel art PNG sprites (32x32 each)
     this.load.image('knight_real', 'assets/monsters/knight.png');
     this.load.image('demon_critical_real', 'assets/monsters/demon_critical.png');
@@ -60,6 +65,10 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
+    const dpr = this.game.dpr || window.GAME_DPR;
+    this.cameras.main.setZoom(dpr);
+    this.cameras.main.scrollX = 400 * (1 - dpr);
+    this.cameras.main.scrollY = 300 * (1 - dpr);
     PixelArt.generateAll(this);
 
     // Create character animations from selected character config

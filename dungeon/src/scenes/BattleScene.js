@@ -1,4 +1,4 @@
-import { COLORS, FONTS } from '../utils/colors.js';
+import { COLORS } from '../utils/colors.js';
 import { bridge } from '../utils/ws.js';
 import { ENCOUNTER_MESSAGES, VICTORY_MESSAGES } from '../utils/flavor-text.js';
 
@@ -20,9 +20,15 @@ export class BattleScene extends Phaser.Scene {
     this.isPlayerTurn = true;
     this.battleOver = false;
     this.selectedMenuItem = 0;
+    this.battleLogHistory = [];
+    this.battleLogScrollOffset = 0;
   }
 
   create() {
+    const dpr = this.game.dpr || window.GAME_DPR;
+    this.cameras.main.setZoom(dpr);
+    this.cameras.main.scrollX = 400 * (1 - dpr);
+    this.cameras.main.scrollY = 300 * (1 - dpr);
     this.cameras.main.setBackgroundColor(0x000000);
 
     // ── Dark dungeon background ──────────────────────
@@ -52,6 +58,9 @@ export class BattleScene extends Phaser.Scene {
 
     // ── Keyboard support ─────────────────────────────
     this.setupKeyboard();
+
+    // ── Cleanup on scene exit ────────────────────────
+    this.events.on('shutdown', this.shutdown, this);
   }
 
   // ═══════════════════════════════════════════════════
@@ -155,7 +164,7 @@ export class BattleScene extends Phaser.Scene {
     const floor = this.add.graphics();
     // Dark floor with perspective lines
     floor.fillStyle(0x0e0c16, 1);
-    floor.fillRect(0, 300, 800, 120);
+    floor.fillRect(0, 300, 800, 300);
 
     // Floor tile pattern
     for (let i = 0; i < 20; i++) {
@@ -182,12 +191,14 @@ export class BattleScene extends Phaser.Scene {
     const demonScale = demonScales[this.issue.severity] || 3;
     const sevColor = this.getSeverityHexColor();
 
-    // Pulsing shadow beneath demon
-    this.demonShadow = this.add.ellipse(580, 350, 100, 24, 0x000000, 0.5);
+    // Ground line is y=300; place demon feet on it
+    const spriteH = 32 * demonScale;
+    const demonY = 320 - spriteH * 0.5;
+    this.demonGroundY = demonY;
 
     // Menacing aura / glow
-    this.demonAuraOuter = this.add.ellipse(580, 240, 130, 140, sevColor, 0.06);
-    this.demonAuraInner = this.add.ellipse(580, 240, 90, 100, sevColor, 0.1);
+    this.demonAuraOuter = this.add.ellipse(580, demonY, 130, 140, sevColor, 0.06);
+    this.demonAuraInner = this.add.ellipse(580, demonY, 90, 100, sevColor, 0.1);
 
     this.tweens.add({
       targets: this.demonAuraOuter,
@@ -211,61 +222,16 @@ export class BattleScene extends Phaser.Scene {
       delay: 200
     });
 
-    // Demon sprite (real pixel art, scaled by severity)
-    this.demon = this.add.image(580, 240, demonKey).setScale(demonScale);
+    // Demon sprite — feet on ground line y=300
+    this.demon = this.add.image(580, demonY, demonKey).setScale(demonScale);
     this.demon.setAlpha(0); // for entrance anim
 
-    // Demon idle hover
-    this.tweens.add({
-      targets: this.demon,
-      y: 228,
-      duration: 1800,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-
-    // Shadow breathe sync
-    this.tweens.add({
-      targets: this.demonShadow,
-      scaleX: 0.85,
-      alpha: 0.35,
-      duration: 1800,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
+    // No bobbing — demon stays grounded
   }
 
   createKnight() {
-    // Knight shadow
-    this.knightShadow = this.add.ellipse(180, 380, 80, 18, 0x000000, 0.4);
-
-    // Knight (animated warrior sprite)
-    this.knight = this.add.sprite(180, 320, 'char_idle').setScale(2.5).setAlpha(0).play('char_idle_anim');
-    this.sword = this.add.image(215, 310, 'sword').setScale(1.5).setAngle(-30).setAlpha(0);
-    this.shield = this.add.image(145, 325, 'shield').setScale(1.5).setAlpha(0);
-
-    // Knight idle breathing (subtle)
-    this.tweens.add({
-      targets: [this.knight, this.sword, this.shield],
-      y: '+=4',
-      duration: 2200,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-
-    // Shadow breathe
-    this.tweens.add({
-      targets: this.knightShadow,
-      scaleX: 0.9,
-      alpha: 0.3,
-      duration: 2200,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
+    // Knight — feet on ground line y=300
+    this.knight = this.add.sprite(180, 280, 'char_idle').setScale(2.5).setAlpha(0).play('char_idle_anim');
   }
 
   // ═══════════════════════════════════════════════════
@@ -275,8 +241,6 @@ export class BattleScene extends Phaser.Scene {
   playEntranceAnimation() {
     // Knight slides in from left
     this.knight.setX(-60);
-    this.sword.setX(-25);
-    this.shield.setX(-95);
 
     this.tweens.add({
       targets: this.knight,
@@ -285,22 +249,6 @@ export class BattleScene extends Phaser.Scene {
       duration: 700,
       ease: 'Back.easeOut',
       delay: 300
-    });
-    this.tweens.add({
-      targets: this.sword,
-      x: 215,
-      alpha: 1,
-      duration: 700,
-      ease: 'Back.easeOut',
-      delay: 350
-    });
-    this.tweens.add({
-      targets: this.shield,
-      x: 145,
-      alpha: 1,
-      duration: 700,
-      ease: 'Back.easeOut',
-      delay: 400
     });
 
     // Demon materializes with flash (scale to severity-based size)
@@ -324,58 +272,51 @@ export class BattleScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════
 
   createHPDisplays() {
-    // ── Demon HP (top right area) ──────────────
-    const demonPanelX = 440;
-    const demonPanelY = 100;
-
-    // Demon name plate
-    const namePanel = this.add.graphics();
-    namePanel.fillStyle(0x0a0a18, 0.85);
-    namePanel.fillRoundedRect(demonPanelX, demonPanelY, 280, 78, 4);
-    namePanel.lineStyle(2, this.getSeverityHexColor(), 0.8);
-    namePanel.strokeRoundedRect(demonPanelX, demonPanelY, 280, 78, 4);
-
-    // Inner highlight line
-    namePanel.lineStyle(1, 0x2a2a4a, 0.3);
-    namePanel.strokeRoundedRect(demonPanelX + 2, demonPanelY + 2, 276, 74, 3);
-
-    this.add.text(demonPanelX + 10, demonPanelY + 6, this.issue.title, {
-      fontFamily: '"JetBrains Mono", monospace',
-      fontSize: '10px',
-      color: COLORS.white,
-      wordWrap: { width: 260 }
-    });
-
+    const sevHex = this.getSeverityHexColor();
     const sevColor = COLORS[this.issue.severity] || COLORS.red;
-    this.add.text(demonPanelX + 10, demonPanelY + 24, this.issue.severity.toUpperCase(), {
+
+    // ── Demon HP (below demon sprite) ──
+    const dp = { x: 480, y: 340, w: 260, h: 48 };
+
+    const dPanel = this.add.graphics();
+    // Glow behind panel
+    dPanel.fillStyle(sevHex, 0.08);
+    dPanel.fillRoundedRect(dp.x - 4, dp.y - 4, dp.w + 8, dp.h + 8, 8);
+    // Panel bg
+    dPanel.fillStyle(0x0a0a1a, 0.92);
+    dPanel.fillRoundedRect(dp.x, dp.y, dp.w, dp.h, 5);
+    dPanel.lineStyle(2, sevHex, 0.7);
+    dPanel.strokeRoundedRect(dp.x, dp.y, dp.w, dp.h, 5);
+
+    // Demon name (from real issue data) + severity badge
+    const demonName = this.issue.severity.toUpperCase() + ' DEMON';
+    this.add.text(dp.x + 10, dp.y + 6, demonName, {
       fontFamily: '"JetBrains Mono", monospace',
-      fontSize: '10px',
-      color: sevColor
+      fontSize: '11px',
+      color: sevColor,
+      shadow: { offsetX: 0, offsetY: 0, color: sevColor === COLORS.red ? '#ff2040' : sevColor, blur: 8, fill: true },
+      resolution: window.GAME_DPR
     });
 
-    // HP bar background
-    const barX = demonPanelX + 10;
-    const barY = demonPanelY + 44;
-    const barW = 220;
-    const barH = 16;
+    // HP bar
+    const barX = dp.x + 10;
+    const barY = dp.y + 26;
+    const barW = dp.w - 70;
+    const barH = 14;
 
-    this.add.text(barX, barY + 1, 'HP', {
-      fontFamily: '"JetBrains Mono", monospace',
-      fontSize: '10px',
-      color: COLORS.gray
+    this.add.text(barX, barY, 'HP', {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '10px', color: '#606080', resolution: window.GAME_DPR
     });
 
-    const barStartX = barX + 28;
-    const actualBarW = barW - 28;
+    const barStartX = barX + 26;
+    const actualBarW = barW - 26;
 
-    // Bar frame
     const barFrame = this.add.graphics();
     barFrame.fillStyle(0x200808, 1);
-    barFrame.fillRoundedRect(barStartX, barY, actualBarW, barH, 2);
-    barFrame.lineStyle(1, 0x4a2020, 1);
-    barFrame.strokeRoundedRect(barStartX, barY, actualBarW, barH, 2);
+    barFrame.fillRoundedRect(barStartX, barY, actualBarW, barH, 3);
+    barFrame.lineStyle(1, 0x4a2020, 0.8);
+    barFrame.strokeRoundedRect(barStartX, barY, actualBarW, barH, 3);
 
-    // HP bar fill
     this.demonHpBar = this.add.graphics();
     this.demonHpBarWidth = actualBarW - 4;
     this.demonHpBarX = barStartX + 2;
@@ -383,54 +324,57 @@ export class BattleScene extends Phaser.Scene {
     this.demonHpBarH = barH - 4;
     this.drawDemonHpBar(1.0);
 
-    // HP shimmer overlay
     this.demonHpShimmer = this.add.graphics();
     this.drawBarShimmer(this.demonHpShimmer, this.demonHpBarX, this.demonHpBarY, this.demonHpBarWidth, this.demonHpBarH);
 
-    // HP text
-    this.demonHpText = this.add.text(barStartX + actualBarW + 8, barY + 1, `${this.demonHp}/${this.demonMaxHp}`, {
-      fontFamily: '"JetBrains Mono", monospace',
-      fontSize: '10px',
-      color: COLORS.red
+    this.demonHpText = this.add.text(barStartX + actualBarW + 8, barY, `${this.demonHp}/${this.demonMaxHp}`, {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '11px',
+      color: COLORS.red,
+      shadow: { offsetX: 0, offsetY: 0, color: '#e04040', blur: 6, fill: true },
+      resolution: window.GAME_DPR
     });
 
-    // ── Knight HP (bottom left area) ──────────
-    const knightPanelX = 30;
-    const knightPanelY = 388;
+    // ── Knight HP (below knight sprite) ──
+    const kp = { x: 30, y: 340, w: 260, h: 48 };
 
     const kPanel = this.add.graphics();
-    kPanel.fillStyle(0x0a0a18, 0.85);
-    kPanel.fillRoundedRect(knightPanelX, knightPanelY, 250, 48, 4);
+    // Glow behind panel
+    kPanel.fillStyle(0x40c0c0, 0.06);
+    kPanel.fillRoundedRect(kp.x - 4, kp.y - 4, kp.w + 8, kp.h + 8, 8);
+    // Panel bg
+    kPanel.fillStyle(0x0a0a1a, 0.92);
+    kPanel.fillRoundedRect(kp.x, kp.y, kp.w, kp.h, 5);
     kPanel.lineStyle(2, 0x40c0c0, 0.6);
-    kPanel.strokeRoundedRect(knightPanelX, knightPanelY, 250, 48, 4);
-    kPanel.lineStyle(1, 0x2a2a4a, 0.3);
-    kPanel.strokeRoundedRect(knightPanelX + 2, knightPanelY + 2, 246, 44, 3);
+    kPanel.strokeRoundedRect(kp.x, kp.y, kp.w, kp.h, 5);
 
-    this.add.text(knightPanelX + 10, knightPanelY + 5, 'SEO KNIGHT', {
+    const charNames = { 'claude-opus-4-6': 'SEO WARRIOR', 'claude-sonnet-4-6': 'SEO SAMURAI', 'claude-haiku-4-5-20251001': 'SEO KNIGHT' };
+    const charName = charNames[this.game.characterConfig?.model] || 'SEO WARRIOR';
+    this.charName = charName;
+    this.add.text(kp.x + 10, kp.y + 6, charName, {
       fontFamily: '"JetBrains Mono", monospace',
-      fontSize: '12px',
-      color: COLORS.cyan
+      fontSize: '11px',
+      color: COLORS.cyan,
+      shadow: { offsetX: 0, offsetY: 0, color: '#40c0c0', blur: 8, fill: true },
+      resolution: window.GAME_DPR
     });
 
-    const kBarX = knightPanelX + 10;
-    const kBarY = knightPanelY + 24;
-    const kBarW = 190;
-    const kBarH = 16;
+    const kBarX = kp.x + 10;
+    const kBarY = kp.y + 26;
+    const kBarW = kp.w - 70;
+    const kBarH = 14;
 
-    this.add.text(kBarX, kBarY + 1, 'HP', {
-      fontFamily: '"JetBrains Mono", monospace',
-      fontSize: '10px',
-      color: COLORS.gray
+    this.add.text(kBarX, kBarY, 'HP', {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '10px', color: '#606080', resolution: window.GAME_DPR
     });
 
-    const kBarStartX = kBarX + 28;
-    const kActualBarW = kBarW - 28;
+    const kBarStartX = kBarX + 26;
+    const kActualBarW = kBarW - 26;
 
     const kBarFrame = this.add.graphics();
     kBarFrame.fillStyle(0x082008, 1);
-    kBarFrame.fillRoundedRect(kBarStartX, kBarY, kActualBarW, kBarH, 2);
-    kBarFrame.lineStyle(1, 0x204a20, 1);
-    kBarFrame.strokeRoundedRect(kBarStartX, kBarY, kActualBarW, kBarH, 2);
+    kBarFrame.fillRoundedRect(kBarStartX, kBarY, kActualBarW, kBarH, 3);
+    kBarFrame.lineStyle(1, 0x204a20, 0.8);
+    kBarFrame.strokeRoundedRect(kBarStartX, kBarY, kActualBarW, kBarH, 3);
 
     this.knightHpBar = this.add.graphics();
     this.knightHpBarWidth = kActualBarW - 4;
@@ -439,14 +383,14 @@ export class BattleScene extends Phaser.Scene {
     this.knightHpBarH = kBarH - 4;
     this.drawKnightHpBar(1.0);
 
-    // Knight HP shimmer
     this.knightHpShimmer = this.add.graphics();
     this.drawBarShimmer(this.knightHpShimmer, this.knightHpBarX, this.knightHpBarY, this.knightHpBarWidth, this.knightHpBarH);
 
-    this.knightHpText = this.add.text(kBarStartX + kActualBarW + 8, kBarY + 1, `${this.knightHp}/100`, {
-      fontFamily: '"JetBrains Mono", monospace',
-      fontSize: '10px',
-      color: COLORS.green
+    this.knightHpText = this.add.text(kBarStartX + kActualBarW + 8, kBarY, `${this.knightHp}/100`, {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '11px',
+      color: COLORS.green,
+      shadow: { offsetX: 0, offsetY: 0, color: '#40c040', blur: 6, fill: true },
+      resolution: window.GAME_DPR
     });
   }
 
@@ -504,9 +448,9 @@ export class BattleScene extends Phaser.Scene {
 
   createBattleLog() {
     const logX = 16;
-    const logY = 440;
-    const logW = 520;
-    const logH = 104;
+    const logY = 420;
+    const logW = 530;
+    const logH = 170;
 
     // Log panel with FF-style double border
     const logGfx = this.add.graphics();
@@ -530,19 +474,37 @@ export class BattleScene extends Phaser.Scene {
     logGfx.fillRect(logX + 6, logY + logH - 9, 3, 3);
     logGfx.fillRect(logX + logW - 9, logY + logH - 9, 3, 3);
 
-    this.battleLog = this.add.text(logX + 14, logY + 12, ENCOUNTER_MESSAGES[Math.floor(Math.random() * ENCOUNTER_MESSAGES.length)], {
+    // Store log panel bounds for scrolling
+    this.logBounds = { x: logX, y: logY, w: logW, h: logH };
+    const textPadding = 14;
+    this.logVisibleHeight = logH - textPadding * 2;
+    this.logTextBaseY = logY + textPadding;
+
+    this.battleLog = this.add.text(logX + textPadding, this.logTextBaseY, '', {
       fontFamily: 'monospace',
-      fontSize: '12px',
+      fontSize: '10px',
       color: COLORS.white,
       lineSpacing: 6,
-      wordWrap: { width: logW - 32 }
+      wordWrap: { width: logW - textPadding * 2 - 4 },
+      resolution: window.GAME_DPR
     });
+
+    // Mask so text doesn't overflow the log panel
+    const maskShape = this.make.graphics({ x: 0, y: 0, add: false });
+    maskShape.fillStyle(0xffffff);
+    maskShape.fillRect(logX + 4, logY + 4, logW - 8, logH - 8);
+    this.battleLog.setMask(new Phaser.Display.Masks.GeometryMask(this, maskShape));
+
+    // Seed with the encounter message
+    const encounterMsg = ENCOUNTER_MESSAGES[Math.floor(Math.random() * ENCOUNTER_MESSAGES.length)];
+    this.appendLog(encounterMsg);
 
     // Blinking indicator
     this.logIndicator = this.add.text(logX + logW - 22, logY + logH - 20, '\u25BC', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '10px',
-      color: COLORS.gold
+      color: COLORS.gold,
+      resolution: window.GAME_DPR
     });
     this.tweens.add({
       targets: this.logIndicator,
@@ -551,6 +513,68 @@ export class BattleScene extends Phaser.Scene {
       yoyo: true,
       repeat: -1
     });
+
+    // Mouse wheel scrolling over the log panel
+    this.input.on('pointerdown', () => {}); // ensure input is active
+    const canvas = this.sys.game.canvas;
+    this._logWheelHandler = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+      if (mouseX >= logX && mouseX <= logX + logW && mouseY >= logY && mouseY <= logY + logH) {
+        e.preventDefault();
+        const textHeight = this.battleLog.height;
+        const maxScroll = Math.max(0, textHeight - this.logVisibleHeight);
+        this.battleLogScrollOffset = Phaser.Math.Clamp(
+          this.battleLogScrollOffset + e.deltaY * 0.5,
+          0,
+          maxScroll
+        );
+        this.battleLog.y = this.logTextBaseY - this.battleLogScrollOffset;
+      }
+    };
+    canvas.addEventListener('wheel', this._logWheelHandler, { passive: false });
+
+    // "EXPAND" label hint (top-right corner of log panel)
+    this.logExpandLabel = this.add.text(logX + logW - 58, logY + 8, '[ EXPAND ]', {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '7px',
+      color: '#6060a0',
+      resolution: window.GAME_DPR
+    }).setDepth(20);
+    this.tweens.add({
+      targets: this.logExpandLabel,
+      alpha: { from: 0.5, to: 1 },
+      duration: 1200,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    // Click on log panel opens Big Mode
+    this._logClickHandler = (e) => {
+      if (this._bigModeOpen || this._attackOverlayOpen) return;
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+      if (mouseX >= logX && mouseX <= logX + logW && mouseY >= logY && mouseY <= logY + logH) {
+        this._openBigMode();
+      }
+    };
+    canvas.addEventListener('click', this._logClickHandler);
+
+    // Pointer cursor on hover over log panel
+    this._logMoveHandler = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+      if (mouseX >= logX && mouseX <= logX + logW && mouseY >= logY && mouseY <= logY + logH) {
+        canvas.style.cursor = 'pointer';
+      } else {
+        canvas.style.cursor = 'default';
+      }
+    };
+    canvas.addEventListener('mousemove', this._logMoveHandler);
   }
 
   // ═══════════════════════════════════════════════════
@@ -558,10 +582,10 @@ export class BattleScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════
 
   createCommandMenu() {
-    const menuX = 548;
-    const menuY = 440;
-    const menuW = 236;
-    const menuH = 104;
+    const menuX = 558;
+    const menuY = 420;
+    const menuW = 226;
+    const menuH = 170;
 
     // Menu panel with double border (FF style)
     const menuGfx = this.add.graphics();
@@ -586,29 +610,31 @@ export class BattleScene extends Phaser.Scene {
     menuGfx.fillRect(menuX + menuW - 10, menuY + menuH - 10, 4, 4);
 
     const commands = [
-      { label: 'ATTACK', icon: '\u2694', action: () => this.doAttack() },
+      { label: 'ATTACK', icon: '\u2694', action: () => this.showAttackPrompt() },
+      { label: 'VANQUISH', icon: '\u2620', action: () => this.doVanquish() },
       { label: 'DEFEND', icon: '\u26E8', action: () => this.doDefend() },
-      { label: 'INSPECT', icon: '\u25C9', action: () => this.doInspect() },
       { label: 'FLEE', icon: '\u21B6', action: () => this.doFlee() }
     ];
 
     this.menuItems = commands.map((cmd, i) => {
-      const itemY = menuY + 14 + i * 22;
+      const itemY = menuY + 18 + i * 28;
       const text = this.add.text(menuX + 40, itemY, cmd.label, {
         fontFamily: '"JetBrains Mono", monospace',
-        fontSize: '12px',
-        color: COLORS.white
+        fontSize: '14px',
+        color: COLORS.white,
+        resolution: window.GAME_DPR
       }).setInteractive({ useHandCursor: true });
 
       // Icon
-      this.add.text(menuX + 24, itemY, cmd.icon, {
+      this.add.text(menuX + 22, itemY, cmd.icon, {
         fontFamily: 'monospace',
-        fontSize: '14px',
-        color: COLORS.gray
+        fontSize: '16px',
+        color: COLORS.gray,
+        resolution: window.GAME_DPR
       });
 
       // Hover highlight zone (full row)
-      const hitZone = this.add.rectangle(menuX + menuW / 2, itemY + 7, menuW - 16, 20, 0xffffff, 0)
+      const hitZone = this.add.rectangle(menuX + menuW / 2, itemY + 9, menuW - 16, 28, 0xffffff, 0)
         .setInteractive({ useHandCursor: true });
 
       hitZone.on('pointerover', () => {
@@ -642,22 +668,55 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // Bouncing arrow cursor
-    this.cursor = this.add.text(menuX + 10, menuY + 14, '\u25B6', {
+    this.cursor = this.add.text(menuX + 8, menuY + 18, '\u25B6', {
       fontFamily: '"JetBrains Mono", monospace',
-      fontSize: '10px',
-      color: COLORS.gold
+      fontSize: '12px',
+      color: COLORS.gold,
+      resolution: window.GAME_DPR
     });
 
     this.tweens.add({
       targets: this.cursor,
-      x: menuX + 16,
+      x: menuX + 14,
       duration: 350,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'
     });
 
+    // Command descriptions — shown below menu when hovering
+    this.commandDescs = [
+      'Talk to Claude. Describe what to fix or ask questions.',
+      'Mark this demon defeated. Use when the issue is resolved.',
+      'Brace for impact. The demon strikes back.',
+      'Retreat to the dungeon hall. Issue stays unresolved.'
+    ];
+    this.menuTooltip = this.add.text(menuX + 12, menuY + menuH - 28, '', {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '7px',
+      color: '#6868a0',
+      wordWrap: { width: menuW - 24 },
+      align: 'left',
+      lineSpacing: 2,
+      resolution: window.GAME_DPR
+    }).setOrigin(0, 0.5);
+
     this.selectMenuItem(0);
+  }
+
+  _disableMenu() {
+    this.menuItems.forEach(item => {
+      item.setColor('#404060');
+      item.setScale(1.0);
+    });
+    if (this.cursor) this.cursor.setVisible(false);
+    if (this.menuTooltip) this.menuTooltip.setVisible(false);
+  }
+
+  _enableMenu() {
+    if (this.cursor) this.cursor.setVisible(true);
+    if (this.menuTooltip) this.menuTooltip.setVisible(true);
+    this.selectMenuItem(this.selectedMenuItem);
   }
 
   selectMenuItem(index) {
@@ -671,6 +730,10 @@ export class BattleScene extends Phaser.Scene {
         item.setScale(1.0);
       }
     });
+    // Update tooltip description
+    if (this.menuTooltip && this.commandDescs) {
+      this.menuTooltip.setText(this.commandDescs[index] || '');
+    }
     // Move cursor
     const targetY = this.menuItems[index].y;
     this.cursor.y = targetY;
@@ -678,19 +741,19 @@ export class BattleScene extends Phaser.Scene {
 
   setupKeyboard() {
     this.input.keyboard.on('keydown-UP', () => {
-      if (!this.isPlayerTurn || this.battleOver) return;
+      if (!this.isPlayerTurn || this.battleOver || this._attackOverlayOpen) return;
       this.selectMenuItem((this.selectedMenuItem - 1 + 4) % 4);
     });
     this.input.keyboard.on('keydown-DOWN', () => {
-      if (!this.isPlayerTurn || this.battleOver) return;
+      if (!this.isPlayerTurn || this.battleOver || this._attackOverlayOpen) return;
       this.selectMenuItem((this.selectedMenuItem + 1) % 4);
     });
     this.input.keyboard.on('keydown-ENTER', () => {
-      if (!this.isPlayerTurn || this.battleOver) return;
+      if (!this.isPlayerTurn || this.battleOver || this._attackOverlayOpen) return;
       this.menuItems[this.selectedMenuItem]._cmdAction();
     });
     this.input.keyboard.on('keydown-SPACE', () => {
-      if (!this.isPlayerTurn || this.battleOver) return;
+      if (!this.isPlayerTurn || this.battleOver || this._attackOverlayOpen) return;
       this.menuItems[this.selectedMenuItem]._cmdAction();
     });
   }
@@ -700,46 +763,48 @@ export class BattleScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════
 
   createIssueDetails() {
-    const detX = 16;
-    const detY = 550;
-    const detW = 768;
-    const detH = 44;
-
-    const detGfx = this.add.graphics();
-    detGfx.fillStyle(0x0e0c1a, 0.92);
-    detGfx.fillRoundedRect(detX, detY, detW, detH, 3);
-    detGfx.lineStyle(1, 0x2a2a4e, 0.6);
-    detGfx.strokeRoundedRect(detX, detY, detW, detH, 3);
+    const detX = 10;
+    const detY = 6;
+    const detW = 780;
+    const pad = 10;
 
     // Category badge
-    const catText = this.add.text(detX + 10, detY + 4, this.issue.category, {
+    const catBadge = this.add.text(detX + pad, detY + pad, this.issue.category.toUpperCase(), {
       fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '9px',
+      color: COLORS.cyan,
+      resolution: window.GAME_DPR
+    }).setDepth(51);
+
+    // Description (full width, wraps)
+    const descObj = this.add.text(detX + pad, detY + pad + 16, this.issue.description, {
+      fontFamily: 'monospace',
       fontSize: '10px',
-      color: COLORS.cyan
-    });
+      color: '#b0b0c8',
+      wordWrap: { width: detW - pad * 2 - 4 },
+      lineSpacing: 2,
+      resolution: window.GAME_DPR
+    }).setDepth(51);
 
-    // Separator
-    this.add.text(catText.x + catText.width + 8, detY + 4, '|', {
-      fontFamily: 'monospace',
-      fontSize: '14px',
-      color: '#3a3a5e'
-    });
+    // Dynamic height based on actual content
+    const detH = pad + 16 + descObj.height + pad;
 
-    // Description
-    this.add.text(detX + 10, detY + 22, this.issue.description, {
-      fontFamily: 'monospace',
-      fontSize: '12px',
-      color: COLORS.gray,
-      wordWrap: { width: detW - 24 }
-    });
+    // Draw panel background sized to fit
+    const detGfx = this.add.graphics().setDepth(50);
+    detGfx.fillStyle(0x0a0a1e, 0.92);
+    detGfx.fillRoundedRect(detX, detY, detW, detH, 4);
+    detGfx.lineStyle(1, 0x2a2a4e, 0.5);
+    detGfx.strokeRoundedRect(detX, detY, detW, detH, 4);
   }
 
   createStreamText() {
-    this.streamText = this.add.text(24, 556, '', {
+    // Stream text for fix output — positioned in battle log area
+    this.streamText = this.add.text(30, 460, '', {
       fontFamily: 'monospace',
-      fontSize: '11px',
+      fontSize: '10px',
       color: COLORS.purple,
-      wordWrap: { width: 740 }
+      wordWrap: { width: 500 },
+      resolution: window.GAME_DPR
     }).setDepth(10);
   }
 
@@ -748,7 +813,27 @@ export class BattleScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════
 
   setLog(msg) {
-    this.battleLog.setText(msg);
+    this.appendLog(msg);
+  }
+
+  appendLog(msg) {
+    this.battleLogHistory.push(msg);
+
+    // Build display text from history
+    const displayText = this.battleLogHistory.join('\n');
+    this.battleLog.setText(displayText);
+
+    // Auto-scroll to bottom: position text so newest messages are visible
+    const textHeight = this.battleLog.height;
+    const overflow = textHeight - this.logVisibleHeight;
+    if (overflow > 0) {
+      this.battleLogScrollOffset = overflow;
+      this.battleLog.y = this.logTextBaseY - overflow;
+    } else {
+      this.battleLogScrollOffset = 0;
+      this.battleLog.y = this.logTextBaseY;
+    }
+
     // Quick text pop effect
     this.battleLog.setScale(1.02);
     this.tweens.add({
@@ -758,57 +843,707 @@ export class BattleScene extends Phaser.Scene {
       duration: 150,
       ease: 'Back.easeOut'
     });
+
+    // Update big mode log if open
+    this._updateBigModeLog();
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  BIG MODE (full-screen battle log overlay)
+  // ═══════════════════════════════════════════════════
+
+  _openBigMode() {
+    if (this._bigModeOpen) return;
+    this._bigModeOpen = true;
+
+    const container = document.getElementById('game-container');
+    container.style.position = 'relative';
+
+    const overlay = document.createElement('div');
+    overlay.id = 'big-mode-overlay';
+
+    const logContent = this.battleLogHistory.join('\n');
+
+    overlay.innerHTML = `
+      <div class="big-mode-backdrop"></div>
+      <div class="big-mode-card">
+        <div class="big-mode-header">
+          <span class="big-mode-title">\u2694 BATTLE LOG</span>
+          <button id="big-mode-close" class="big-mode-close-btn">CLOSE</button>
+        </div>
+        <div id="big-mode-log" class="big-mode-log">${this._escapeHtml(logContent)}</div>
+        <div class="big-mode-input-area">
+          <textarea id="big-mode-input" class="big-mode-input" rows="3"
+            placeholder="Command the ${this.charName}..."></textarea>
+          <div class="big-mode-buttons">
+            <button id="big-mode-execute" class="big-mode-btn big-mode-execute-btn" style="opacity: 0.4; pointer-events: none;">EXECUTE</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const style = document.createElement('style');
+    style.id = 'big-mode-style';
+    style.textContent = `
+      #big-mode-overlay {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        pointer-events: none;
+      }
+      #big-mode-overlay > * { pointer-events: auto; }
+      .big-mode-backdrop {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 10, 0.82);
+        pointer-events: auto;
+      }
+      .big-mode-card {
+        position: relative;
+        z-index: 1;
+        background: #0a0a24;
+        border: 2px solid #b8b8d8;
+        border-radius: 8px;
+        padding: 16px 20px;
+        width: 90%;
+        height: 80%;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 0 30px rgba(64, 128, 255, 0.3), inset 0 0 20px rgba(10, 10, 40, 0.5);
+        font-family: "JetBrains Mono", monospace;
+      }
+      .big-mode-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        flex-shrink: 0;
+      }
+      .big-mode-title {
+        color: #f0c040;
+        font-size: 14px;
+        font-weight: bold;
+        text-shadow: 0 0 10px rgba(240, 192, 64, 0.5);
+        letter-spacing: 2px;
+      }
+      .big-mode-close-btn {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: bold;
+        padding: 4px 14px;
+        border-radius: 4px;
+        border: 1px solid #404060;
+        background: #1a1020;
+        color: #8080a0;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: all 0.15s;
+      }
+      .big-mode-close-btn:hover {
+        color: #c0c0d0;
+        border-color: #6060a0;
+      }
+      .big-mode-log {
+        flex: 1;
+        overflow-y: auto;
+        background: #06061a;
+        border: 1px solid #2a2a4e;
+        border-radius: 4px;
+        padding: 10px 12px;
+        color: #c0c0e0;
+        font-size: 11px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+        scrollbar-width: thin;
+        scrollbar-color: #3a3a6e #06061a;
+        margin-bottom: 10px;
+      }
+      .big-mode-log::-webkit-scrollbar {
+        width: 6px;
+      }
+      .big-mode-log::-webkit-scrollbar-track {
+        background: #06061a;
+      }
+      .big-mode-log::-webkit-scrollbar-thumb {
+        background: #3a3a6e;
+        border-radius: 3px;
+      }
+      .big-mode-input-area {
+        flex-shrink: 0;
+      }
+      .big-mode-input {
+        width: 100%;
+        box-sizing: border-box;
+        background: #06061a;
+        border: 1px solid #3a3a6e;
+        border-radius: 4px;
+        color: #e0e0f0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        padding: 8px 12px;
+        resize: none;
+        outline: none;
+        line-height: 1.5;
+      }
+      .big-mode-input:focus {
+        border-color: #6060c0;
+        box-shadow: 0 0 8px rgba(96, 96, 192, 0.3);
+      }
+      .big-mode-input::placeholder {
+        color: #404070;
+      }
+      .big-mode-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 10px;
+        justify-content: center;
+      }
+      .big-mode-btn {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        font-weight: bold;
+        padding: 8px 28px;
+        border-radius: 4px;
+        border: 2px solid;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: all 0.15s;
+      }
+      .big-mode-execute-btn {
+        background: #182040;
+        color: #f0c040;
+        border-color: #f0c040;
+      }
+      .big-mode-execute-btn:hover {
+        background: #283060;
+        box-shadow: 0 0 12px rgba(240, 192, 64, 0.4);
+      }
+    `;
+
+    container.appendChild(style);
+    container.appendChild(overlay);
+
+    // Position overlay to match the Phaser canvas
+    const positionOverlay = () => {
+      const canvas = container.querySelector('canvas');
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      overlay.style.top = (rect.top - containerRect.top) + 'px';
+      overlay.style.left = (rect.left - containerRect.left) + 'px';
+      overlay.style.width = rect.width + 'px';
+      overlay.style.height = rect.height + 'px';
+    };
+    positionOverlay();
+    this._bigModeResizeHandler = positionOverlay;
+    window.addEventListener('resize', this._bigModeResizeHandler);
+    setTimeout(positionOverlay, 100);
+
+    // Auto-scroll log to bottom
+    const logDiv = document.getElementById('big-mode-log');
+    if (logDiv) {
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    // Focus textarea
+    const input = document.getElementById('big-mode-input');
+    const executeBtn = document.getElementById('big-mode-execute');
+    setTimeout(() => input && input.focus(), 50);
+
+    // Enable/disable EXECUTE button based on textarea content
+    if (input && executeBtn) {
+      input.addEventListener('input', () => {
+        const hasContent = input.value.trim().length > 0;
+        executeBtn.style.opacity = hasContent ? '1' : '0.4';
+        executeBtn.style.pointerEvents = hasContent ? 'auto' : 'none';
+      });
+    }
+
+    // Execute handler
+    const execute = () => {
+      const userPrompt = (input ? input.value : '').trim();
+      if (!userPrompt) return;
+      this._closeBigMode();
+      this.doAttack(userPrompt);
+    };
+
+    // Close handler
+    const close = () => {
+      this._closeBigMode();
+    };
+
+    document.getElementById('big-mode-execute').addEventListener('click', execute);
+    document.getElementById('big-mode-close').addEventListener('click', close);
+
+    // Keyboard: Enter (no shift) submits, Escape closes
+    this._bigModeKeyHandler = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        execute();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+      }
+    };
+    document.addEventListener('keydown', this._bigModeKeyHandler);
+
+    // Store references for cleanup
+    this._bigModeOverlayEl = overlay;
+    this._bigModeStyleEl = style;
+  }
+
+  _closeBigMode() {
+    this._bigModeOpen = false;
+    if (this._bigModeOverlayEl) {
+      this._bigModeOverlayEl.remove();
+      this._bigModeOverlayEl = null;
+    }
+    if (this._bigModeStyleEl) {
+      this._bigModeStyleEl.remove();
+      this._bigModeStyleEl = null;
+    }
+    if (this._bigModeResizeHandler) {
+      window.removeEventListener('resize', this._bigModeResizeHandler);
+      this._bigModeResizeHandler = null;
+    }
+    if (this._bigModeKeyHandler) {
+      document.removeEventListener('keydown', this._bigModeKeyHandler);
+      this._bigModeKeyHandler = null;
+    }
+  }
+
+  _updateBigModeLog() {
+    if (!this._bigModeOpen) return;
+    const logDiv = document.getElementById('big-mode-log');
+    if (!logDiv) return;
+    const wasAtBottom = logDiv.scrollTop + logDiv.clientHeight >= logDiv.scrollHeight - 10;
+    logDiv.textContent = this.battleLogHistory.join('\n');
+    if (wasAtBottom) {
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+  }
+
+  _escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  ATTACK PROMPT OVERLAY
+  // ═══════════════════════════════════════════════════
+
+  showAttackPrompt() {
+    if (!this.isPlayerTurn || this.battleOver) return;
+    // Disable menu interaction while overlay is open
+    this._attackOverlayOpen = true;
+    this._createAttackOverlay();
+  }
+
+  _createAttackOverlay() {
+    const container = document.getElementById('game-container');
+    container.style.position = 'relative';
+
+    // Determine character name from config
+    const model = this.game?.characterConfig?.model || '';
+    let characterName = 'WARRIOR'; // default
+    if (model.includes('haiku')) {
+      characterName = 'KNIGHT';
+    } else if (model.includes('sonnet')) {
+      characterName = 'SAMURAI';
+    } else if (model.includes('opus')) {
+      characterName = 'WARRIOR';
+    }
+
+    const overlay = document.createElement('div');
+    overlay.id = 'attack-prompt-overlay';
+
+    overlay.innerHTML = `
+      <div class="attack-prompt-backdrop"></div>
+      <div class="attack-prompt-box">
+        <div class="attack-prompt-title">⚔ COMMAND THE ${characterName}</div>
+        <div class="attack-prompt-issue">${this.issue.title}</div>
+        <textarea id="attack-prompt-input" class="attack-prompt-input" rows="6"
+          placeholder="Describe what you want Claude to fix..."></textarea>
+        <div class="attack-prompt-buttons">
+          <button id="attack-prompt-execute" class="attack-prompt-btn attack-prompt-execute" style="opacity: 0.4; pointer-events: none;">EXECUTE</button>
+          <button id="attack-prompt-cancel" class="attack-prompt-btn attack-prompt-cancel">CANCEL</button>
+        </div>
+      </div>
+    `;
+
+    const style = document.createElement('style');
+    style.id = 'attack-prompt-style';
+    style.textContent = `
+      #attack-prompt-overlay {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        pointer-events: none;
+      }
+      #attack-prompt-overlay > * { pointer-events: auto; }
+      .attack-prompt-backdrop {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 10, 0.75);
+        pointer-events: auto;
+      }
+      .attack-prompt-box {
+        position: relative;
+        z-index: 1;
+        background: #0a0a24;
+        border: 2px solid #b8b8d8;
+        border-radius: 8px;
+        padding: 20px 24px;
+        width: 92%;
+        max-width: 700px;
+        box-shadow: 0 0 30px rgba(64, 128, 255, 0.3), inset 0 0 20px rgba(10, 10, 40, 0.5);
+        font-family: "JetBrains Mono", monospace;
+      }
+      .attack-prompt-title {
+        color: #f0c040;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 10px;
+        text-shadow: 0 0 10px rgba(240, 192, 64, 0.5);
+        letter-spacing: 2px;
+      }
+      .attack-prompt-issue {
+        color: #8080b0;
+        font-size: 11px;
+        text-align: center;
+        margin-bottom: 14px;
+        padding: 6px 10px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid #2a2a4e;
+        border-radius: 4px;
+        line-height: 1.4;
+      }
+      .attack-prompt-input {
+        width: 100%;
+        box-sizing: border-box;
+        background: #06061a;
+        border: 1px solid #3a3a6e;
+        border-radius: 4px;
+        color: #e0e0f0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        padding: 10px 12px;
+        resize: none;
+        outline: none;
+        line-height: 1.5;
+        min-height: 150px;
+        overflow-y: auto;
+        scrollbar-width: none;
+      }
+      .attack-prompt-input::-webkit-scrollbar {
+        width: 0;
+      }
+      .attack-prompt-input:focus {
+        border-color: #6060c0;
+        box-shadow: 0 0 8px rgba(96, 96, 192, 0.3);
+      }
+      .attack-prompt-input::placeholder {
+        color: #404070;
+      }
+      .attack-prompt-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 14px;
+        justify-content: center;
+      }
+      .attack-prompt-btn {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        font-weight: bold;
+        padding: 8px 24px;
+        border-radius: 4px;
+        border: 2px solid;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: all 0.15s;
+      }
+      .attack-prompt-execute {
+        background: #182040;
+        color: #f0c040;
+        border-color: #f0c040;
+      }
+      .attack-prompt-execute:hover {
+        background: #283060;
+        box-shadow: 0 0 12px rgba(240, 192, 64, 0.4);
+      }
+      .attack-prompt-cancel {
+        background: #1a1020;
+        color: #8080a0;
+        border-color: #404060;
+      }
+      .attack-prompt-cancel:hover {
+        color: #c0c0d0;
+        border-color: #6060a0;
+      }
+    `;
+
+    container.appendChild(style);
+    container.appendChild(overlay);
+
+    // Position overlay to match the Phaser canvas
+    const positionOverlay = () => {
+      const canvas = container.querySelector('canvas');
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      overlay.style.top = (rect.top - containerRect.top) + 'px';
+      overlay.style.left = (rect.left - containerRect.left) + 'px';
+      overlay.style.width = rect.width + 'px';
+      overlay.style.height = rect.height + 'px';
+    };
+    positionOverlay();
+    this._attackResizeHandler = positionOverlay;
+    window.addEventListener('resize', this._attackResizeHandler);
+    setTimeout(positionOverlay, 100);
+
+    // Focus the input
+    const input = document.getElementById('attack-prompt-input');
+    const executeBtn = document.getElementById('attack-prompt-execute');
+    setTimeout(() => input && input.focus(), 50);
+
+    // Enable/disable EXECUTE button based on textarea content
+    if (input && executeBtn) {
+      input.addEventListener('input', () => {
+        const hasContent = input.value.trim().length > 0;
+        executeBtn.style.opacity = hasContent ? '1' : '0.4';
+        executeBtn.style.pointerEvents = hasContent ? 'auto' : 'none';
+      });
+    }
+
+    // Handlers
+    const execute = () => {
+      const userPrompt = (input ? input.value : '').trim();
+      if (!userPrompt) return; // Don't execute with empty input
+      this._removeAttackOverlay();
+      this.doAttack(userPrompt);
+    };
+
+    const cancel = () => {
+      this._removeAttackOverlay();
+      // Return to menu, still player's turn
+    };
+
+    document.getElementById('attack-prompt-execute').addEventListener('click', execute);
+    document.getElementById('attack-prompt-cancel').addEventListener('click', cancel);
+
+    // Keyboard: Enter submits, Escape cancels
+    this._attackKeyHandler = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        execute();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        cancel();
+      }
+    };
+    document.addEventListener('keydown', this._attackKeyHandler);
+
+    this._attackOverlayEl = overlay;
+    this._attackStyleEl = style;
+  }
+
+  _removeAttackOverlay() {
+    this._attackOverlayOpen = false;
+    if (this._attackOverlayEl) {
+      this._attackOverlayEl.remove();
+      this._attackOverlayEl = null;
+    }
+    if (this._attackStyleEl) {
+      this._attackStyleEl.remove();
+      this._attackStyleEl = null;
+    }
+    if (this._attackResizeHandler) {
+      window.removeEventListener('resize', this._attackResizeHandler);
+      this._attackResizeHandler = null;
+    }
+    if (this._attackKeyHandler) {
+      document.removeEventListener('keydown', this._attackKeyHandler);
+      this._attackKeyHandler = null;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  CHANNELING STATE (while Claude works)
+  // ═══════════════════════════════════════════════════
+
+  _startChanneling() {
+    // Blue tint pulsing on the knight
+    this._channelingActive = true;
+    this.knight.setTint(0x4080ff);
+    this._channelingTintTween = this.tweens.add({
+      targets: this.knight,
+      alpha: { from: 1.0, to: 0.7 },
+      duration: 600,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    // Pulsing glow effect around the knight
+    this._channelingGlow = this.add.ellipse(180, 280, 80, 90, 0x4080ff, 0.12).setDepth(0);
+    this._channelingGlowTween = this.tweens.add({
+      targets: this._channelingGlow,
+      scaleX: 1.4,
+      scaleY: 1.3,
+      alpha: 0.03,
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    // Floating "Channeling..." label above the knight
+    this._channelingLabel = this.add.text(180, 200, 'Channeling', {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '12px',
+      color: '#80b0ff',
+      shadow: { offsetX: 0, offsetY: 0, color: '#4080ff', blur: 12, fill: true, stroke: true },
+      resolution: window.GAME_DPR
+    }).setOrigin(0.5).setDepth(20);
+
+    // Float up and down
+    this._channelingLabelTween = this.tweens.add({
+      targets: this._channelingLabel,
+      y: 190,
+      duration: 1400,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    // Animated dots
+    this._channelingDots = 0;
+    this._channelingTimer = this.time.addEvent({
+      delay: 400,
+      repeat: -1,
+      callback: () => {
+        if (!this._channelingActive || !this._channelingLabel) return;
+        this._channelingDots = (this._channelingDots + 1) % 4;
+        const dots = '.'.repeat(this._channelingDots);
+        const pad = ' '.repeat(3 - this._channelingDots);
+        this._channelingLabel.setText('Channeling' + dots + pad);
+      }
+    });
+  }
+
+  _stopChanneling() {
+    this._channelingActive = false;
+    // Clear tint and restore alpha
+    this.knight.clearTint();
+    this.knight.setAlpha(1);
+    if (this._channelingTintTween) {
+      this._channelingTintTween.stop();
+      this._channelingTintTween = null;
+    }
+    // Remove glow
+    if (this._channelingGlow) {
+      if (this._channelingGlowTween) {
+        this._channelingGlowTween.stop();
+        this._channelingGlowTween = null;
+      }
+      this._channelingGlow.destroy();
+      this._channelingGlow = null;
+    }
+    // Remove floating label
+    if (this._channelingLabel) {
+      if (this._channelingLabelTween) {
+        this._channelingLabelTween.stop();
+        this._channelingLabelTween = null;
+      }
+      this._channelingLabel.destroy();
+      this._channelingLabel = null;
+    }
+    // Stop timer
+    if (this._channelingTimer) {
+      this._channelingTimer.remove(false);
+      this._channelingTimer = null;
+    }
   }
 
   // ═══════════════════════════════════════════════════
   //  ATTACK
   // ═══════════════════════════════════════════════════
 
-  async doAttack() {
+  async doAttack(userPrompt) {
     if (!this.isPlayerTurn || this.battleOver) return;
     this.isPlayerTurn = false;
 
-    this.setLog('Knight channels the power of Claude...');
+    this.appendLog('> ' + userPrompt);
+    this.appendLog(`${this.charName} channels the power of Claude...`);
 
-    // Sword slash animation
-    await this.slashAnimation();
+    // 1. Disable menu and start channeling
+    this._disableMenu();
+    this._startChanneling();
 
-    // Try real fix via bridge, fall back to demo
+    // Build the command from user prompt + issue context
+    const issueWithCommand = {
+      ...this.issue,
+      title: userPrompt || this.issue.title,
+      description: userPrompt
+        ? `${userPrompt}\n\nOriginal issue — ${this.issue.title}: ${this.issue.description}`
+        : this.issue.description
+    };
+
+    // 2. Send to Claude — stream output into battle log in real-time
     try {
       const model = this.game.characterConfig?.model;
-      const result = await bridge.fix(this.issue, this.game.projectPath, (stream) => {
+      const result = await bridge.fix(issueWithCommand, this.game.projectPath, (stream) => {
         const clean = stream.replace(/[\n\r]+/g, ' ').trim();
         if (clean.length > 0) {
-          this.streamText.setText(clean.substring(0, 90) + '...');
+          // Stream into both the battle log and the guild ledger
+          this.appendLog(clean);
           if (this.game.addLog) this.game.addLog(clean);
         }
       }, model);
+
+      // 3. Claude finished — stop channeling, THEN play the slash
+      this._stopChanneling();
       this.streamText.setText('');
+
+      await this.slashAnimation();
+
+      // 4. Deal damage and show results (clamp so only VANQUISH can kill)
       const fixData = result.data || result;
-      if (fixData && fixData.fixed) {
-        this.dealDamage(this.demonMaxHp); // One-shot if fix succeeds
-        this.setLog(`Claude vanquished the demon! ${fixData.summary || 'Fixed: ' + this.issue.title}`);
-      } else {
-        // Partial fix
-        const damage = Phaser.Math.Between(40, 70);
-        this.dealDamage(damage);
-        this.setLog(`Claude strikes for ${damage} damage! ${fixData.summary || ''}`);
-      }
+      const rawDamage = Math.floor(this.demonMaxHp * 0.05);
+      const maxAllowed = this.demonHp - 1; // Leave at least 1 HP
+      const damage = Math.min(rawDamage, Math.max(0, maxAllowed));
+      if (damage > 0) this.dealDamage(damage);
+
+      const summary = (fixData && fixData.fixed)
+        ? (fixData.summary || 'Claude made changes.')
+        : (fixData?.summary || 'Claude analyzed the issue.');
+      const verb = (fixData && fixData.fixed) ? 'strikes' : 'probes';
+      this.setLog(`${this.charName} ${verb}! ${summary} Attack again or VANQUISH when done.`);
+
     } catch (err) {
-      // Fix failed — show error, no fake damage
+      // Fix failed — stop channeling, no slash, no damage
+      this._stopChanneling();
       this.streamText.setText('');
-      this.setLog(`Fix failed: ${err.message || 'Connection error'}. Try again.`);
+      this.setLog(`The spell fizzles... ${err.message || 'Connection error'}. Try again.`);
       if (this.game.addLog) this.game.addLog('Fix error: ' + (err.message || 'unknown'));
     }
 
-    // Check if demon is dead
-    if (this.demonHp <= 0) {
-      this.demonDefeated();
-      return;
-    }
-
-    // Demon turn
-    this.time.delayedCall(1200, () => this.demonTurn());
+    // Turn returns to player — re-enable menu
+    this.isPlayerTurn = true;
+    this._enableMenu();
   }
 
   async slashAnimation() {
@@ -818,7 +1553,7 @@ export class BattleScene extends Phaser.Scene {
 
       // Knight lunges forward dramatically
       this.tweens.add({
-        targets: [this.knight, this.sword, this.shield],
+        targets: this.knight,
         x: '+=120',
         duration: 180,
         ease: 'Power3',
@@ -827,13 +1562,14 @@ export class BattleScene extends Phaser.Scene {
           this.cameras.main.flash(150, 255, 255, 255, true);
 
           // Multiple slash lines
-          this.createSlashEffect(580, 240, 0);
-          this.time.delayedCall(60, () => this.createSlashEffect(580, 240, -30));
-          this.time.delayedCall(120, () => this.createSlashEffect(580, 240, 30));
+          const dy = this.demon.y;
+          this.createSlashEffect(580, dy, 0);
+          this.time.delayedCall(60, () => this.createSlashEffect(580, dy, -30));
+          this.time.delayedCall(120, () => this.createSlashEffect(580, dy, 30));
 
           // Hit particles
-          this.createHitParticles(580, 240, 0xffffff);
-          this.createHitParticles(580, 240, this.getSeverityHexColor());
+          this.createHitParticles(580, dy, 0xffffff);
+          this.createHitParticles(580, dy, this.getSeverityHexColor());
 
           // Demon knockback + red flash
           this.demon.setTint(0xff0000);
@@ -853,7 +1589,7 @@ export class BattleScene extends Phaser.Scene {
           // Knight returns
           this.time.delayedCall(200, () => {
             this.tweens.add({
-              targets: [this.knight, this.sword, this.shield],
+              targets: this.knight,
               x: '-=120',
               duration: 300,
               ease: 'Power2',
@@ -974,7 +1710,8 @@ export class BattleScene extends Phaser.Scene {
       fontSize: '22px',
       color: '#ff4040',
       stroke: '#000000',
-      strokeThickness: 4
+      strokeThickness: 4,
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setScale(0.3);
 
     // Scale up, then float up and fade
@@ -1011,7 +1748,7 @@ export class BattleScene extends Phaser.Scene {
     this.cameras.main.shake(150, 0.01);
 
     // Red flash overlay
-    const redFlash = this.add.rectangle(580, 240, 120, 120, 0xff0000, 0.3);
+    const redFlash = this.add.rectangle(580, this.demon.y, 120, 120, 0xff0000, 0.3);
     this.tweens.add({
       targets: redFlash,
       alpha: 0,
@@ -1020,7 +1757,7 @@ export class BattleScene extends Phaser.Scene {
     });
 
     // Hit particles
-    this.createHitParticles(580, 240, 0xff4040);
+    this.createHitParticles(580, this.demon.y, 0xff4040);
   }
 
   // ═══════════════════════════════════════════════════
@@ -1039,7 +1776,7 @@ export class BattleScene extends Phaser.Scene {
       duration: 250,
       ease: 'Power3',
       onComplete: () => {
-        const damage = Phaser.Math.Between(5, 15);
+        const damage = Phaser.Math.Between(3, 8);
         this.knightHp = Math.max(0, this.knightHp - damage);
         const pct = this.knightHp / 100;
 
@@ -1048,7 +1785,7 @@ export class BattleScene extends Phaser.Scene {
 
         // Knight knockback
         this.tweens.add({
-          targets: [this.knight, this.sword, this.shield],
+          targets: this.knight,
           x: '-=20',
           duration: 80,
           yoyo: true,
@@ -1084,7 +1821,8 @@ export class BattleScene extends Phaser.Scene {
           fontSize: '18px',
           color: '#ff8040',
           stroke: '#000000',
-          strokeThickness: 3
+          strokeThickness: 3,
+          resolution: window.GAME_DPR
         }).setOrigin(0.5).setScale(0.3);
 
         this.tweens.add({
@@ -1117,8 +1855,21 @@ export class BattleScene extends Phaser.Scene {
           ease: 'Power2',
           delay: 150,
           onComplete: () => {
-            this.setLog(`Demon deals ${damage} damage! Your turn, knight.`);
-            this.isPlayerTurn = true;
+            if (this.knightHp <= 0) {
+              this.battleOver = true;
+              this._disableMenu();
+              this.setLog(`The ${this.charName} falls! Retreating to regroup...`);
+              if (this.game.addLog) this.game.addLog('Defeated! Retreating...');
+              this.time.delayedCall(1500, () => {
+                this.cameras.main.fadeOut(800, 0, 0, 0);
+                this.time.delayedCall(800, () => {
+                  this.scene.start('DungeonHall');
+                });
+              });
+            } else {
+              this.setLog(`Demon deals ${damage} damage! Your turn. Command the ${this.charName} again...`);
+              this.isPlayerTurn = true;
+            }
           }
         });
       }
@@ -1126,106 +1877,204 @@ export class BattleScene extends Phaser.Scene {
   }
 
   // ═══════════════════════════════════════════════════
-  //  DEFEND
+  //  VANQUISH — instant kill, only the player decides when
+  // ═══════════════════════════════════════════════════
+
+  doVanquish() {
+    if (!this.isPlayerTurn || this.battleOver) return;
+    this.isPlayerTurn = false;
+    this._disableMenu();
+
+    this.setLog(`\u2694 EXECUTION STRIKE! The ${this.charName} delivers the final blow!`);
+
+    // Dramatic pause — knight glows gold before the strike
+    this.knight.setTint(0xf0c040);
+    this.cameras.main.flash(150, 60, 40, 10);
+
+    // Charge-up particles around knight
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const p = this.add.circle(
+        180 + Math.cos(angle) * 60,
+        280 + Math.sin(angle) * 60,
+        3, 0xf0c040, 0.8
+      ).setDepth(20);
+      this.tweens.add({
+        targets: p,
+        x: 180, y: 280, alpha: 0,
+        duration: 500, delay: i * 30,
+        ease: 'Power2',
+        onComplete: () => p.destroy()
+      });
+    }
+
+    // After charge-up, unleash the strike
+    this.time.delayedCall(600, () => {
+      this.knight.clearTint();
+      this.knight.play('char_attack_anim');
+
+      // Screen shake + massive flash
+      this.cameras.main.shake(600, 0.05);
+      this.cameras.main.flash(500, 255, 255, 255);
+
+      // Knight lunges forward dramatically
+      this.tweens.add({
+        targets: this.knight,
+        x: '+=180',
+        duration: 150,
+        ease: 'Power4',
+        onComplete: () => {
+          // Impact flash
+          this.cameras.main.flash(300, 255, 200, 100);
+
+          // Multiple slash effects (5 slashes for the killing blow)
+          const dy = this.demon.y;
+          this.createSlashEffect(580, dy, 0);
+          this.time.delayedCall(60, () => this.createSlashEffect(580, dy, -40));
+          this.time.delayedCall(120, () => this.createSlashEffect(580, dy, 40));
+          this.time.delayedCall(180, () => this.createSlashEffect(580, dy, -20));
+          this.time.delayedCall(240, () => this.createSlashEffect(580, dy, 20));
+
+          // Massive hit particles (3 bursts)
+          this.createHitParticles(580, dy, 0xffffff);
+          this.createHitParticles(580, dy, 0xf0c040);
+          this.createHitParticles(580, dy, 0xff4040);
+
+          // Demon recoils hard
+          this.demon.setTint(0xff0000);
+          this.tweens.add({
+            targets: this.demon,
+            x: 640, duration: 100, yoyo: true, ease: 'Power2'
+          });
+
+          // Set HP to 0
+          this.demonHp = 0;
+          this.drawDemonHpBar(0);
+          this.demonHpText.setText(`0/${this.demonMaxHp}`);
+
+          // Knight returns to position
+          this.tweens.add({
+            targets: this.knight,
+            x: 180, duration: 400, ease: 'Power2', delay: 300,
+            onComplete: () => this.knight.play('char_idle_anim')
+          });
+
+          // Trigger the full defeat spectacle
+          this.time.delayedCall(800, () => {
+            this.demonDefeated();
+          });
+        }
+      });
+    });
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  DEFEND — brace for impact, demon gets a free hit
   // ═══════════════════════════════════════════════════
 
   doDefend() {
     if (!this.isPlayerTurn || this.battleOver) return;
     this.isPlayerTurn = false;
 
-    this.setLog('Knight raises shield! Defense increased.');
+    this.setLog(`${this.charName} braces for impact!`);
+    this._disableMenu();
 
-    // Shield glow effect
-    this.shield.setTint(0x40c0f0);
+    // Knight raises guard — blue tint pulses
+    this.knight.setTint(0x40c0f0);
 
-    // Shield pulse
-    this.tweens.add({
-      targets: this.shield,
-      scaleX: 2.0,
-      scaleY: 2.0,
-      duration: 200,
-      yoyo: true,
-      ease: 'Sine.easeOut',
-      onComplete: () => {
-        this.shield.setScale(1.5);
-        this.time.delayedCall(300, () => this.shield.clearTint());
+    // Hexagonal shield materializes in front of knight
+    const shieldX = 220, shieldY = 280;
+    const shieldGfx = this.add.graphics().setDepth(15);
+
+    // Draw layered hex shield
+    const drawHexShield = (gfx, cx, cy, radius, color, alpha, lineW) => {
+      gfx.lineStyle(lineW, color, alpha);
+      gfx.beginPath();
+      for (let i = 0; i <= 6; i++) {
+        const angle = (Math.PI / 3) * i - Math.PI / 2;
+        const px = cx + Math.cos(angle) * radius;
+        const py = cy + Math.sin(angle) * radius;
+        if (i === 0) gfx.moveTo(px, py);
+        else gfx.lineTo(px, py);
       }
-    });
+      gfx.strokePath();
+    };
 
-    // Shield barrier ring
-    const barrier = this.add.graphics();
-    barrier.lineStyle(3, 0x40c0f0, 0.6);
-    barrier.strokeCircle(180, 320, 50);
-    barrier.lineStyle(1, 0x80e0ff, 0.3);
-    barrier.strokeCircle(180, 320, 55);
+    // Outer hex
+    drawHexShield(shieldGfx, shieldX, shieldY, 45, 0x40c0f0, 0.7, 3);
+    // Inner hex
+    drawHexShield(shieldGfx, shieldX, shieldY, 32, 0x80e0ff, 0.4, 2);
+    // Core hex
+    drawHexShield(shieldGfx, shieldX, shieldY, 18, 0xb0f0ff, 0.3, 1);
+
+    // Shield fill glow
+    shieldGfx.fillStyle(0x40c0f0, 0.08);
+    shieldGfx.beginPath();
+    for (let i = 0; i <= 6; i++) {
+      const angle = (Math.PI / 3) * i - Math.PI / 2;
+      const px = shieldX + Math.cos(angle) * 45;
+      const py = shieldY + Math.sin(angle) * 45;
+      if (i === 0) shieldGfx.moveTo(px, py);
+      else shieldGfx.lineTo(px, py);
+    }
+    shieldGfx.fillPath();
+
+    // Shield materializes — scale from 0
+    shieldGfx.setScale(0);
     this.tweens.add({
-      targets: barrier,
-      alpha: 0,
-      scaleX: 1.4,
-      scaleY: 1.4,
-      duration: 600,
-      ease: 'Power1',
-      onComplete: () => barrier.destroy()
+      targets: shieldGfx,
+      scaleX: 1, scaleY: 1,
+      duration: 250,
+      ease: 'Back.easeOut'
     });
 
-    // Green heal particles rising upward
-    for (let i = 0; i < 12; i++) {
-      const p = this.add.rectangle(
-        180 + Phaser.Math.Between(-35, 35),
-        380,
-        4, 4,
-        Phaser.Utils.Array.GetRandom([0x40e0a0, 0x60ff80, 0x80ffc0]),
-        0.8
-      );
+    // Orbiting energy particles around the shield
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const orbitR = 55;
+      const p = this.add.circle(
+        shieldX + Math.cos(angle) * orbitR,
+        shieldY + Math.sin(angle) * orbitR,
+        2, 0x80e0ff, 0.8
+      ).setDepth(16);
+
       this.tweens.add({
         targets: p,
-        y: p.y - Phaser.Math.Between(40, 100),
-        x: p.x + Phaser.Math.Between(-10, 10),
+        x: shieldX + Math.cos(angle + Math.PI) * (orbitR * 0.3),
+        y: shieldY + Math.sin(angle + Math.PI) * (orbitR * 0.3),
         alpha: 0,
-        duration: 900,
-        delay: i * 60,
-        ease: 'Power1',
+        duration: 600,
+        delay: i * 40,
+        ease: 'Power2',
         onComplete: () => p.destroy()
       });
     }
 
-    // Heal a bit
-    this.knightHp = Math.min(100, this.knightHp + 10);
-    const pct = this.knightHp / 100;
-
-    this.tweens.addCounter({
-      from: (this.knightHp - 10) / 100,
-      to: pct,
-      duration: 400,
-      ease: 'Power2',
-      onUpdate: (tween) => {
-        this.drawKnightHpBar(tween.getValue());
-      }
-    });
-
-    this.knightHpText.setText(`${this.knightHp}/100`);
-
-    // +10 heal text
-    const healText = this.add.text(180, 300, '+10', {
-      fontFamily: '"JetBrains Mono", monospace',
-      fontSize: '16px',
-      color: '#40e080',
-      stroke: '#000000',
-      strokeThickness: 3
-    }).setOrigin(0.5);
-
+    // Shield pulse effect
     this.tweens.add({
-      targets: healText,
-      y: 260,
-      alpha: 0,
-      duration: 800,
-      ease: 'Power1',
-      onComplete: () => healText.destroy()
+      targets: shieldGfx,
+      alpha: 0.5,
+      duration: 200,
+      yoyo: true,
+      repeat: 1,
+      delay: 300
     });
 
-    this.time.delayedCall(1000, () => {
-      this.demonTurn();
+    // Shield fades after holding
+    this.tweens.add({
+      targets: shieldGfx,
+      alpha: 0, scaleX: 1.2, scaleY: 1.2,
+      duration: 400,
+      delay: 700,
+      ease: 'Power2',
+      onComplete: () => shieldGfx.destroy()
     });
+
+    // Knight clears tint after shield fades
+    this.time.delayedCall(600, () => this.knight.clearTint());
+
+    // Demon counterattacks after the shield holds
+    this.time.delayedCall(1000, () => this.demonTurn());
   }
 
   // ═══════════════════════════════════════════════════
@@ -1244,7 +2093,7 @@ export class BattleScene extends Phaser.Scene {
     // Inspect scanning ring
     const scanRing = this.add.graphics();
     scanRing.lineStyle(2, 0x4080e0, 0.7);
-    scanRing.strokeCircle(580, 240, 30);
+    scanRing.strokeCircle(580, this.demon.y, 30);
     this.tweens.add({
       targets: scanRing,
       scaleX: 2.5,
@@ -1280,12 +2129,14 @@ export class BattleScene extends Phaser.Scene {
 
   doFlee() {
     if (!this.isPlayerTurn || this.battleOver) return;
+    this.isPlayerTurn = false;
+    this.battleOver = true;
 
     this.setLog('You retreat from battle...');
 
     // Knight runs off screen left
     this.tweens.add({
-      targets: [this.knight, this.sword, this.shield],
+      targets: this.knight,
       x: '-=300',
       alpha: 0,
       duration: 600,
@@ -1327,7 +2178,7 @@ export class BattleScene extends Phaser.Scene {
 
           const p = this.add.rectangle(
             580 + Phaser.Math.Between(-15, 15),
-            240 + Phaser.Math.Between(-15, 15),
+            this.demon.y + Phaser.Math.Between(-15, 15),
             size, size, color, 1
           ).setDepth(20);
 
@@ -1351,7 +2202,7 @@ export class BattleScene extends Phaser.Scene {
       this.time.delayedCall(r * 120, () => {
         const ring = this.add.graphics().setDepth(19);
         ring.lineStyle(3 - r, 0xffffff, 0.7 - r * 0.2);
-        ring.strokeCircle(580, 240, 20);
+        ring.strokeCircle(580, this.demonGroundY, 20);
         this.tweens.add({
           targets: ring,
           scaleX: 4 + r,
@@ -1387,7 +2238,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Aura dissolve
     this.tweens.add({
-      targets: [this.demonAuraOuter, this.demonAuraInner, this.demonShadow],
+      targets: [this.demonAuraOuter, this.demonAuraInner],
       alpha: 0,
       duration: 800,
       delay: 500
@@ -1408,7 +2259,8 @@ export class BattleScene extends Phaser.Scene {
         fontSize: '32px',
         color: COLORS.gold,
         stroke: '#000000',
-        strokeThickness: 6
+        strokeThickness: 6,
+        resolution: window.GAME_DPR
       }).setOrigin(0.5).setScale(0.1).setDepth(30);
 
       this.tweens.add({
@@ -1462,6 +2314,26 @@ export class BattleScene extends Phaser.Scene {
       info: 0x4080e0
     };
     return map[this.issue.severity] || 0xe04040;
+  }
+
+  // Clean up HTML overlays on scene shutdown
+  shutdown() {
+    this._removeAttackOverlay();
+    this._closeBigMode();
+    this._stopChanneling();
+    const canvas = this.sys.game.canvas;
+    if (this._logWheelHandler) {
+      canvas.removeEventListener('wheel', this._logWheelHandler);
+      this._logWheelHandler = null;
+    }
+    if (this._logClickHandler) {
+      canvas.removeEventListener('click', this._logClickHandler);
+      this._logClickHandler = null;
+    }
+    if (this._logMoveHandler) {
+      canvas.removeEventListener('mousemove', this._logMoveHandler);
+      this._logMoveHandler = null;
+    }
   }
 
   /**

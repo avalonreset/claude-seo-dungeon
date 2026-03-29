@@ -25,6 +25,11 @@ export class GateScene extends Phaser.Scene {
   }
 
   create() {
+    const dpr = this.game.dpr || window.GAME_DPR;
+    this.cameras.main.setZoom(dpr);
+    this.cameras.main.scrollX = 400 * (1 - dpr);
+    this.cameras.main.scrollY = 300 * (1 - dpr);
+
     const W = 800;
     const H = 600;
     const cx = W / 2;
@@ -32,48 +37,46 @@ export class GateScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(0x05050f);
     this.cameras.main.fadeIn(600, 0, 0, 0);
 
-    // Check for cached audit data across all three models
-    const MODELS = [
-      { key: 'claude-opus-4-6', label: 'Opus', color: '#d4af37', charName: 'Warrior' },
-      { key: 'claude-sonnet-4-6', label: 'Sonnet', color: '#88bbff', charName: 'Samurai' },
-      { key: 'claude-haiku-4-5-20251001', label: 'Haiku', color: '#66ddaa', charName: 'Knight' }
-    ];
+    // Only check cache for the SELECTED character/model
+    const currentModel = this.game.characterConfig?.model || 'claude-sonnet-4-6';
+    const MODELS = {
+      'claude-opus-4-6':          { key: 'claude-opus-4-6', label: 'Opus', color: '#d4af37', charName: 'Warrior' },
+      'claude-sonnet-4-6':        { key: 'claude-sonnet-4-6', label: 'Sonnet', color: '#88bbff', charName: 'Samurai' },
+      'claude-haiku-4-5-20251001':{ key: 'claude-haiku-4-5-20251001', label: 'Haiku', color: '#66ddaa', charName: 'Knight' }
+    };
+    this.selectedModel = MODELS[currentModel] || MODELS['claude-sonnet-4-6'];
 
-    this.cachedRuns = [];
-    for (const m of MODELS) {
+    // Check cache for selected model
+    this.cachedRun = null;
+    try {
+      const raw = localStorage.getItem(`seo_dungeon_audit_${this.domain}_${this.selectedModel.key}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.auditData) {
+          this.cachedRun = parsed;
+        }
+      }
+    } catch (_) {}
+
+    // Legacy cache migration
+    if (!this.cachedRun) {
       try {
-        const raw = localStorage.getItem(`seo_dungeon_audit_${this.domain}_${m.key}`);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed && parsed.auditData) {
-            this.cachedRuns.push({ ...m, cached: parsed });
+        const legacyRaw = localStorage.getItem(`seo_dungeon_audit_${this.domain}`);
+        if (legacyRaw) {
+          const legacy = JSON.parse(legacyRaw);
+          if (legacy && legacy.auditData && !legacy.model) {
+            localStorage.setItem(`seo_dungeon_audit_${this.domain}_${currentModel}`, JSON.stringify({
+              ...legacy, model: currentModel
+            }));
+            localStorage.removeItem(`seo_dungeon_audit_${this.domain}`);
+            this.cachedRun = legacy;
           }
         }
       } catch (_) {}
     }
 
-    // Also check legacy cache key (before model split) and migrate it
-    try {
-      const legacyRaw = localStorage.getItem(`seo_dungeon_audit_${this.domain}`);
-      if (legacyRaw) {
-        const legacy = JSON.parse(legacyRaw);
-        if (legacy && legacy.auditData && !legacy.model) {
-          // Migrate to current model's cache slot
-          const currentModel = this.game.characterConfig?.model || 'claude-sonnet-4-6';
-          localStorage.setItem(`seo_dungeon_audit_${this.domain}_${currentModel}`, JSON.stringify({
-            ...legacy, model: currentModel
-          }));
-          localStorage.removeItem(`seo_dungeon_audit_${this.domain}`);
-          const modelInfo = MODELS.find(m => m.key === currentModel);
-          if (modelInfo && !this.cachedRuns.find(r => r.key === currentModel)) {
-            this.cachedRuns.push({ ...modelInfo, cached: legacy });
-          }
-        }
-      }
-    } catch (_) {}
-
-    // No cached data — skip straight to Summoning
-    if (this.cachedRuns.length === 0) {
+    // No cached data for this model — skip straight to Summoning
+    if (!this.cachedRun) {
       this._drawBackground(W, H);
       this.time.delayedCall(400, () => {
         this.cameras.main.fadeOut(400, 0, 0, 0);
@@ -160,83 +163,51 @@ export class GateScene extends Phaser.Scene {
     const overlay = document.createElement('div');
     overlay.id = 'gate-overlay';
 
-    const ALL_MODELS = [
-      { key: 'claude-opus-4-6', label: 'Opus', color: '#d4af37', charName: 'Warrior' },
-      { key: 'claude-sonnet-4-6', label: 'Sonnet', color: '#88bbff', charName: 'Samurai' },
-      { key: 'claude-haiku-4-5-20251001', label: 'Haiku', color: '#66ddaa', charName: 'Knight' }
-    ];
+    const m = this.selectedModel;
+    const cached = this.cachedRun;
 
-    const cachedByKey = {};
-    for (const run of this.cachedRuns) {
-      cachedByKey[run.key] = run.cached;
-    }
+    // Single column for the selected character
+    const ts = cached.timestamp;
+    const dateStr = ts ? new Date(ts).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: 'numeric', minute: '2-digit'
+    }) : 'Unknown';
+    const timeAgo = ts ? this._timeAgo(ts) : '';
+    const issues = cached.auditData.issues || [];
+    const remaining = Array.isArray(issues) ? issues.filter(i => !i.defeated && !i.fixed).length : 0;
+    const total = issues.length;
+    const defeated = total - remaining;
 
-    // Build three columns — one per character/model
-    // Each column always has two rows:
-    //   Top row: "Continue Quest" (if cached) or empty placeholder
-    //   Bottom row: "New Quest" (if cached, re-run) or "Begin Quest" (if uncached)
-    let columnsHTML = '';
-    for (const m of ALL_MODELS) {
-      const cached = cachedByKey[m.key];
-
-      let topCardHTML = '';
-      let bottomCardHTML = '';
-
-      if (cached) {
-        const ts = cached.timestamp;
-        const dateStr = ts ? new Date(ts).toLocaleDateString('en-US', {
-          month: 'short', day: 'numeric', year: 'numeric',
-          hour: 'numeric', minute: '2-digit'
-        }) : 'Unknown';
-        const timeAgo = ts ? this._timeAgo(ts) : '';
-        const issues = cached.auditData.issues || [];
-        const remaining = Array.isArray(issues) ? issues.filter(i => !i.defeated && !i.fixed).length : 0;
-        const total = issues.length;
-        const defeated = total - remaining;
-
-        topCardHTML = `
-          <div class="gate-card gate-card-continue" data-model="${m.key}" data-action="resume" style="--accent: ${m.color};">
-            <div class="gate-card-label" style="color: ${m.color};">Continue Quest</div>
-            <div class="gate-card-time dim">${timeAgo} &middot; ${dateStr}</div>
-            <div class="gate-card-stat">
-              <span class="stat-demons">${remaining} demons remain</span>
-              ${defeated > 0 ? `<span class="stat-slain">${defeated} of ${total} slain</span>` : ''}
+    const columnsHTML = `
+      <div class="gate-column" style="--accent: ${m.color};">
+        <div class="gate-col-header">
+          <div class="gate-col-name" style="color: ${m.color};">${m.charName}</div>
+          <div class="gate-col-model" style="color: ${m.color}; border-color: ${m.color}40;">${m.label}</div>
+        </div>
+        <div class="gate-col-cards">
+          <div class="gate-row-top">
+            <div class="gate-card gate-card-continue" data-model="${m.key}" data-action="resume" style="--accent: ${m.color};">
+              <div class="gate-card-label" style="color: ${m.color};">Continue Quest</div>
+              <div class="gate-card-time dim">${timeAgo} &middot; ${dateStr}</div>
+              <div class="gate-card-stat">
+                <span class="stat-demons">${remaining} demons remain</span>
+                ${defeated > 0 ? `<span class="stat-slain">${defeated} of ${total} slain</span>` : ''}
+              </div>
             </div>
-          </div>`;
-
-        bottomCardHTML = `
-          <div class="gate-card gate-card-new" data-model="${m.key}" data-action="rerun" style="--accent: ${m.color};">
-            <div class="gate-card-label gate-card-label-new">New Quest</div>
-            <div class="gate-card-sub dim">Abandon progress. Descend anew.</div>
-          </div>`;
-      } else {
-        // Empty top row placeholder — keeps bottom row aligned with other columns
-        topCardHTML = '<div class="gate-card-placeholder"></div>';
-
-        bottomCardHTML = `
-          <div class="gate-card gate-card-begin" data-model="${m.key}" data-action="new" style="--accent: ${m.color};">
-            <div class="gate-card-label" style="color: ${m.color};">Begin Quest</div>
-            <div class="gate-card-sub dim">Unexplored territory.</div>
-          </div>`;
-      }
-
-      columnsHTML += `
-        <div class="gate-column" style="--accent: ${m.color};">
-          <div class="gate-col-header">
-            <div class="gate-col-name" style="color: ${m.color};">${m.charName}</div>
-            <div class="gate-col-model" style="color: ${m.color}; border-color: ${m.color}40;">${m.label}</div>
           </div>
-          <div class="gate-col-cards">
-            <div class="gate-row-top">${topCardHTML}</div>
-            <div class="gate-row-bottom">${bottomCardHTML}</div>
+          <div class="gate-row-bottom">
+            <div class="gate-card gate-card-new" data-model="${m.key}" data-action="rerun" style="--accent: ${m.color};">
+              <div class="gate-card-label gate-card-label-new">New Quest</div>
+              <div class="gate-card-sub dim">Abandon progress. Descend anew.</div>
+            </div>
           </div>
-        </div>`;
-    }
+        </div>
+      </div>`;
 
     overlay.innerHTML = `
       <div class="gate-title">THE GATE AWAITS</div>
       <div class="gate-domain">${this.domain}</div>
-      <div class="gate-section-label">Choose Your Path</div>
+      <div class="gate-section-label">A Quest Awaits</div>
       <div class="gate-columns">${columnsHTML}</div>
       <div class="gate-rune" id="gate-rune" title="Sever the link">&#x2715;</div>
     `;
@@ -246,7 +217,6 @@ export class GateScene extends Phaser.Scene {
     style.textContent = `
       #gate-overlay {
         position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
         pointer-events: none;
         display: flex;
         flex-direction: column;
@@ -254,12 +224,14 @@ export class GateScene extends Phaser.Scene {
         justify-content: flex-start;
         font-family: 'JetBrains Mono', monospace;
         z-index: 10;
-        padding-top: 4%;
+        padding-top: 3%;
+        box-sizing: border-box;
+        overflow: hidden auto;
       }
       #gate-overlay > * { pointer-events: auto; }
 
       .gate-title {
-        font-size: 22px;
+        font-size: clamp(14px, 2.8vw, 22px);
         font-weight: 600;
         color: #d4af37;
         letter-spacing: 8px;
@@ -267,12 +239,12 @@ export class GateScene extends Phaser.Scene {
         margin-bottom: 4px;
       }
       .gate-domain {
-        font-size: 13px;
+        font-size: clamp(10px, 1.6vw, 13px);
         color: #88bbff;
         margin-bottom: 14px;
       }
       .gate-section-label {
-        font-size: 11px;
+        font-size: clamp(9px, 1.3vw, 11px);
         letter-spacing: 3px;
         text-transform: uppercase;
         color: #606078;
@@ -284,66 +256,57 @@ export class GateScene extends Phaser.Scene {
         display: flex;
         gap: 20px;
         margin-top: auto;
-        margin-bottom: 8%;
+        padding-bottom: 3%;
       }
       .gate-column {
-        width: 220px;
+        width: 80%;
+        max-width: 420px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 10px;
+        gap: 14px;
       }
       .gate-col-header {
         text-align: center;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
       }
       .gate-col-name {
-        font-size: 15px;
+        font-size: 22px;
         font-weight: 600;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
+        letter-spacing: 2px;
       }
       .gate-col-model {
-        font-size: 9px;
+        font-size: 11px;
         font-weight: 600;
-        letter-spacing: 2px;
+        letter-spacing: 3px;
         text-transform: uppercase;
-        border: 1px solid;
-        border-radius: 3px;
-        padding: 2px 8px;
+        border: 1.5px solid;
+        border-radius: 4px;
+        padding: 3px 12px;
         display: inline-block;
       }
       .gate-col-cards {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 12px;
         width: 100%;
-        flex: 1;
-      }
-      .gate-row-top {
-        flex: 1;
-        display: flex;
-        align-items: flex-end;
       }
       .gate-row-top > * { width: 100%; }
-      .gate-row-bottom {
-        flex: 0 0 auto;
-      }
-      .gate-card-placeholder {
-        /* Empty space where "Continue Quest" would be */
-      }
+      .gate-row-bottom > * { width: 100%; }
 
       /* ── Individual cards ── */
       .gate-card {
         width: 100%;
-        padding: 14px 16px;
+        padding: 20px 24px;
         background: rgba(12, 12, 20, 0.88);
-        border-radius: 5px;
+        border-radius: 6px;
         cursor: pointer;
         text-align: center;
         transition: border-color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.15s;
       }
       .gate-card:hover {
-        transform: translateY(-1px);
+        transform: translateY(-2px);
       }
       .gate-card:active {
         transform: translateY(0);
@@ -381,28 +344,30 @@ export class GateScene extends Phaser.Scene {
       }
 
       .gate-card-label {
-        font-size: 12px;
+        font-size: 16px;
         font-weight: 600;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
       }
       .gate-card-label-new {
-        color: #884444;
+        color: #aa5555;
       }
       .gate-card-sub {
-        font-size: 10px;
+        font-size: 13px;
         line-height: 1.5;
+        color: #808098;
       }
       .gate-card-time {
-        font-size: 10px;
-        margin-bottom: 4px;
+        font-size: 12px;
+        margin-bottom: 6px;
+        color: #808098;
       }
       .gate-card-stat {
         display: flex;
         flex-direction: column;
-        gap: 1px;
+        gap: 2px;
       }
-      .stat-demons { color: #cc4444; font-size: 11px; font-weight: 600; }
-      .stat-slain { color: #505068; font-size: 10px; }
+      .stat-demons { color: #dd4444; font-size: 14px; font-weight: 600; }
+      .stat-slain { color: #606078; font-size: 12px; }
 
       .dim { color: #606078; }
 
@@ -434,33 +399,56 @@ export class GateScene extends Phaser.Scene {
     container.appendChild(style);
     container.appendChild(overlay);
 
+    // Position overlay to match the Phaser canvas (letterboxed with Scale.FIT)
+    const positionOverlay = () => {
+      const canvas = container.querySelector('canvas');
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      overlay.style.top = (rect.top - containerRect.top) + 'px';
+      overlay.style.left = (rect.left - containerRect.left) + 'px';
+      overlay.style.width = rect.width + 'px';
+      overlay.style.height = rect.height + 'px';
+    };
+    positionOverlay();
+    this._resizeHandler = positionOverlay;
+    window.addEventListener('resize', this._resizeHandler);
+    // ResizeObserver catches zoom changes that resize doesn't
+    this._resizeObserver = new ResizeObserver(positionOverlay);
+    const canvas = container.querySelector('canvas');
+    if (canvas) this._resizeObserver.observe(canvas);
+    setTimeout(positionOverlay, 100);
+    setTimeout(positionOverlay, 500);
+
     // ── Click handlers ──
 
     // Resume (continue cached quest)
     overlay.querySelectorAll('[data-action="resume"]').forEach(card => {
       card.addEventListener('click', () => {
-        const modelKey = card.dataset.model;
-        const cached = cachedByKey[modelKey];
-        if (!cached) return;
-        this.game.auditData = cached.auditData;
-        this._switchCharacterAndGo(modelKey, 'DungeonHall');
+        this.game.auditData = this.cachedRun.auditData;
+        this._removeOverlay();
+        this.cameras.main.fadeOut(500, 0, 0, 0);
+        this.time.delayedCall(500, () => {
+          this.scene.start('DungeonHall', {
+            domain: this.domain,
+            projectPath: this.projectPath
+          });
+        });
       });
     });
 
-    // Re-run (wipe cache, run fresh with same model)
+    // Re-run (wipe cache, run fresh)
     overlay.querySelectorAll('[data-action="rerun"]').forEach(card => {
       card.addEventListener('click', () => {
-        const modelKey = card.dataset.model;
-        try { localStorage.removeItem(`seo_dungeon_audit_${this.domain}_${modelKey}`); } catch (_) {}
-        this._switchCharacterAndGo(modelKey, 'Summoning');
-      });
-    });
-
-    // Begin (unexplored model, run fresh)
-    overlay.querySelectorAll('[data-action="new"]').forEach(card => {
-      card.addEventListener('click', () => {
-        const modelKey = card.dataset.model;
-        this._switchCharacterAndGo(modelKey, 'Summoning');
+        try { localStorage.removeItem(`seo_dungeon_audit_${this.domain}_${this.selectedModel.key}`); } catch (_) {}
+        this._removeOverlay();
+        this.cameras.main.fadeOut(500, 0, 0, 0);
+        this.time.delayedCall(500, () => {
+          this.scene.start('Summoning', {
+            domain: this.domain,
+            projectPath: this.projectPath
+          });
+        });
       });
     });
 
@@ -522,6 +510,14 @@ export class GateScene extends Phaser.Scene {
   _removeOverlay() {
     if (this._overlayEl) this._overlayEl.remove();
     if (this._styleEl) this._styleEl.remove();
+    if (this._resizeHandler) {
+      window.removeEventListener('resize', this._resizeHandler);
+      this._resizeHandler = null;
+    }
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
+    }
   }
 
   // Clean up on scene shutdown

@@ -15,6 +15,11 @@ export class VictoryScene extends Phaser.Scene {
   }
 
   create() {
+    const dpr = this.game.dpr || window.GAME_DPR;
+    this.cameras.main.setZoom(dpr);
+    this.cameras.main.scrollX = 400 * (1 - dpr);
+    this.cameras.main.scrollY = 300 * (1 - dpr);
+
     const cx = 400;
     const W = 800;
     const H = 600;
@@ -47,11 +52,11 @@ export class VictoryScene extends Phaser.Scene {
     this.addLootPanel(cx);
 
     // ── Progress section ─────────────────────────────────────
-    const data = this.game.auditData;
+    const data = this.game.auditData || { issues: [] };
     const remaining = data.issues.filter(i => !i.defeated).length;
     const total = data.issues.length;
     const defeated = total - remaining;
-    const allClear = remaining === 0;
+    const allClear = remaining === 0 && total > 0;
 
     this.addProgressSection(cx, defeated, total, allClear);
 
@@ -125,28 +130,32 @@ export class VictoryScene extends Phaser.Scene {
     const shadow = this.add.text(cx + 3, 50, 'VICTORY', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '48px',
-      color: '#000000'
+      color: '#000000',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(8);
 
     // Warm outer glow layer (large, soft)
     const outerGlow = this.add.text(cx, 48, 'VICTORY', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '52px',
-      color: '#d4af37'
+      color: '#d4af37',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setScale(3).setAlpha(0).setDepth(8);
 
     // Inner bright glow layer
     const titleGlow = this.add.text(cx, 48, 'VICTORY', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '50px',
-      color: '#ffe680'
+      color: '#ffe680',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setScale(3).setAlpha(0).setDepth(9);
 
     // Main title
     const title = this.add.text(cx, 48, 'VICTORY', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '48px',
-      color: '#d4af37'
+      color: '#d4af37',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setScale(3).setAlpha(0).setDepth(10);
 
     // Slam-in animation: start big, bounce to final size
@@ -197,10 +206,10 @@ export class VictoryScene extends Phaser.Scene {
 
     // Small star decorations beside title
     const starLeft = this.add.text(cx - 165, 43, '\u2726', {
-      fontSize: '22px', color: '#d4af37'
+      fontSize: '22px', color: '#d4af37', resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(10);
     const starRight = this.add.text(cx + 165, 43, '\u2726', {
-      fontSize: '22px', color: '#d4af37'
+      fontSize: '22px', color: '#d4af37', resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(10);
     this.tweens.add({
       targets: [starLeft, starRight],
@@ -349,7 +358,8 @@ export class VictoryScene extends Phaser.Scene {
     const vanquishedText = this.add.text(cx, panelY - 25, '\u2694  DEMON VANQUISHED  \u2694', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '14px',
-      color: '#e04040'
+      color: '#e04040',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // Flavor subtitle from VICTORY_MESSAGES
@@ -357,7 +367,8 @@ export class VictoryScene extends Phaser.Scene {
       fontFamily: 'monospace',
       fontSize: '11px',
       color: '#a08060',
-      fontStyle: 'italic'
+      fontStyle: 'italic',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // Issue title
@@ -366,7 +377,8 @@ export class VictoryScene extends Phaser.Scene {
       fontSize: '15px',
       color: '#ffffff',
       fontStyle: 'bold',
-      wordWrap: { width: panelW - 40 }
+      wordWrap: { width: panelW - 40 },
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // Issue description
@@ -374,7 +386,8 @@ export class VictoryScene extends Phaser.Scene {
       fontFamily: 'monospace',
       fontSize: '13px',
       color: '#b0b0c0',
-      wordWrap: { width: panelW - 60 }
+      wordWrap: { width: panelW - 60 },
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // Separator line (gold themed)
@@ -384,7 +397,8 @@ export class VictoryScene extends Phaser.Scene {
     const spoilsHeader = this.add.text(cx, panelY + 72, '\u2500\u2500  Spoils of War  \u2500\u2500', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '12px',
-      color: '#d4af37'
+      color: '#d4af37',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // XP calculation
@@ -396,25 +410,29 @@ export class VictoryScene extends Phaser.Scene {
     const xpLabel = this.add.text(cx - 110, panelY + 98, 'EXP:', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '13px',
-      color: '#40c0c0'
+      color: '#40c0c0',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     const xpValue = this.add.text(cx - 45, panelY + 98, '+0', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '13px',
-      color: '#40c0c0'
+      color: '#40c0c0',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     const bonusLabel = this.add.text(cx + 65, panelY + 98, 'Bonus:', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '13px',
-      color: '#e88020'
+      color: '#e88020',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     const bonusValue = this.add.text(cx + 150, panelY + 98, '+0', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '13px',
-      color: '#e88020'
+      color: '#e88020',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // Severity badge
@@ -425,7 +443,8 @@ export class VictoryScene extends Phaser.Scene {
     const sevBadge = this.add.text(cx, panelY + 126, `[ ${(this.issue.severity || 'medium').toUpperCase()} ]`, {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '11px',
-      color: sevColor
+      color: sevColor,
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // Staggered content reveal
@@ -462,7 +481,8 @@ export class VictoryScene extends Phaser.Scene {
     const progText = this.add.text(cx, progressY, `Demons defeated: ${defeated} / ${total}`, {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '12px',
-      color: allClear ? '#d4af37' : '#e8e8e8'
+      color: allClear ? '#d4af37' : '#e8e8e8',
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setAlpha(0).setDepth(7);
 
     // Progress bar background
@@ -542,7 +562,8 @@ export class VictoryScene extends Phaser.Scene {
       Math.round((defeated / total) * 100) + '%', {
         fontFamily: '"JetBrains Mono", monospace',
         fontSize: '11px',
-        color: '#d4af37'
+        color: '#d4af37',
+        resolution: window.GAME_DPR
       }).setOrigin(0, 0.5).setAlpha(0).setDepth(7);
 
     this.tweens.add({
@@ -558,19 +579,22 @@ export class VictoryScene extends Phaser.Scene {
       const clearShadow = this.add.text(cx + 2, progressY + 58, '\u2605  DUNGEON CLEARED  \u2605', {
         fontFamily: '"JetBrains Mono", monospace',
         fontSize: '18px',
-        color: '#000000'
+        color: '#000000',
+        resolution: window.GAME_DPR
       }).setOrigin(0.5).setAlpha(0).setDepth(9);
 
       const clearText = this.add.text(cx, progressY + 56, '\u2605  DUNGEON CLEARED  \u2605', {
         fontFamily: '"JetBrains Mono", monospace',
         fontSize: '18px',
-        color: '#d4af37'
+        color: '#d4af37',
+        resolution: window.GAME_DPR
       }).setOrigin(0.5).setAlpha(0).setDepth(10);
 
       const clearGlow = this.add.text(cx, progressY + 56, '\u2605  DUNGEON CLEARED  \u2605', {
         fontFamily: '"JetBrains Mono", monospace',
         fontSize: '20px',
-        color: '#ffe680'
+        color: '#ffe680',
+        resolution: window.GAME_DPR
       }).setOrigin(0.5).setAlpha(0).setDepth(9);
 
       // Slam in with bounce like the victory title
@@ -612,7 +636,8 @@ export class VictoryScene extends Phaser.Scene {
       const subClear = this.add.text(cx, progressY + 82, 'ALL DEMONS VANQUISHED', {
         fontFamily: '"JetBrains Mono", monospace',
         fontSize: '11px',
-        color: '#40c040'
+        color: '#40c040',
+        resolution: window.GAME_DPR
       }).setOrigin(0.5).setAlpha(0).setDepth(10);
 
       this.tweens.add({
@@ -639,7 +664,8 @@ export class VictoryScene extends Phaser.Scene {
       const btnText = this.add.text(cx, btnY, 'Return to the Surface', {
         fontFamily: '"JetBrains Mono", monospace',
         fontSize: '12px',
-        color: '#d4af37'
+        color: '#d4af37',
+        resolution: window.GAME_DPR
       }).setOrigin(0.5).setDepth(11);
 
       // Fade in
@@ -699,12 +725,14 @@ export class VictoryScene extends Phaser.Scene {
       const btnText = this.add.text(cx, btnY - 2, `${remaining} demon${remaining > 1 ? 's' : ''} remain`, {
         fontFamily: '"JetBrains Mono", monospace',
         fontSize: '12px',
-        color: '#d4af37'
+        color: '#d4af37',
+        resolution: window.GAME_DPR
       }).setOrigin(0.5).setDepth(11);
       const btnSub = this.add.text(cx, btnY + 14, 'Click to continue', {
         fontFamily: 'monospace',
         fontSize: '13px',
-        color: '#a0a0b0'
+        color: '#a0a0b0',
+        resolution: window.GAME_DPR
       }).setOrigin(0.5).setDepth(11);
 
       // Fade in

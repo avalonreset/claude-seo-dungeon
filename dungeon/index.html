@@ -198,18 +198,40 @@
       border-radius: 6px;
       cursor: pointer;
       letter-spacing: 3px;
-      transition: transform 0.1s, box-shadow 0.2s;
+      transition: transform 0.1s, box-shadow 0.2s, opacity 0.3s;
       box-shadow: 0 2px 12px rgba(212, 175, 55, 0.2);
     }
 
-    #descend-btn:hover {
+    #descend-btn:hover:not(:disabled) {
       transform: translateY(-1px);
       box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
     }
 
-    #descend-btn:active {
+    #descend-btn:active:not(:disabled) {
       transform: translateY(1px);
       box-shadow: 0 1px 6px rgba(212, 175, 55, 0.15);
+    }
+
+    #descend-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* ── Validation styles ──────────────── */
+    .form-group input.valid {
+      border-color: #3a7a3a;
+    }
+
+    .form-group input.invalid {
+      border-color: #cc4444;
+    }
+
+    #validation-errors {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #cc4444;
+      text-align: center;
+      min-height: 18px;
     }
 
     .safety-note {
@@ -316,7 +338,7 @@
         </div>
       </div>
 
-      <div class="tagline">Slay your SEO demons, one by one.</div>
+      <div class="tagline">Slay your SEO demons...</div>
 
       <div class="form-group">
         <label>Domain</label>
@@ -328,12 +350,8 @@
         <input type="text" id="path-input" class="path-input" value="E:\claude-github-website" placeholder="C:\path\to\project" autocomplete="off" spellcheck="false">
       </div>
 
-      <button id="descend-btn">SEAL YOUR FATE</button>
-
-      <div class="safety-note">
-        Fixes are applied on a new git branch.<br>
-        Your main branch is never touched.
-      </div>
+      <button id="descend-btn" disabled>SEAL YOUR FATE</button>
+      <div id="validation-errors"></div>
 
       <div id="bridge-status">Entering the dungeon...</div>
     </div>

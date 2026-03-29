@@ -1,5 +1,5 @@
 const { WebSocketServer } = require('ws');
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const http = require('http');
 const path = require('path');
 
@@ -46,13 +46,20 @@ wss.on('connection', (ws) => {
   };
 
   ws.on('message', async (raw) => {
-    const msg = JSON.parse(raw.toString());
+    let msg;
+    try {
+      msg = JSON.parse(raw.toString());
+    } catch (e) {
+      console.error('Invalid JSON from client:', e.message);
+      safeSend(JSON.stringify({ id: 0, type: 'error', message: 'Invalid message format' }));
+      return;
+    }
     const { id, command, type, projectPath, model } = msg;
 
     // Use project path for fixes, project root for audits
     const fixCwd = projectPath || PROJECT_ROOT;
 
-    console.log(`Command #${id} [${type}]: ${command ? command.substring(0, 80) : '(no command)'}`);
+    console.log(`Command #${id} [${type}]: ${command || '(no command)'}`);
     if (model) console.log(`  Model: ${model}`);
     if (projectPath) console.log(`  Project: ${projectPath}`);
 
@@ -83,7 +90,7 @@ wss.on('connection', (ws) => {
         }, id, model);
         activeProcesses.delete(id);
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
-        console.log(`Fix done: ${command.substring(0, 50)}`);
+        console.log(`Fix done: ${command}`);
 
       } else if (type === 'commit') {
         const result = await runCommit(command, fixCwd, (chunk) => {
@@ -111,6 +118,72 @@ wss.on('connection', (ws) => {
     console.log('Game client disconnected');
   });
 });
+
+/**
+ * Check if a directory is a git repository.
+ */
+function isGitRepo(cwd) {
+  try {
+    execSync('git rev-parse --git-dir', { cwd, stdio: 'pipe' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Ensure fixes run on a dedicated branch, not main.
+ * Creates or switches to a date-stamped branch: seo-dungeon-fixes-YYYY-MM-DD
+ * Returns the branch name on success, or null if branching was skipped.
+ */
+function ensureFixBranch(projectCwd) {
+  try {
+    if (!isGitRepo(projectCwd)) {
+      console.log('  [branch] Not a git repo — skipping branch protection');
+      return null;
+    }
+
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const branchName = `seo-dungeon-fixes-${today}`;
+
+    // Check current branch
+    const currentBranch = execSync('git rev-parse --abbrev-ref HEAD', {
+      cwd: projectCwd,
+      stdio: 'pipe'
+    }).toString().trim();
+
+    if (currentBranch === branchName) {
+      console.log(`  [branch] Already on ${branchName}`);
+      return branchName;
+    }
+
+    // Check if the branch already exists locally
+    try {
+      execSync(`git rev-parse --verify ${branchName}`, {
+        cwd: projectCwd,
+        stdio: 'pipe'
+      });
+      // Branch exists — switch to it
+      execSync(`git checkout ${branchName}`, {
+        cwd: projectCwd,
+        stdio: 'pipe'
+      });
+      console.log(`  [branch] Switched to existing ${branchName}`);
+    } catch {
+      // Branch doesn't exist — create it
+      execSync(`git checkout -b ${branchName}`, {
+        cwd: projectCwd,
+        stdio: 'pipe'
+      });
+      console.log(`  [branch] Created and switched to ${branchName}`);
+    }
+
+    return branchName;
+  } catch (err) {
+    console.warn(`  [branch] Warning: could not set up fix branch — ${err.message}`);
+    return null;
+  }
+}
 
 /**
  * Run an SEO audit via Claude CLI.
@@ -164,6 +237,8 @@ Quality over quantity. Each issue should be a real battle worth fighting, not bu
  * Runs inside the user's project directory so Claude can edit real files.
  */
 async function runFix(issueDescription, projectCwd, onStream, requestId, model) {
+  // No forced branch switching — user controls their own git workflow
+
   const prompt = `You are working in a website project directory. Fix this SEO issue by editing the actual source files: ${issueDescription}
 
 This issue may represent a group of related problems. Fix ALL aspects described — not just one. Look at the project files, identify everything that needs to change, and make the edits. Be thorough but precise — fix what's described, nothing more. After making changes, return a JSON summary: {"fixed":true,"summary":"<what was changed>","filesChanged":["<list of files>"]}
@@ -252,10 +327,10 @@ function runClaude(prompt, onStream, cwd, requestId, model) {
                   let detail = '';
                   if (input.url) detail = input.url;
                   else if (input.query) detail = input.query;
-                  else if (input.command) detail = input.command.substring(0, 80);
+                  else if (input.command) detail = input.command;
                   else if (input.pattern) detail = input.pattern;
                   else if (input.file_path) detail = input.file_path;
-                  else if (input.prompt) detail = input.prompt.substring(0, 60);
+                  else if (input.prompt) detail = input.prompt;
                   else if (input.description) detail = input.description;
 
                   const toolMsg = detail
@@ -267,15 +342,15 @@ function runClaude(prompt, onStream, cwd, requestId, model) {
               }
             }
           } else if (event.type === 'tool_result' || event.type === 'tool_output') {
-            // Stream tool results — show truncated output so user sees activity
+            // Stream tool results — show full output so user sees activity
             const content = event.content || event.output;
             if (typeof content === 'string' && content.trim()) {
-              const preview = content.trim().split('\n')[0].substring(0, 80);
+              const preview = content.trim().split('\n')[0];
               if (preview.length > 5) onStream(preview);
             } else if (Array.isArray(content)) {
               for (const block of content) {
                 if (block.type === 'text' && block.text) {
-                  const preview = block.text.trim().split('\n')[0].substring(0, 80);
+                  const preview = block.text.trim().split('\n')[0];
                   if (preview.length > 5) onStream(preview);
                 }
               }

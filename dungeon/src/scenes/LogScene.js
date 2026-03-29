@@ -56,14 +56,6 @@ export class LogScene extends Phaser.Scene {
     if (clean === '[working...]') return;
     if (clean.length < 3) return;
 
-    // Truncate at word boundary
-    const maxLen = 44;
-    if (clean.length > maxLen) {
-      const truncated = clean.substring(0, maxLen);
-      const lastSpace = truncated.lastIndexOf(' ');
-      clean = lastSpace > 20 ? truncated.substring(0, lastSpace) + '...' : truncated + '...';
-    }
-
     this._pushLine(clean);
   }
 

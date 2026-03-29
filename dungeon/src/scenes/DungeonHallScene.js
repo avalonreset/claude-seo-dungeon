@@ -5,9 +5,7 @@ const HEADER_FONT = '"JetBrains Mono", monospace';
 const BODY_FONT = 'monospace';
 
 // Row geometry
-const ROW_HEIGHT = 70;
-const ROW_GAP = 6;
-const ROW_TOTAL = ROW_HEIGHT + ROW_GAP;
+const ROW_GAP = 10;
 const LIST_TOP = 94;
 const LIST_BOTTOM = 518;
 const LIST_VISIBLE = LIST_BOTTOM - LIST_TOP; // 424px
@@ -31,6 +29,10 @@ export class DungeonHallScene extends Phaser.Scene {
   }
 
   create() {
+    const dpr = this.game.dpr || window.GAME_DPR;
+    this.cameras.main.setZoom(dpr);
+    this.cameras.main.scrollX = 400 * (1 - dpr);
+    this.cameras.main.scrollY = 300 * (1 - dpr);
     this.cameras.main.setBackgroundColor(0x05050e);
     this.cameras.main.fadeIn(1200, 0, 0, 0);
 
@@ -72,7 +74,7 @@ export class DungeonHallScene extends Phaser.Scene {
     this.isDragging = false;
     this.lastPointerY = 0;
 
-    const maxScroll = () => Math.max(0, data.issues.length * ROW_TOTAL - LIST_VISIBLE + 10);
+    const maxScroll = () => Math.max(0, (this.totalDemonListHeight || 0) - LIST_VISIBLE + 10);
 
     // Mouse wheel
     this.input.on('wheel', (_pointer, _gameObjects, _dx, dy) => {
@@ -82,22 +84,22 @@ export class DungeonHallScene extends Phaser.Scene {
       );
     });
 
-    // Touch / click-drag scroll
+    // Touch / click-drag scroll (use worldY for camera-zoom-safe coords)
     this.input.on('pointerdown', (pointer) => {
-      if (pointer.y > LIST_TOP && pointer.y < LIST_BOTTOM) {
+      if (pointer.worldY > LIST_TOP && pointer.worldY < LIST_BOTTOM) {
         this.isDragging = true;
-        this.lastPointerY = pointer.y;
+        this.lastPointerY = pointer.worldY;
         this.scrollVelocity = 0;
       }
     });
     this.input.on('pointermove', (pointer) => {
       if (this.isDragging && pointer.isDown) {
-        const dy = pointer.y - this.lastPointerY;
+        const dy = pointer.worldY - this.lastPointerY;
         this.targetScrollOffset = Phaser.Math.Clamp(
           this.targetScrollOffset + dy, -maxScroll(), 0
         );
         this.scrollVelocity = dy;
-        this.lastPointerY = pointer.y;
+        this.lastPointerY = pointer.worldY;
       }
     });
     this.input.on('pointerup', () => {
@@ -283,7 +285,8 @@ export class DungeonHallScene extends Phaser.Scene {
       fontFamily: HEADER_FONT,
       fontSize: '10px',
       color: '#707090',
-      letterSpacing: 6
+      letterSpacing: 6,
+      resolution: window.GAME_DPR
     }).setOrigin(0.5, 0).setDepth(101);
 
     // Domain name -- big gold text
@@ -293,16 +296,17 @@ export class DungeonHallScene extends Phaser.Scene {
       color: COLORS.gold,
       shadow: {
         offsetX: 0, offsetY: 0, color: '#f0c040', blur: 16, fill: true, stroke: true
-      }
+      },
+      resolution: window.GAME_DPR
     }).setOrigin(0.5, 0).setDepth(101);
 
     // Decorative swords beside domain
     const hw = domainText.width * 0.5;
     this.add.text(400 - hw - 26, 38, '\u2694', {
-      fontFamily: BODY_FONT, fontSize: '16px', color: COLORS.gold
+      fontFamily: BODY_FONT, fontSize: '16px', color: COLORS.gold, resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(101);
     this.add.text(400 + hw + 26, 38, '\u2694', {
-      fontFamily: BODY_FONT, fontSize: '16px', color: COLORS.gold
+      fontFamily: BODY_FONT, fontSize: '16px', color: COLORS.gold, resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(101);
 
     // --- SEO SCORE (left) ---
@@ -310,7 +314,7 @@ export class DungeonHallScene extends Phaser.Scene {
     const scoreGlowHex = data.score >= 70 ? '#40c040' : data.score >= 40 ? '#f0c040' : '#e04040';
 
     this.add.text(160, 56, 'SEO SCORE', {
-      fontFamily: HEADER_FONT, fontSize: '10px', color: '#606080'
+      fontFamily: HEADER_FONT, fontSize: '10px', color: '#606080', resolution: window.GAME_DPR
     }).setOrigin(0.5, 0).setDepth(101);
 
     const scoreValue = this.add.text(160, 68, `${data.score}/100`, {
@@ -319,7 +323,8 @@ export class DungeonHallScene extends Phaser.Scene {
       color: scoreColor,
       shadow: {
         offsetX: 0, offsetY: 0, color: scoreGlowHex, blur: 18, fill: true, stroke: true
-      }
+      },
+      resolution: window.GAME_DPR
     }).setOrigin(0.5, 0).setDepth(101);
 
     // Pulsing glow on score
@@ -334,7 +339,7 @@ export class DungeonHallScene extends Phaser.Scene {
 
     // --- DEMON COUNT (right) ---
     this.add.text(640, 56, 'DEMONS', {
-      fontFamily: HEADER_FONT, fontSize: '10px', color: '#606080'
+      fontFamily: HEADER_FONT, fontSize: '10px', color: '#606080', resolution: window.GAME_DPR
     }).setOrigin(0.5, 0).setDepth(101);
 
     this.add.text(640, 68, `${data.totalIssues} AWAIT`, {
@@ -343,12 +348,13 @@ export class DungeonHallScene extends Phaser.Scene {
       color: '#e04040',
       shadow: {
         offsetX: 0, offsetY: 0, color: '#e04040', blur: 12, fill: true, stroke: true
-      }
+      },
+      resolution: window.GAME_DPR
     }).setOrigin(0.5, 0).setDepth(101);
 
     // --- Divider diamonds in center bottom ---
     this.add.text(400, 56, '\u25C6  \u25C6  \u25C6', {
-      fontFamily: BODY_FONT, fontSize: '10px', color: '#303050'
+      fontFamily: BODY_FONT, fontSize: '10px', color: '#303050', resolution: window.GAME_DPR
     }).setOrigin(0.5, 0).setDepth(101);
   }
 
@@ -396,7 +402,8 @@ export class DungeonHallScene extends Phaser.Scene {
       color: '#f0c040',
       shadow: {
         offsetX: 0, offsetY: 0, color: '#f0c040', blur: 8, fill: true, stroke: true
-      }
+      },
+      resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(101);
 
     // Cycle flavor text every 4 seconds with fade
@@ -427,7 +434,7 @@ export class DungeonHallScene extends Phaser.Scene {
 
     // Scroll hint
     this.add.text(460, 576, '\u25B2 SCROLL TO EXPLORE \u25BC', {
-      fontFamily: HEADER_FONT, fontSize: '10px', color: '#404060'
+      fontFamily: HEADER_FONT, fontSize: '10px', color: '#404060', resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(101);
   }
 
@@ -440,9 +447,56 @@ export class DungeonHallScene extends Phaser.Scene {
     const sorted = [...issues].sort((a, b) => {
       return (SEVERITY_ORDER[a.severity] ?? 5) - (SEVERITY_ORDER[b.severity] ?? 5);
     });
-    // Write sorted order back so scroll/engage references match
     issues.length = 0;
     issues.push(...sorted);
+
+    // Pre-measure all row heights so we can position dynamically
+    const textLeftX = 128;
+    const threatX = 660;
+    const titleMaxW = threatX - textLeftX - 20;
+    const descMaxW = threatX - textLeftX - 10;
+    const rowHeights = [];
+    const BADGE_H = 20;  // badge line
+    const PAD_TOP = 10;
+    const PAD_BOTTOM = 30; // room for category tag + padding
+
+    sorted.forEach((issue) => {
+      // Measure title height
+      const titleM = this.add.text(0, -9999, issue.title, {
+        fontFamily: BODY_FONT, fontSize: '14px',
+        wordWrap: { width: titleMaxW, useAdvancedWrap: true },
+        resolution: window.GAME_DPR
+      });
+      const titleH = titleM.height;
+      titleM.destroy();
+
+      // Measure desc height
+      let descH = 0;
+      const descText = issue.description || '';
+      if (descText) {
+        const descM = this.add.text(0, -9999, descText, {
+          fontFamily: BODY_FONT, fontSize: '11px',
+          wordWrap: { width: descMaxW, useAdvancedWrap: true },
+          resolution: window.GAME_DPR
+        });
+        descH = descM.height;
+        descM.destroy();
+      }
+
+      const rowH = PAD_TOP + BADGE_H + titleH + (descH > 0 ? descH + 4 : 0) + PAD_BOTTOM;
+      rowHeights.push(Math.max(rowH, 80)); // minimum 80px
+    });
+
+    // Store cumulative Y positions and total content height
+    this.demonRowYs = [];
+    this.demonRowHeights = [];
+    let cumY = LIST_TOP;
+    rowHeights.forEach((h) => {
+      this.demonRowYs.push(cumY);
+      this.demonRowHeights.push(h);
+      cumY += h + ROW_GAP;
+    });
+    this.totalDemonListHeight = cumY - LIST_TOP;
 
     sorted.forEach((issue, i) => {
       this.time.delayedCall(i * 350, () => {
@@ -452,11 +506,12 @@ export class DungeonHallScene extends Phaser.Scene {
   }
 
   // =====================================================================
-  // MATERIALIZE A SINGLE DEMON ROW (70px tall)
+  // MATERIALIZE A SINGLE DEMON ROW (dynamic height)
   // =====================================================================
   materializeDemon(issue, index) {
-    const y = LIST_TOP + index * ROW_TOTAL;
-    const centerY = y + ROW_HEIGHT * 0.5;
+    const y = this.demonRowYs[index];
+    const rowH = this.demonRowHeights[index];
+    const centerY = y + rowH * 0.5;
     const severitySprite = `demon_${issue.severity}_real`;
 
     const sevPalette = {
@@ -473,55 +528,206 @@ export class DungeonHallScene extends Phaser.Scene {
     const rowW = 708;
     const spriteX = 86;
     const textLeftX = 128;
-    const threatX = 660;  // Right-aligned threat/category area
+    const threatX = 660;
 
     // =========================
-    // ROW BACKGROUND
+    // LAYER 0: ROW BACKGROUND (lowest z in container)
     // =========================
     const rowBg = this.add.graphics();
     rowBg.fillStyle(0x10101e, 0);
-    rowBg.fillRoundedRect(rowX, y, rowW, ROW_HEIGHT, 6);
+    rowBg.fillRoundedRect(rowX, y, rowW, rowH, 6);
 
-    // Interactive hit area
-    const hitArea = this.add.rectangle(400, centerY, rowW, ROW_HEIGHT, 0x000000, 0)
+    const rowBorder = this.add.graphics();
+
+    // =========================
+    // LAYER 1: SHADOW BURST PARTICLES
+    // =========================
+    this.createShadowBurst(spriteX, centerY);
+
+    // =========================
+    // LAYER 2: DEMON SPRITE
+    // =========================
+    const spriteScale = SPRITE_SCALES[issue.severity] || 1.0;
+    const demon = this.add.image(spriteX, centerY, severitySprite)
+      .setScale(0).setAlpha(0);
+
+    this.tweens.add({
+      targets: demon,
+      scaleX: spriteScale, scaleY: spriteScale, alpha: 1,
+      duration: 500, ease: 'Back.easeOut', delay: 100
+    });
+    this.tweens.add({
+      targets: demon, y: centerY - 3,
+      duration: 1200 + index * 80, yoyo: true, repeat: -1,
+      ease: 'Sine.easeInOut', delay: 600
+    });
+
+    const shadow = this.add.ellipse(spriteX, centerY + 18, 22, 6, 0x000000, 0.3);
+    this.tweens.add({
+      targets: shadow, scaleX: 0.8,
+      duration: 1200 + index * 80, yoyo: true, repeat: -1,
+      ease: 'Sine.easeInOut', delay: 600
+    });
+
+    // =========================
+    // LAYER 3: SEVERITY BADGE (own line above title)
+    // =========================
+    const sevLabel = issue.severity.toUpperCase();
+    const badgePadX = 10;
+    const badgeH = 16;
+    const badgeY = y + 10;
+
+    const badgeMeasure = this.add.text(0, -9999, sevLabel, {
+      fontFamily: HEADER_FONT, fontSize: '9px', resolution: window.GAME_DPR
+    });
+    const badgeW = badgeMeasure.width + badgePadX * 2;
+    badgeMeasure.destroy();
+
+    const badgeBg = this.add.graphics().setAlpha(0);
+    badgeBg.fillStyle(sev.hex, 0.2);
+    badgeBg.fillRoundedRect(textLeftX, badgeY, badgeW, badgeH, 8);
+    badgeBg.lineStyle(1, sev.hex, 0.5);
+    badgeBg.strokeRoundedRect(textLeftX, badgeY, badgeW, badgeH, 8);
+
+    const badge = this.add.text(textLeftX + badgeW * 0.5, badgeY + badgeH * 0.5, sevLabel, {
+      fontFamily: HEADER_FONT, fontSize: '9px', color: sev.text,
+      shadow: { offsetX: 0, offsetY: 0, color: sev.glow, blur: 6, fill: true, stroke: true },
+      resolution: window.GAME_DPR
+    }).setOrigin(0.5).setAlpha(0);
+
+    this.tweens.add({ targets: [badge, badgeBg], alpha: 1, duration: 400, delay: 200 });
+
+    // =========================
+    // LAYER 4: ISSUE TITLE (below badge, full width, no truncation)
+    // =========================
+    const titleMaxW = threatX - textLeftX - 20;
+    const titleY = badgeY + badgeH + 4;
+    const title = this.add.text(textLeftX, titleY, issue.title, {
+      fontFamily: BODY_FONT, fontSize: '14px', color: '#d8d8e8',
+      shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, fill: true },
+      wordWrap: { width: titleMaxW, useAdvancedWrap: true },
+      resolution: window.GAME_DPR
+    }).setAlpha(0);
+
+    this.tweens.add({ targets: title, alpha: 1, duration: 400, delay: 300 });
+
+    // =========================
+    // LAYER 5: DESCRIPTION (below title, full text, no truncation)
+    // =========================
+    const descText = issue.description || '';
+    let desc = null;
+    let cat = null;
+    let catBg = null;
+    if (descText) {
+      const descMaxW = threatX - textLeftX - 10;
+      const descY = titleY + title.height + 4;
+      desc = this.add.text(textLeftX, descY, descText, {
+        fontFamily: BODY_FONT, fontSize: '11px', color: '#d0d0e8',
+        shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 5, fill: true },
+        wordWrap: { width: descMaxW, useAdvancedWrap: true },
+        resolution: window.GAME_DPR
+      }).setAlpha(0);
+      this.tweens.add({ targets: desc, alpha: 1, duration: 400, delay: 350 });
+    }
+
+    // =========================
+    // LAYER 6: CATEGORY TAG (bottom-right)
+    // =========================
+    const catText = issue.category || '';
+    if (catText) {
+      const catLabel = catText.toUpperCase();
+      const catTagW = catLabel.length * 7.5 + 18;
+      const catTagX = rowX + rowW - catTagW - 10;
+      const catTagY = y + rowH - 24;
+
+      catBg = this.add.graphics().setAlpha(0);
+      catBg._catX = catTagX;
+      catBg._catY = catTagY;
+      catBg._catW = catTagW;
+      catBg.fillStyle(0x0a0a18, 0.85);
+      catBg.fillRoundedRect(catTagX, catTagY, catTagW, 18, 9);
+      catBg.lineStyle(1, 0x60d8d8, 0.6);
+      catBg.strokeRoundedRect(catTagX, catTagY, catTagW, 18, 9);
+
+      cat = this.add.text(catTagX + catTagW * 0.5, catTagY + 9, catLabel, {
+        fontFamily: HEADER_FONT, fontSize: '10px', color: '#c0ffff',
+        shadow: { offsetX: 0, offsetY: 0, color: '#000000', blur: 4, fill: true },
+        resolution: window.GAME_DPR
+      }).setOrigin(0.5).setAlpha(0);
+
+      this.tweens.add({ targets: [cat, catBg], alpha: 1, duration: 400, delay: 380 });
+    }
+
+    // =========================
+    // LAYER 7: THREAT LEVEL (top-right)
+    // =========================
+    const threatLabels = {
+      critical: 'DEADLY', high: 'DANGEROUS', medium: 'MODERATE',
+      low: 'MINOR', info: 'TRIVIAL'
+    };
+    const threat = this.add.text(rowX + rowW - 14, y + 10, threatLabels[issue.severity] || 'UNKNOWN', {
+      fontFamily: HEADER_FONT, fontSize: '11px', color: sev.text,
+      letterSpacing: 3,
+      shadow: { offsetX: 0, offsetY: 0, color: sev.glow, blur: 8, fill: true, stroke: true },
+      resolution: window.GAME_DPR
+    }).setOrigin(1, 0).setAlpha(0);
+
+    this.tweens.add({ targets: threat, alpha: 1, duration: 400, delay: 500 });
+
+    // =========================
+    // INTERACTIVE HIT AREA (on top for click detection, but invisible)
+    // =========================
+    const hitArea = this.add.rectangle(400, y + rowH * 0.5, rowW, rowH, 0x000000, 0)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
 
-    // Row border (initially invisible, shows on hover as gold)
-    const rowBorder = this.add.graphics();
-
-    // Flash overlay for click state
-    const clickFlash = this.add.graphics().setAlpha(0).setDepth(5);
-
     // =========================
-    // HOVER / CLICK STATES
+    // HOVER / CLICK — bg redraws BEHIND content via z-order in container
     // =========================
     hitArea.on('pointerover', () => {
       rowBg.clear();
       rowBg.fillStyle(sev.bgTint, 0.95);
-      rowBg.fillRoundedRect(rowX, y, rowW, ROW_HEIGHT, 6);
+      rowBg.fillRoundedRect(rowX, y, rowW, rowH, 6);
       rowBorder.clear();
       rowBorder.lineStyle(1.5, 0xf0c040, 0.5);
-      rowBorder.strokeRoundedRect(rowX, y, rowW, ROW_HEIGHT, 6);
+      rowBorder.strokeRoundedRect(rowX, y, rowW, rowH, 6);
+      title.setColor('#ffffff');
+      if (desc) { desc.setColor('#ffffff'); desc.setShadow(0, 0, '#000000', 10, true, true); }
+      threat.setColor('#ffffff');
+      if (cat) { cat.setColor('#ffffff'); cat.setShadow(0, 0, '#000000', 8, true, true); }
+      if (catBg) {
+        catBg.clear();
+        catBg.fillStyle(0x000000, 0.9);
+        catBg.fillRoundedRect(catBg._catX, catBg._catY, catBg._catW, 18, 9);
+        catBg.lineStyle(1, 0xffffff, 0.7);
+        catBg.strokeRoundedRect(catBg._catX, catBg._catY, catBg._catW, 18, 9);
+      }
     });
     hitArea.on('pointerout', () => {
       rowBg.clear();
       rowBg.fillStyle(0x12121e, 0.7);
-      rowBg.fillRoundedRect(rowX, y, rowW, ROW_HEIGHT, 6);
+      rowBg.fillRoundedRect(rowX, y, rowW, rowH, 6);
       rowBorder.clear();
       rowBorder.lineStyle(1, 0x1e1e30, 0.3);
-      rowBorder.strokeRoundedRect(rowX, y, rowW, ROW_HEIGHT, 6);
+      rowBorder.strokeRoundedRect(rowX, y, rowW, rowH, 6);
+      title.setColor('#d8d8e8');
+      if (desc) { desc.setColor('#d0d0e8'); desc.setShadow(1, 1, '#000000', 5, true, false); }
+      threat.setColor(sev.text);
+      if (cat) { cat.setColor('#c0ffff'); cat.setShadow(0, 0, '#000000', 4, true, false); }
+      if (catBg) {
+        catBg.clear();
+        catBg.fillStyle(0x0a0a18, 0.85);
+        catBg.fillRoundedRect(catBg._catX, catBg._catY, catBg._catW, 18, 9);
+        catBg.lineStyle(1, 0x60d8d8, 0.6);
+        catBg.strokeRoundedRect(catBg._catX, catBg._catY, catBg._catW, 18, 9);
+      }
     });
     hitArea.on('pointerdown', () => {
-      // Brief white flash before transition
-      clickFlash.clear();
-      clickFlash.fillStyle(0xffffff, 0.25);
-      clickFlash.fillRoundedRect(rowX, y, rowW, ROW_HEIGHT, 6);
-      this.tweens.add({
-        targets: clickFlash,
-        alpha: { from: 1, to: 0 },
-        duration: 200,
-        onComplete: () => this.engageDemon(issue)
+      this.cameras.main.flash(400, 255, 50, 50);
+      this.cameras.main.shake(200, 0.006);
+      this.time.delayedCall(500, () => {
+        this.cameras.main.fadeOut(600, 0, 0, 0);
+        this.time.delayedCall(600, () => this.scene.start('Battle', { issue }));
       });
     });
 
@@ -533,177 +739,13 @@ export class DungeonHallScene extends Phaser.Scene {
       onComplete: () => {
         rowBg.clear();
         rowBg.fillStyle(0x12121e, 0.7);
-        rowBg.fillRoundedRect(rowX, y, rowW, ROW_HEIGHT, 6);
+        rowBg.fillRoundedRect(rowX, y, rowW, rowH, 6);
         rowBorder.lineStyle(1, 0x1e1e30, 0.3);
-        rowBorder.strokeRoundedRect(rowX, y, rowW, ROW_HEIGHT, 6);
+        rowBorder.strokeRoundedRect(rowX, y, rowW, rowH, 6);
       }
     });
 
-    // =========================
-    // SHADOW BURST PARTICLES
-    // =========================
-    this.createShadowBurst(spriteX, centerY);
-
-    // =========================
-    // DEMON SPRITE (left side, scaled by severity)
-    // =========================
-    const spriteScale = SPRITE_SCALES[issue.severity] || 1.0;
-    const demon = this.add.image(spriteX, centerY, severitySprite)
-      .setScale(0).setAlpha(0);
-
-    this.tweens.add({
-      targets: demon,
-      scaleX: spriteScale, scaleY: spriteScale, alpha: 1,
-      duration: 500,
-      ease: 'Back.easeOut',
-      delay: 100
-    });
-
-    // Demon idle hover
-    this.tweens.add({
-      targets: demon,
-      y: centerY - 3,
-      duration: 1200 + index * 80,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-      delay: 600
-    });
-
-    // Demon shadow
-    const shadow = this.add.ellipse(spriteX, centerY + 18, 22, 6, 0x000000, 0.3);
-    this.tweens.add({
-      targets: shadow,
-      scaleX: 0.8,
-      duration: 1200 + index * 80,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-      delay: 600
-    });
-
-    // =========================
-    // SEVERITY BADGE (colored pill)
-    // =========================
-    const sevLabel = issue.severity.toUpperCase();
-    const badgePadX = 10;
-    const badgeH = 18;
-    const badgeY = y + 8;
-
-    // Measure badge width using temporary text
-    const badgeMeasure = this.add.text(0, -100, sevLabel, {
-      fontFamily: HEADER_FONT, fontSize: '10px'
-    });
-    const badgeW = badgeMeasure.width + badgePadX * 2;
-    badgeMeasure.destroy();
-
-    const badgeBg = this.add.graphics().setAlpha(0);
-    badgeBg.fillStyle(sev.hex, 0.2);
-    badgeBg.fillRoundedRect(textLeftX, badgeY, badgeW, badgeH, 9);
-    badgeBg.lineStyle(1, sev.hex, 0.5);
-    badgeBg.strokeRoundedRect(textLeftX, badgeY, badgeW, badgeH, 9);
-
-    const badge = this.add.text(textLeftX + badgeW * 0.5, badgeY + badgeH * 0.5, sevLabel, {
-      fontFamily: HEADER_FONT,
-      fontSize: '10px',
-      color: sev.text,
-      shadow: { offsetX: 0, offsetY: 0, color: sev.glow, blur: 6, fill: true, stroke: true }
-    }).setOrigin(0.5).setAlpha(0);
-
-    this.tweens.add({ targets: [badge, badgeBg], alpha: 1, duration: 400, delay: 200 });
-
-    // =========================
-    // ISSUE TITLE (14px readable)
-    // =========================
-    const titleMaxW = threatX - textLeftX - badgeW - 20;
-    const title = this.add.text(textLeftX + badgeW + 12, y + 10, issue.title, {
-      fontFamily: BODY_FONT,
-      fontSize: '14px',
-      color: '#d8d8e8',
-      shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 2, fill: true },
-      wordWrap: { width: titleMaxW, useAdvancedWrap: true }
-    }).setAlpha(0);
-
-    // Clamp to single line if it wraps too much
-    if (title.height > 22) {
-      const truncated = issue.title.length > 32
-        ? issue.title.substring(0, 32) + '...'
-        : issue.title;
-      title.setText(truncated);
-    }
-
-    this.tweens.add({ targets: title, alpha: 1, duration: 400, delay: 300 });
-
-    // =========================
-    // DESCRIPTION (smaller gray below title)
-    // =========================
-    const descText = issue.description || '';
-    if (descText) {
-      const descMaxLen = 50;
-      const truncDesc = descText.length > descMaxLen
-        ? descText.substring(0, descMaxLen) + '...'
-        : descText;
-      const desc = this.add.text(textLeftX + badgeW + 12, y + 30, truncDesc, {
-        fontFamily: BODY_FONT,
-        fontSize: '11px',
-        color: '#9898b0'
-      }).setAlpha(0);
-      this.tweens.add({ targets: desc, alpha: 1, duration: 400, delay: 350 });
-      this.demonContainer.add(desc);
-    }
-
-    // =========================
-    // CATEGORY TAG (right side, cyan)
-    // =========================
-    const catText = issue.category || '';
-    if (catText) {
-      const catLabel = catText.toUpperCase();
-      const catTagW = catLabel.length * 7 + 16;
-      const catTagX = rowX + rowW - catTagW - 10;
-      const catTagY = y + ROW_HEIGHT - 24;
-
-      const catBg = this.add.graphics().setAlpha(0);
-      catBg.fillStyle(0x40c0c0, 0.12);
-      catBg.fillRoundedRect(catTagX, catTagY, catTagW, 18, 9);
-      catBg.lineStyle(1, 0x40c0c0, 0.4);
-      catBg.strokeRoundedRect(catTagX, catTagY, catTagW, 18, 9);
-
-      const cat = this.add.text(catTagX + catTagW * 0.5, catTagY + 9, catLabel, {
-        fontFamily: HEADER_FONT,
-        fontSize: '9px',
-        color: '#88dddd',
-      }).setOrigin(0.5).setAlpha(0);
-
-      this.tweens.add({ targets: [cat, catBg], alpha: 1, duration: 400, delay: 380 });
-      this.demonContainer.add([catBg, cat]);
-    }
-
-    // =========================
-    // THREAT LEVEL (severity-based, right-aligned)
-    // =========================
-    const threatLabels = {
-      critical: 'DEADLY',
-      high: 'DANGEROUS',
-      medium: 'MODERATE',
-      low: 'MINOR',
-      info: 'TRIVIAL'
-    };
-    const threatLabel = threatLabels[issue.severity] || 'UNKNOWN';
-    const threatColor = sev.color;
-
-    const threat = this.add.text(rowX + rowW - 14, y + 10, threatLabel, {
-      fontFamily: HEADER_FONT,
-      fontSize: '10px',
-      color: Phaser.Display.Color.IntegerToColor(threatColor).rgba,
-      letterSpacing: 2,
-      shadow: { offsetX: 0, offsetY: 0, color: '#000000', blur: 4, fill: true, stroke: true }
-    }).setOrigin(1, 0).setAlpha(0);
-
-    this.tweens.add({ targets: threat, alpha: 1, duration: 400, delay: 500 });
-
-    // =========================
-    // SCREEN SHAKE FOR CRITICAL
-    // =========================
+    // Screen shake for critical
     if (issue.severity === 'critical') {
       this.time.delayedCall(250, () => {
         this.cameras.main.shake(300, 0.004);
@@ -711,39 +753,33 @@ export class DungeonHallScene extends Phaser.Scene {
       });
     }
 
-    // =========================
-    // DEFEATED OVERLAY
-    // =========================
+    // Defeated overlay
     if (issue.defeated) {
       this.time.delayedCall(700, () => {
         const defeatOverlay = this.add.graphics();
         defeatOverlay.fillStyle(0x000000, 0.7);
-        defeatOverlay.fillRoundedRect(rowX, y, rowW, ROW_HEIGHT, 6);
-
+        defeatOverlay.fillRoundedRect(rowX, y, rowW, rowH, 6);
         const defeatText = this.add.text(400, centerY, 'DEFEATED', {
-          fontFamily: HEADER_FONT,
-          fontSize: '14px',
-          color: COLORS.green,
-          shadow: {
-            offsetX: 0, offsetY: 0, color: '#40c040', blur: 14, fill: true, stroke: true
-          }
+          fontFamily: HEADER_FONT, fontSize: '14px', color: COLORS.green,
+          shadow: { offsetX: 0, offsetY: 0, color: '#40c040', blur: 14, fill: true, stroke: true },
+          resolution: window.GAME_DPR
         }).setOrigin(0.5);
-
-        // Strikethrough line
         const line = this.add.graphics();
         line.lineStyle(1, 0x40c040, 0.4);
         line.lineBetween(rowX + 20, centerY, rowX + rowW - 20, centerY);
-
         this.demonContainer.add([defeatOverlay, defeatText, line]);
         hitArea.disableInteractive();
       });
     }
 
-    // Add everything to scroll container
-    this.demonContainer.add([
-      rowBg, rowBorder, hitArea, clickFlash, shadow, demon,
-      badgeBg, badge, title, threat
-    ]);
+    // Add to container — ORDER MATTERS for z-layering:
+    // Background layers FIRST (bottom), then all visible content on TOP
+    const children = [rowBg, rowBorder, hitArea, shadow, demon, badgeBg, badge, title];
+    if (desc) children.push(desc);
+    children.push(threat);
+    if (catBg) children.push(catBg);
+    if (cat) children.push(cat);
+    this.demonContainer.add(children);
   }
 
   // =====================================================================
@@ -779,26 +815,6 @@ export class DungeonHallScene extends Phaser.Scene {
       duration: 400,
       ease: 'Power2',
       onComplete: () => flash.destroy()
-    });
-  }
-
-  // =====================================================================
-  // HP BAR SHIMMER
-  // =====================================================================
-  // =====================================================================
-  // ENGAGE DEMON (transition to battle)
-  // =====================================================================
-  engageDemon(issue) {
-    // Dramatic flash and screen shake
-    this.cameras.main.flash(400, 255, 50, 50);
-    this.cameras.main.shake(200, 0.006);
-
-    // Brief dramatic pause before transition
-    this.time.delayedCall(500, () => {
-      this.cameras.main.fadeOut(600, 0, 0, 0);
-      this.time.delayedCall(600, () => {
-        this.scene.start('Battle', { issue });
-      });
     });
   }
 }
