@@ -13,9 +13,13 @@ A gamified 16-bit dungeon crawler that turns SEO audits into boss battles. Choos
 
 ## Screenshots
 
+### Title Screen
+![Title Screen](screenshots/title-screen.png)
+*Choose your character, enter a domain, and seal your fate*
+
 ### Gate Scene
 ![Gate Scene](screenshots/gate-scene-full.png)
-*Choose your warrior and quest path*
+*Continue a previous quest or begin a new one*
 
 ### Dungeon Hall
 ![Dungeon Hall](screenshots/dungeon-hall.png)
