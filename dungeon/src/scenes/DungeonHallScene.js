@@ -518,6 +518,27 @@ export class DungeonHallScene extends Phaser.Scene {
     this.add.text(460, 576, '\u25B2 SCROLL TO EXPLORE \u25BC', {
       fontFamily: HEADER_FONT, fontSize: '10px', color: '#404060', resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(101);
+
+    // Return to Guild Hall button (top-right area of footer)
+    const returnBtn = this.add.text(740, 558, '\u2190 GUILD HALL', {
+      fontFamily: HEADER_FONT, fontSize: '9px', color: '#606078',
+      resolution: window.GAME_DPR
+    }).setOrigin(0.5).setDepth(101).setInteractive({ useHandCursor: true });
+
+    returnBtn.on('pointerover', () => {
+      returnBtn.setColor('#d4af37');
+      SFX.play('menuHover');
+    });
+    returnBtn.on('pointerout', () => {
+      returnBtn.setColor('#606078');
+    });
+    returnBtn.on('pointerdown', () => {
+      SFX.play('menuConfirm');
+      this.cameras.main.fadeOut(500, 0, 0, 0);
+      this.time.delayedCall(500, () => {
+        window.returnToTitle();
+      });
+    });
   }
 
   // =====================================================================
