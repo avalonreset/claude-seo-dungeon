@@ -202,6 +202,19 @@ The game connects to Claude Code's SEO analysis pipeline through a WebSocket bri
 | Blurry text on 4K display | Should auto-detect. If not, the game uses 3x minimum DPR |
 | Skills not found by Claude | Run the installer (`install.ps1` or `install.sh`) to copy skills to `~/.claude/` |
 
+## Asset Credits
+
+| Asset | Creator | License | Link |
+|-------|---------|---------|------|
+| Medieval Warrior Pack | LuizMelo | CC0 (Public Domain) | [itch.io](https://luizmelo.itch.io/medieval-warrior-pack) |
+| Medieval Warrior Pack 2 | LuizMelo | CC0 (Public Domain) | [itch.io](https://luizmelo.itch.io/medieval-warrior-pack-2) |
+| Samurai | LuizMelo | CC0 (Public Domain) | [itch.io](https://luizmelo.itch.io/samurai) |
+| 16x16 DungeonTileset II | 0x72 | CC0 (Public Domain) | [itch.io](https://0x72.itch.io/dungeontileset-ii) |
+| Dungeon Crawl Stone Soup tiles | DCSS contributors | CC0 (Public Domain) | [github](https://github.com/crawl/crawl) |
+| RPG GUI Construction Kit | Lamoot | CC-BY 3.0 | [opengameart.org](https://opengameart.org/content/rpg-gui-construction-kit-v10) |
+
+All sprite assets are used under their respective open licenses. The game code and SEO skills are proprietary.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
