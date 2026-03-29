@@ -1,11 +1,12 @@
 /**
  * Guild Ledger — Animated activity log with rich color coding,
- * typewriter effects, glowing text, pulse animations, and
- * contextual icons for different event types.
+ * typewriter effects, per-category icons with unique animations,
+ * flowing glow effects, pulse animations, and a living "latest line"
+ * that makes it obvious work is still happening.
  */
 
-const CHAR_DELAY_BASE = 12;  // ms per character for typewriter (speeds up when queue is backed up)
-const GLOW_DURATION = 2000;  // ms for the new-line glow to fade
+const CHAR_DELAY_BASE = 12;
+const GLOW_DURATION = 2000;
 
 let logEl = null;
 let queue = [];
@@ -15,34 +16,37 @@ let loadingFrame = 0;
 let loadingInterval = null;
 let lineCount = 0;
 
-// ── Icons per category ──
+// ── Track the current "latest" line ──
+let latestLine = null;
+let latestDots = null;
+
+// ── Thematic icons per category ──
+// Each gets a unique Unicode symbol that matches its role in the dungeon
 const ICONS = {
-  tool: '\u2692',       // ⚒ hammer and pick
-  agent: '\u2726',      // ✦ star
-  fetch: '\u21E3',      // ⇣ downward arrow
-  search: '\u2318',     // ⌘ command
-  read: '\u25A4',       // ▤ document
-  write: '\u270E',      // ✎ pencil
-  bash: '\u25B6',       // ▶ play
-  skill: '\u2605',      // ★ star
-  error: '\u2716',      // ✖ cross
-  complete: '\u2714',   // ✔ check
-  status: '\u25C8',     // ◈ diamond
-  system: '\u25CB',     // ○ circle
-  domain: '\u2302',     // ⌂ house
-  score: '\u2620',      // ☠ skull
-  demon: '\u2620',      // ☠ skull
-  fix: '\u2694',        // ⚔ swords
-  text: '\u25AA',       // ▪ small square
+  tool:     '\u2692\uFE0E',   // ⚒ hammer & pick — generic tool work
+  agent:    '\u273F',          // ✿ rosette — summoned agent
+  fetch:    '\u21AF',          // ↯ lightning zigzag — fetching from the web
+  search:   '\u2609',          // ☉ sun/eye — searching/scanning
+  read:     '\u2234',          // ∴ therefore dots — reading/analyzing
+  write:    '\u2741',          // ❁ flower — inscribing/writing
+  bash:     '\u2623',          // ☣ biohazard — executing commands
+  skill:    '\u269D',          // ⚝ outlined star — skill invocation
+  error:    '\u2620',          // ☠ skull — something died
+  complete: '\u2726',          // ✦ four-pointed star — victory
+  status:   '\u25C8',          // ◈ diamond — status/progress
+  system:   '\u2042',          // ⁂ asterism — system message
+  domain:   '\u2302',          // ⌂ house — domain/site
+  score:    '\u2694\uFE0E',   // ⚔ crossed swords — scoring
+  demon:    '\u2666',          // ♦ diamond suit — demon
+  fix:      '\u2726',          // ✦ star — vanquished
+  text:     '\u203A',          // › single angle quote — generic text
 };
 
-// ── Classify log text into categories with sub-types ──
+// ── Classify log text into categories ──
 function classify(text) {
-  // Errors
   if (text.startsWith('ERROR') || text.startsWith('Fix error') || text.startsWith('Fix failed'))
     return 'error';
 
-  // Tool calls — sub-classify by tool type
   if (text.startsWith('[Agent]')) return 'agent';
   if (text.startsWith('[WebFetch]') || text.startsWith('[WebSearch]')) return 'fetch';
   if (text.startsWith('[Grep]') || text.startsWith('[Glob]') || text.startsWith('[ToolSearch]')) return 'search';
@@ -53,29 +57,53 @@ function classify(text) {
   if (text.startsWith('[TodoWrite]') || text.startsWith('[TaskCreate]')) return 'status';
   if (text.startsWith('[')) return 'tool';
 
-  // Completion signals
   if (text.includes('[Complete]') || text.includes('omplete')) return 'complete';
 
-  // Status / progress
   if (/^(Audit|Fix|Score|Found|Scanning|Initializing|Subagent)/i.test(text)) return 'status';
   if (/demons?\s*(remain|found|slain|await)/i.test(text)) return 'demon';
   if (/score/i.test(text)) return 'score';
 
-  // Hunting / domain
   if (text.startsWith('Hunting:') || text.startsWith('Source:')) return 'domain';
 
-  // System messages
   if (/^(System|Waiting|Connected|Bridge|Ready|Recalled)/i.test(text)) return 'system';
 
-  // Fix results
   if (/vanquish|strikes|damage|fixed/i.test(text)) return 'fix';
 
   return 'text';
 }
 
-// ── Get icon for class ──
 function getIcon(cls) {
   return ICONS[cls] || ICONS.text;
+}
+
+// ── Mark a line as the "latest" (living/active) ──
+function markAsLatest(line) {
+  if (latestLine && latestLine !== line) {
+    latestLine.classList.remove('latest');
+    if (latestDots && latestDots.parentNode) {
+      latestDots.remove();
+    }
+    // Reset text fill so old lines show normal color
+    const oldText = latestLine.querySelector('.log-text');
+    if (oldText) {
+      oldText.style.background = 'none';
+      oldText.style.webkitBackgroundClip = 'unset';
+      oldText.style.backgroundClip = 'unset';
+      oldText.style.webkitTextFillColor = 'unset';
+    }
+  }
+
+  latestLine = line;
+  line.classList.add('latest');
+
+  // Animated trailing dots
+  latestDots = document.createElement('span');
+  latestDots.className = 'log-dots';
+  latestDots.innerHTML = '<span class="dot">\u2022</span><span class="dot">\u2022</span><span class="dot">\u2022</span>';
+  const textSpan = line.querySelector('.log-text');
+  if (textSpan) {
+    textSpan.after(latestDots);
+  }
 }
 
 // ── Typewriter effect with icon prefix ──
@@ -84,10 +112,10 @@ function typewriterLine(text, cls) {
     const line = document.createElement('div');
     line.className = `log-line ${cls} typing glow`;
 
-    // Icon prefix
+    // Icon with its own category-specific animation class
     const icon = document.createElement('span');
-    icon.className = 'log-icon';
-    icon.textContent = getIcon(cls) + ' ';
+    icon.className = `log-icon icon-${cls}`;
+    icon.textContent = getIcon(cls);
     line.appendChild(icon);
 
     // Text content typed out
@@ -101,19 +129,17 @@ function typewriterLine(text, cls) {
 
     lineCount++;
 
-    // Insert subtle separator every 10 lines
+    // Separator every 12 lines
     if (lineCount % 12 === 0) {
       const sep = document.createElement('div');
       sep.className = 'log-separator';
-      sep.innerHTML = '<span class="sep-dot">·</span><span class="sep-dot">·</span><span class="sep-dot">·</span>';
+      sep.innerHTML = '<span class="sep-dot">\u25C7</span><span class="sep-dot">\u25C6</span><span class="sep-dot">\u25C7</span>';
       logEl.appendChild(sep);
     }
 
     let i = 0;
-    // Speed up typewriter when queue is backed up so messages don't pile up
     const speed = queue.length > 10 ? 1 : queue.length > 5 ? 4 : queue.length > 2 ? 8 : CHAR_DELAY_BASE;
     const interval = setInterval(() => {
-      // Type multiple chars per tick when speed is very fast
       const charsPerTick = speed <= 2 ? 4 : speed <= 5 ? 2 : 1;
       for (let c = 0; c < charsPerTick && i < text.length; c++) {
         content.textContent += text[i];
@@ -124,36 +150,34 @@ function typewriterLine(text, cls) {
         clearInterval(interval);
         line.classList.remove('typing');
         setTimeout(() => line.classList.remove('glow'), GLOW_DURATION);
+        markAsLatest(line);
         resolve();
       }
     }, speed);
   });
 }
 
-// ── Process queue one line at a time ──
+// ── Process queue ──
 async function processQueue() {
   if (isTyping) return;
   isTyping = true;
-
   while (queue.length > 0) {
     const { text, cls } = queue.shift();
     hideLoading();
     await typewriterLine(text, cls);
   }
-
   isTyping = false;
 }
 
-// ── Loading indicator (animated rune spinner) ──
+// ── Loading indicator ──
 function showLoading() {
   if (loadingIndicator) return;
-
   loadingIndicator = document.createElement('div');
   loadingIndicator.className = 'log-line log-loading';
   logEl.appendChild(loadingIndicator);
   scrollToBottom();
 
-  const runes = ['\u25C7', '\u25C6', '\u25C8', '\u25C6']; // ◇ ◆ ◈ ◆
+  const runes = ['\u25C7', '\u25C6', '\u25C8', '\u25C6'];
   loadingFrame = 0;
   loadingInterval = setInterval(() => {
     loadingFrame = (loadingFrame + 1) % runes.length;
@@ -179,38 +203,240 @@ function scrollToBottom() {
   if (logEl) logEl.scrollTop = logEl.scrollHeight;
 }
 
-// ── Public API ──
+// ══════════════════════════════════════════════════
+// PUBLIC API
+// ══════════════════════════════════════════════════
+
 export function initActivityLog() {
   logEl = document.getElementById('log-content');
   if (!logEl) return;
 
   const style = document.createElement('style');
   style.textContent = `
-    /* ── Base line ── */
+    /* ═══════════════════════════════════════════════
+       BASE LINE
+       ═══════════════════════════════════════════════ */
     .log-line {
       opacity: 0;
       animation: fadeInLine 0.35s ease forwards;
       position: relative;
+      padding: 3px 0 3px 4px;
     }
 
     @keyframes fadeInLine {
-      from { opacity: 0; transform: translateX(-6px); }
-      to { opacity: 1; transform: translateX(0); }
+      from { opacity: 0; transform: translateX(-8px); }
+      to   { opacity: 1; transform: translateX(0); }
     }
 
     .log-line.typing { opacity: 1; }
 
-    /* ── Icon styling ── */
+    /* ═══════════════════════════════════════════════
+       ICON BASE — bigger, bolder, colored to match category
+       ═══════════════════════════════════════════════ */
     .log-icon {
       display: inline-block;
-      width: 16px;
+      width: 20px;
       text-align: center;
-      margin-right: 4px;
-      font-size: 10px;
-      opacity: 0.6;
+      margin-right: 6px;
+      font-size: 13px;
+      vertical-align: middle;
+      /* Each category overrides color below */
     }
 
-    /* ── Glow effects per class ── */
+    /* ── Per-category icon colors (match line colors but slightly brighter) ── */
+    .icon-tool    { color: #8ee0f0; }
+    .icon-agent   { color: #c9a8ff; }
+    .icon-fetch   { color: #78c4ff; }
+    .icon-search  { color: #b0d4ff; }
+    .icon-read    { color: #9ec8dd; }
+    .icon-write   { color: #ffc468; }
+    .icon-bash    { color: #88ee88; }
+    .icon-skill   { color: #e8c040; }
+    .icon-status  { color: #f0d860; }
+    .icon-system  { color: #9098a8; }
+    .icon-error   { color: #ff5050; }
+    .icon-complete{ color: #50ff50; }
+    .icon-fix     { color: #e8c040; }
+    .icon-demon   { color: #ff4040; }
+    .icon-domain  { color: #99ccff; }
+    .icon-score   { color: #f0d860; }
+    .icon-text    { color: #808898; }
+
+    /* ═══════════════════════════════════════════════
+       PER-CATEGORY ICON ANIMATIONS
+       Each icon type gets its own characteristic motion
+       ═══════════════════════════════════════════════ */
+
+    /* Agent — slow orbit/breathing, it's a summoned entity */
+    .icon-agent {
+      animation: iconOrbit 3s ease-in-out infinite;
+    }
+    @keyframes iconOrbit {
+      0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+      50%      { transform: scale(1.2) rotate(15deg); opacity: 1; text-shadow: 0 0 8px #c9a8ff; }
+    }
+
+    /* Fetch — quick downward bounce, grabbing data */
+    .icon-fetch {
+      animation: iconBounce 1.8s ease-in-out infinite;
+    }
+    @keyframes iconBounce {
+      0%, 100% { transform: translateY(0); opacity: 0.7; }
+      30%      { transform: translateY(3px); opacity: 1; text-shadow: 0 0 6px #78c4ff; }
+      60%      { transform: translateY(-1px); opacity: 0.9; }
+    }
+
+    /* Search — slow rotation like a radar sweep */
+    .icon-search {
+      animation: iconRadar 4s linear infinite;
+    }
+    @keyframes iconRadar {
+      0%   { transform: rotate(0deg); opacity: 0.6; }
+      25%  { opacity: 1; text-shadow: 0 0 6px #b0d4ff; }
+      50%  { transform: rotate(180deg); opacity: 0.6; }
+      75%  { opacity: 1; text-shadow: 0 0 6px #b0d4ff; }
+      100% { transform: rotate(360deg); opacity: 0.6; }
+    }
+
+    /* Read — gentle page-flip pulse */
+    .icon-read {
+      animation: iconFlip 2.5s ease-in-out infinite;
+    }
+    @keyframes iconFlip {
+      0%, 100% { transform: scaleX(1); opacity: 0.6; }
+      50%      { transform: scaleX(-1); opacity: 1; text-shadow: 0 0 4px #9ec8dd; }
+    }
+
+    /* Write — quill writing motion */
+    .icon-write {
+      animation: iconScribe 2s ease-in-out infinite;
+    }
+    @keyframes iconScribe {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.7; }
+      25%      { transform: translate(2px, 1px) rotate(8deg); opacity: 1; text-shadow: 0 0 6px #ffc468; }
+      50%      { transform: translate(0, 0) rotate(0deg); opacity: 0.8; }
+      75%      { transform: translate(-1px, 1px) rotate(-5deg); opacity: 1; }
+    }
+
+    /* Bash — rapid blink like a terminal cursor */
+    .icon-bash {
+      animation: iconTerminal 1.2s step-end infinite;
+    }
+    @keyframes iconTerminal {
+      0%, 49%  { opacity: 1; text-shadow: 0 0 8px #88ee88; }
+      50%, 100% { opacity: 0.3; text-shadow: none; }
+    }
+
+    /* Skill — golden shimmer/sparkle */
+    .icon-skill {
+      animation: iconSparkle 2s ease-in-out infinite;
+    }
+    @keyframes iconSparkle {
+      0%, 100% { transform: scale(1); filter: brightness(1); opacity: 0.7; }
+      30%      { transform: scale(1.3); filter: brightness(1.8); opacity: 1; text-shadow: 0 0 12px #e8c040, 0 0 20px #d4af37; }
+      60%      { transform: scale(0.9); filter: brightness(0.8); opacity: 0.5; }
+    }
+
+    /* Error — alarming shake */
+    .icon-error {
+      animation: iconShake 0.6s ease-in-out infinite;
+    }
+    @keyframes iconShake {
+      0%, 100% { transform: translateX(0); }
+      20%      { transform: translateX(-2px) rotate(-5deg); }
+      40%      { transform: translateX(2px) rotate(5deg); }
+      60%      { transform: translateX(-1px) rotate(-3deg); }
+      80%      { transform: translateX(1px) rotate(2deg); }
+    }
+
+    /* Complete — triumphant scale pop */
+    .icon-complete {
+      animation: iconTriumph 1.5s ease-in-out infinite;
+    }
+    @keyframes iconTriumph {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      15%      { transform: scale(1.5); opacity: 1; text-shadow: 0 0 14px #50ff50, 0 0 24px #30cc30; }
+      40%      { transform: scale(1); opacity: 0.9; }
+    }
+
+    /* Status — steady diamond pulse */
+    .icon-status {
+      animation: iconPulse 2s ease-in-out infinite;
+    }
+    @keyframes iconPulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50%      { opacity: 1; transform: scale(1.15); text-shadow: 0 0 6px #f0d860; }
+    }
+
+    /* System — slow fade breathing */
+    .icon-system {
+      animation: iconBreathe 3s ease-in-out infinite;
+    }
+    @keyframes iconBreathe {
+      0%, 100% { opacity: 0.3; }
+      50%      { opacity: 0.8; }
+    }
+
+    /* Domain — house glow */
+    .icon-domain {
+      animation: iconGlow 2.5s ease-in-out infinite;
+    }
+    @keyframes iconGlow {
+      0%, 100% { opacity: 0.6; text-shadow: none; }
+      50%      { opacity: 1; text-shadow: 0 0 8px #99ccff, 0 0 14px #6699cc; }
+    }
+
+    /* Demon — sinister red throb */
+    .icon-demon {
+      animation: iconThrob 1.5s ease-in-out infinite;
+    }
+    @keyframes iconThrob {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50%      { opacity: 1; transform: scale(1.2); text-shadow: 0 0 10px #ff4040, 0 0 18px #cc0000; }
+    }
+
+    /* Score — crossed swords clash */
+    .icon-score {
+      animation: iconClash 2s ease-in-out infinite;
+    }
+    @keyframes iconClash {
+      0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.7; }
+      25%      { transform: rotate(-10deg) scale(1.1); opacity: 1; }
+      50%      { transform: rotate(10deg) scale(1.2); opacity: 1; text-shadow: 0 0 8px #f0d860; }
+      75%      { transform: rotate(-5deg) scale(1.05); opacity: 0.9; }
+    }
+
+    /* Fix — victorious star burst */
+    .icon-fix {
+      animation: iconBurst 2s ease-in-out infinite;
+    }
+    @keyframes iconBurst {
+      0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+      50%      { transform: scale(1.3) rotate(30deg); opacity: 1; text-shadow: 0 0 10px #e8c040; }
+    }
+
+    /* Tool — generic hammer swing */
+    .icon-tool {
+      animation: iconSwing 2s ease-in-out infinite;
+    }
+    @keyframes iconSwing {
+      0%, 100% { transform: rotate(0deg); opacity: 0.6; }
+      30%      { transform: rotate(-15deg); opacity: 1; text-shadow: 0 0 4px #8ee0f0; }
+      60%      { transform: rotate(5deg); opacity: 0.8; }
+    }
+
+    /* Text — subtle chevron pulse */
+    .icon-text {
+      animation: iconChevron 3s ease-in-out infinite;
+    }
+    @keyframes iconChevron {
+      0%, 100% { opacity: 0.3; transform: translateX(0); }
+      50%      { opacity: 0.6; transform: translateX(2px); }
+    }
+
+    /* ═══════════════════════════════════════════════
+       GLOW EFFECTS PER CLASS
+       ═══════════════════════════════════════════════ */
     .log-line.glow {
       text-shadow: 0 0 8px currentColor;
       transition: text-shadow ${GLOW_DURATION}ms ease;
@@ -232,7 +458,9 @@ export function initActivityLog() {
 
     .log-line:not(.glow) { text-shadow: none; }
 
-    /* ── Color per class ── */
+    /* ═══════════════════════════════════════════════
+       LINE COLORS
+       ═══════════════════════════════════════════════ */
     .log-line.tool    { color: #7dd8e8; }
     .log-line.agent   { color: #b48cff; }
     .log-line.fetch   { color: #64b4ff; }
@@ -251,7 +479,9 @@ export function initActivityLog() {
     .log-line.score   { color: #e8c848; }
     .log-line.text    { color: #b0b8c0; }
 
-    /* ── Typing cursor ── */
+    /* ═══════════════════════════════════════════════
+       TYPING CURSOR
+       ═══════════════════════════════════════════════ */
     .log-line.typing::after {
       content: '\\2588';
       animation: cursorBlink 0.7s step-end infinite;
@@ -265,29 +495,131 @@ export function initActivityLog() {
       51%, 100% { opacity: 0; }
     }
 
-    /* ── Separator dots ── */
+    /* ═══════════════════════════════════════════════
+       LATEST LINE — the living/active indicator
+       Shows the user that the system is still working
+       ═══════════════════════════════════════════════ */
+    .log-line.latest {
+      position: relative;
+      padding-left: 14px;
+      animation: fadeInLine 0.35s ease forwards, latestPulse 2s ease-in-out infinite;
+    }
+
+    /* Flowing left-to-right shimmer across the text */
+    .log-line.latest .log-text {
+      position: relative;
+      background: linear-gradient(
+        90deg,
+        currentColor 0%,
+        currentColor 30%,
+        rgba(255, 255, 255, 0.95) 50%,
+        currentColor 70%,
+        currentColor 100%
+      );
+      background-size: 250% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: glowSweep 2.5s ease-in-out infinite;
+    }
+
+    @keyframes glowSweep {
+      0%   { background-position: 250% center; }
+      100% { background-position: -250% center; }
+    }
+
+    /* Whole-line breathing brightness */
+    @keyframes latestPulse {
+      0%, 100% {
+        text-shadow: 0 0 6px currentColor;
+        filter: brightness(1);
+      }
+      50% {
+        text-shadow: 0 0 18px currentColor, 0 0 30px currentColor;
+        filter: brightness(1.3);
+      }
+    }
+
+    /* Animated trailing dots — bouncing wave */
+    .log-dots {
+      display: inline-block;
+      margin-left: 6px;
+      letter-spacing: 3px;
+      font-size: 11px;
+    }
+    .log-dots .dot {
+      display: inline-block;
+      animation: dotWave 1.4s ease-in-out infinite;
+      opacity: 0.2;
+      color: currentColor;
+    }
+    .log-dots .dot:nth-child(1) { animation-delay: 0s; }
+    .log-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+    .log-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dotWave {
+      0%, 100% { opacity: 0.15; transform: translateY(0) scale(0.8); }
+      35%      { opacity: 1; transform: translateY(-3px) scale(1.3); text-shadow: 0 0 8px currentColor; }
+      70%      { opacity: 0.3; transform: translateY(1px) scale(0.9); }
+    }
+
+    /* Left-border glow pulse */
+    .log-line.latest::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 2px;
+      bottom: 2px;
+      width: 3px;
+      border-radius: 2px;
+      background: currentColor;
+      animation: borderPulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes borderPulse {
+      0%, 100% { opacity: 0.15; box-shadow: 0 0 4px currentColor; }
+      50%      { opacity: 0.8; box-shadow: 0 0 10px currentColor, 0 0 18px currentColor; }
+    }
+
+    /* Icon on latest line overrides its category anim with a brighter pulse */
+    .log-line.latest .log-icon {
+      opacity: 1;
+      filter: brightness(1.4);
+      animation: iconLatestPulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes iconLatestPulse {
+      0%, 100% { filter: brightness(1.2); transform: scale(1); }
+      50%      { filter: brightness(2); transform: scale(1.3); text-shadow: 0 0 12px currentColor; }
+    }
+
+    /* ═══════════════════════════════════════════════
+       SEPARATOR RUNES
+       ═══════════════════════════════════════════════ */
     .log-separator {
       text-align: center;
-      padding: 4px 0;
+      padding: 6px 0;
       opacity: 0;
       animation: fadeInLine 0.5s ease forwards;
     }
     .sep-dot {
       display: inline-block;
       color: #303050;
-      font-size: 14px;
-      margin: 0 6px;
+      font-size: 11px;
+      margin: 0 8px;
       animation: sepPulse 3s ease-in-out infinite;
     }
-    .sep-dot:nth-child(2) { animation-delay: 0.3s; }
-    .sep-dot:nth-child(3) { animation-delay: 0.6s; }
+    .sep-dot:nth-child(2) { animation-delay: 0.4s; color: #404060; }
+    .sep-dot:nth-child(3) { animation-delay: 0.8s; }
 
     @keyframes sepPulse {
-      0%, 100% { opacity: 0.3; color: #303050; }
-      50% { opacity: 0.7; color: #505078; }
+      0%, 100% { opacity: 0.25; transform: scale(1); }
+      50%      { opacity: 0.7; transform: scale(1.2); color: #606088; text-shadow: 0 0 4px #404060; }
     }
 
-    /* ── Loading rune spinner ── */
+    /* ═══════════════════════════════════════════════
+       LOADING RUNE SPINNER
+       ═══════════════════════════════════════════════ */
     .log-loading { opacity: 1; color: #606880; }
 
     .loading-rune {
@@ -299,11 +631,11 @@ export function initActivityLog() {
 
     @keyframes runeGlow {
       0%, 100% { opacity: 0.4; text-shadow: 0 0 4px rgba(212, 175, 55, 0.2); }
-      50% { opacity: 1; text-shadow: 0 0 12px rgba(212, 175, 55, 0.6); }
+      50%      { opacity: 1; text-shadow: 0 0 12px rgba(212, 175, 55, 0.6); }
     }
 
     @keyframes runeSpin {
-      0% { transform: rotate(0deg); }
+      0%   { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
 
@@ -316,46 +648,67 @@ export function initActivityLog() {
 
     @keyframes loadingPulse {
       0%, 100% { opacity: 0.3; }
-      50% { opacity: 0.7; }
+      50%      { opacity: 0.7; }
     }
 
-    /* ── Agent lines get a left accent bar ── */
-    .log-line.agent {
+    /* ═══════════════════════════════════════════════
+       SPECIAL LINE TYPES
+       ═══════════════════════════════════════════════ */
+
+    /* Agent lines — left accent bar (when not latest) */
+    .log-line.agent:not(.latest) {
       border-left: 2px solid rgba(180, 140, 255, 0.3);
       padding-left: 8px;
       margin-left: -2px;
     }
 
-    /* ── Error lines pulse ── */
-    .log-line.error {
+    /* Error lines — red background pulse */
+    .log-line.error:not(.latest) {
       animation: fadeInLine 0.35s ease forwards, errorPulse 2s ease-in-out 1;
     }
 
     @keyframes errorPulse {
       0%, 100% { background: transparent; }
-      20% { background: rgba(240, 60, 60, 0.08); }
-      80% { background: transparent; }
+      20%      { background: rgba(240, 60, 60, 0.1); }
+      80%      { background: transparent; }
     }
 
-    /* ── Complete lines flash ── */
-    .log-line.complete {
+    /* Complete lines — pop scale */
+    .log-line.complete:not(.latest) {
       animation: fadeInLine 0.35s ease forwards, completePop 0.6s ease 1;
     }
 
     @keyframes completePop {
-      0% { transform: scale(1); }
-      30% { transform: scale(1.02); }
-      100% { transform: scale(1); }
+      0%  { transform: scale(1); }
+      30% { transform: scale(1.03); }
+      100%{ transform: scale(1); }
     }
 
-    /* ── Skill lines shimmer ── */
-    .log-line.skill {
+    /* Skill lines — golden shimmer */
+    .log-line.skill:not(.latest) {
       animation: fadeInLine 0.35s ease forwards, skillShimmer 3s ease-in-out 1;
     }
 
     @keyframes skillShimmer {
       0%, 100% { filter: brightness(1); }
-      50% { filter: brightness(1.3); }
+      50%      { filter: brightness(1.4); }
+    }
+
+    /* Fetch lines — subtle slide-in from left */
+    .log-line.fetch:not(.latest) {
+      animation: fetchSlide 0.5s ease forwards;
+    }
+
+    @keyframes fetchSlide {
+      from { opacity: 0; transform: translateX(-12px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Bash lines — green left bar */
+    .log-line.bash:not(.latest) {
+      border-left: 2px solid rgba(120, 220, 120, 0.25);
+      padding-left: 8px;
+      margin-left: -2px;
     }
   `;
   document.head.appendChild(style);
@@ -369,14 +722,12 @@ export function addLog(msg) {
   let clean = msg.replace(/[\n\r]+/g, ' ').trim();
   if (!clean || clean.length < 2) return;
   if (clean === '[working...]') return;
-  // Only filter pure JSON blobs, not text that happens to contain quotes
   if (clean.startsWith('{') && clean.endsWith('}') && clean.includes('":"')) return;
   if (clean.startsWith('[{') && clean.includes('":"')) return;
 
   const cls = classify(clean);
   queue.push({ text: clean, cls });
 
-  // Limit total lines
   while (logEl.children.length > 300) {
     logEl.removeChild(logEl.firstChild);
   }
