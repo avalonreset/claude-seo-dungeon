@@ -1,107 +1,115 @@
-# Claude SEO: Universal SEO Analysis Skill
+# Claude SEO Dungeon
 
 ## Project Overview
 
-This repository contains **Claude SEO**, a Tier 4 Claude Code skill for comprehensive
-SEO analysis across all industries. It follows the Agent Skills open standard and the
-3-layer architecture (directive, orchestration, execution). 14 core sub-skills (+ 2
-extensions), 9 core subagents (+ 2 extension agents), and an extensible reference
-system cover technical SEO, content quality,
-schema markup, image optimization, sitemap architecture, AI search optimization,
-local SEO (GBP, citations, reviews, map pack), and maps intelligence (geo-grid
-rank tracking, GBP auditing, review intelligence, competitor radius mapping).
+A gamified 16-bit dungeon crawler that turns SEO audits into boss battles.
+Built with Phaser.js and powered by Claude Code's SEO analysis pipeline.
+Players choose a character class (Warrior/Opus, Samurai/Sonnet, Knight/Haiku),
+enter a domain, and fight SEO issue "demons" in turn-based combat. The "Vanquish"
+action channels Claude to generate real code fixes during battle.
 
 ## Architecture
 
 ```
-claude-seo/
-  CLAUDE.md                          # Project instructions (this file)
-  .claude-plugin/
-    plugin.json                    # Plugin manifest (v1.6.1)
-    marketplace.json               # Marketplace catalog for distribution
-  skills/                            # 17 skills (auto-discovered)
-    seo/                           # Main orchestrator skill
-      SKILL.md                     # Entry point, routing table, core rules
-      references/                  # On-demand knowledge files (10 files)
-    seo-audit/SKILL.md            # Full site audit with parallel agents
-    seo-page/SKILL.md            # Deep single-page analysis
-    seo-technical/SKILL.md       # Technical SEO (9 categories)
-    seo-content/SKILL.md         # E-E-A-T and content quality
-    seo-schema/SKILL.md          # Schema.org markup detection/generation
-    seo-sitemap/SKILL.md         # XML sitemap analysis/generation
-    seo-images/SKILL.md          # Image optimization analysis
-    seo-geo/SKILL.md             # AI search / GEO optimization
-    seo-local/SKILL.md           # Local SEO (GBP, citations, reviews, map pack)
-    seo-maps/SKILL.md            # Maps intelligence (geo-grid, GBP audit, reviews, competitors)
-    seo-plan/SKILL.md            # Strategic SEO planning
-    seo-programmatic/SKILL.md    # Programmatic SEO at scale
-    seo-competitor-pages/SKILL.md # Competitor comparison pages
-    seo-hreflang/SKILL.md       # International SEO / hreflang
-    seo-dataforseo/SKILL.md     # Live SEO data via DataForSEO MCP
-    seo-image-gen/              # AI image generation for SEO assets
-      SKILL.md
-      references/                # Image gen reference files (7 files)
-  agents/                          # 11 subagents (auto-discovered)
-    seo-technical.md             # Crawlability, indexability, security
-    seo-content.md               # E-E-A-T, readability, thin content
-    seo-schema.md                # Structured data validation
-    seo-sitemap.md               # Sitemap quality gates
-    seo-performance.md           # Core Web Vitals, page speed
-    seo-visual.md                # Screenshots, mobile rendering
-    seo-geo.md                   # AI crawler access, GEO, citability
-    seo-local.md                 # GBP, NAP, citations, reviews, local schema
-    seo-maps.md                  # Geo-grid, GBP audit, reviews, competitor radius
-    seo-dataforseo.md            # DataForSEO data analyst
-    seo-image-gen.md             # SEO image audit analyst
-  hooks/                           # Quality gate hooks
-    hooks.json                   # PostToolUse schema validation
-  scripts/                         # Python execution scripts
-  schema/                          # Schema.org JSON-LD templates
-  extensions/                      # Optional add-on install helpers
-    dataforseo/                  # DataForSEO MCP install scripts
-    banana/                      # Banana MCP install scripts
-  docs/                            # Extended documentation
+claude-seo-dungeon/
+  dungeon/                           # Game application
+    index.html                     # Game shell + title screen UI
+    launch.js                      # Startup script
+    vite.config.js                 # Vite build configuration
+    server/
+      index.js                     # Express + WebSocket bridge to Claude Code
+    src/
+      main.js                      # Entry point, title screen, transitions
+      knight-sprite.js             # Character select sprite animations
+      activity-log.js              # Guild Ledger (real-time log panel)
+      utils/
+        ws.js                      # WebSocket bridge client
+        sound-manager.js           # Procedural audio engine (Web Audio API)
+      scenes/
+        BootScene.js               # Asset loading + DPR setup
+        GateScene.js               # Continue/new quest selection
+        SummoningScene.js          # Audit progress + loading animations
+        DungeonHallScene.js        # Browse SEO issues (demon list)
+        BattleScene.js             # Turn-based combat system
+        VictoryScene.js            # Post-battle XP + loot rewards
+    assets/
+      luizmelo/                    # Character sprite sheets
+  skills/                           # Claude Code SEO skills (backend)
+    seo/SKILL.md                   # Main orchestrator
+    seo-audit/SKILL.md             # Full site audit
+    seo-technical/SKILL.md         # Technical SEO
+    seo-content/SKILL.md           # E-E-A-T analysis
+    seo-schema/SKILL.md            # Schema.org markup
+    seo-sitemap/SKILL.md           # XML sitemap analysis
+    seo-geo/SKILL.md               # AI search optimization
+    seo-local/SKILL.md             # Local SEO
+    seo-maps/SKILL.md              # Maps intelligence
+    (+ 7 more sub-skills)
+  agents/                           # Subagents for parallel analysis
+  scripts/                          # Python execution scripts
+  extensions/                       # DataForSEO + Banana MCP installers
+  docs/                             # Extended documentation
 ```
 
-## Commands
+## Game Scenes (Flow)
+
+```
+Title Screen → Gate → Summoning → Dungeon Hall → Battle → Victory
+     ↑                                              ↓
+     └──────────── Return to Guild ←────────────────┘
+```
+
+1. **Title Screen** (HTML): Domain input, character select, volume control
+2. **Gate Scene** (HTML overlay): Continue quest / new quest per character
+3. **Summoning Scene** (Phaser): Audit runs, progress bar, Guild Ledger updates
+4. **Dungeon Hall** (Phaser): Browse demons sorted by SEO impact severity
+5. **Battle Scene** (Phaser): Turn-based combat with attack/vanquish/defend/flee
+6. **Victory Scene** (Phaser): XP rewards, loot drops, next demon or return
+
+## Development
+
+```bash
+cd dungeon
+npm install
+npm run dev          # Starts Vite + WebSocket bridge
+```
+
+### Dev Shortcuts
+
+- `?battle=1` — Skip to battle scene with first cached demon
+- `?battle=1&issue=2` — Skip to specific issue index
+
+### Key Files
+
+- `dungeon/src/scenes/BattleScene.js` — Main combat logic (~2400 lines)
+- `dungeon/src/utils/sound-manager.js` — 25+ procedural sound effects
+- `dungeon/src/knight-sprite.js` — Character select animations
+- `dungeon/server/index.js` — WebSocket bridge to Claude Code
+
+### Rules
+
+- Phaser scenes go in `dungeon/src/scenes/`
+- Utility modules go in `dungeon/src/utils/`
+- All audio is procedural (Web Audio API) — no audio files
+- Canvas renders at 3x DPR minimum for 4K text clarity
+- Sprite assets stay under `dungeon/assets/luizmelo/`
+
+## SEO Backend
+
+The SEO analysis is powered by Claude Code skills bundled in `skills/` and `agents/`.
+These run server-side through the WebSocket bridge when a player starts an audit.
 
 | Command | Purpose |
 |---------|---------|
-| `/seo audit <url>` | Full site audit with 9 parallel subagents |
-| `/seo page <url>` | Deep single-page analysis |
-| `/seo technical <url>` | Technical SEO audit (9 categories) |
-| `/seo content <url>` | E-E-A-T and content quality analysis |
-| `/seo schema <url>` | Schema.org detection, validation, generation |
-| `/seo sitemap <url>` | XML sitemap analysis or generation |
-| `/seo images <url>` | Image optimization analysis |
-| `/seo geo <url>` | AI search / Generative Engine Optimization |
-| `/seo plan <type>` | Strategic SEO planning by industry |
-| `/seo programmatic` | Programmatic SEO analysis and planning |
-| `/seo competitor-pages` | Competitor comparison page generation |
-| `/seo local <url>` | Local SEO analysis (GBP, citations, reviews, map pack) |
-| `/seo maps [command] [args]` | Maps intelligence (geo-grid, GBP audit, reviews, competitors) |
-| `/seo hreflang <url>` | International SEO / hreflang audit |
-| `/seo image-gen [use-case] <desc>` | AI image generation for SEO assets (extension) |
-
-## Development Rules
-
-- Keep SKILL.md files under 500 lines / 5000 tokens
-- Reference files should be focused and under 200 lines
-- Scripts must have docstrings, CLI interface, and JSON output
-- Follow kebab-case naming for all skill directories
-- Agents invoked via Agent tool, never via Bash
-- Python dependencies install into `~/.claude/skills/seo/.venv/`
-- Test with `python -m pytest tests/` after changes (if applicable)
+| `/seo audit <url>` | Full site audit with parallel subagents |
+| `/seo technical <url>` | Technical SEO (crawlability, security, CWV) |
+| `/seo content <url>` | E-E-A-T and content quality |
+| `/seo schema <url>` | Schema.org detection and generation |
+| `/seo geo <url>` | AI search / GEO optimization |
 
 ## Ecosystem
 
-Part of the Claude Code skill family:
-- [Claude Banana](https://github.com/AgriciDaniel/banana-claude) -- standalone image gen (bundled as extension here)
-- [Claude Blog](https://github.com/AgriciDaniel/claude-blog) -- companion blog engine, consumes SEO findings
-
-## Key Principles
-
-1. **Progressive Disclosure**: Metadata always loaded, instructions on activation, resources on demand
-2. **Industry Detection**: Auto-detect SaaS, e-commerce, local, publisher, agency
-3. **Parallel Execution**: Full audits spawn up to 11 subagents simultaneously
-4. **Extension System**: DataForSEO MCP for live data, Banana MCP for AI image generation
+Part of the avalonreset-pro tool suite:
+- [Claude SEO](https://github.com/avalonreset-pro/claude-seo-dungeon) — this project
+- [Claude GitHub](https://github.com/avalonreset-pro/claude-github) — GitHub repo optimization
+- [Codex SEO](https://github.com/avalonreset-pro/codex-seo) — SEO tools for Codex CLI

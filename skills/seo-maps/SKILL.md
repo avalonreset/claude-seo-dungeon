@@ -16,7 +16,7 @@ license: MIT
 allowed-tools: Read, Grep, Glob, Bash, WebFetch, Write
 compatibility: "DataForSEO MCP for Tier 1+, Google Maps API for Tier 2"
 metadata:
-  author: AgriciDaniel
+  author: avalonreset-pro
   version: "1.6.1"
   category: seo
 ---

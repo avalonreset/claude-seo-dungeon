@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug or unexpected behavior in Claude SEO
+description: Report a bug or unexpected behavior in Claude SEO Dungeon
 title: "[Bug]: "
 labels: ["bug"]
 body:
@@ -15,31 +15,31 @@ body:
     validations:
       required: true
   - type: input
-    id: python-version
+    id: node-version
     attributes:
-      label: Python Version
-      description: Run `python3 --version`
+      label: Node.js Version
+      description: Run `node --version`
     validations:
       required: true
   - type: input
-    id: command
+    id: browser
     attributes:
-      label: Command that failed
-      description: e.g. `/seo audit https://example.com`
+      label: Browser
+      description: e.g. Chrome 120, Firefox 121, Safari 17
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected to happen
     validations:
       required: true
   - type: textarea
     id: error-output
     attributes:
-      label: Full error output
-      description: Copy the complete terminal output
+      label: Error output or screenshot
+      description: Copy any console errors or attach screenshots
       render: shell
     validations:
-      required: true
-  - type: textarea
-    id: expected
-    attributes:
-      label: Expected behavior
-      description: What did you expect to happen?
-    validations:
-      required: true
+      required: false

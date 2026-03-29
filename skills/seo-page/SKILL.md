@@ -10,7 +10,7 @@ argument-hint: "[url]"
 license: MIT
 allowed-tools: Read, Grep, Glob, Bash, WebFetch
 metadata:
-  author: AgriciDaniel
+  author: avalonreset-pro
   version: "1.6.1"
   category: seo
 ---

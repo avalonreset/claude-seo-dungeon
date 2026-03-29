@@ -1,7 +1,7 @@
 version: 2
 updates:
-  - package-ecosystem: "pip"
-    directory: "/"
+  - package-ecosystem: "npm"
+    directory: "/dungeon"
     schedule:
       interval: "weekly"
     labels:

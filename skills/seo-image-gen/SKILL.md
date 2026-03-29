@@ -7,7 +7,7 @@ license: MIT
 allowed-tools: Read, Grep, Glob, Bash, WebFetch, Write
 compatibility: "Requires nanobanana MCP server"
 metadata:
-  author: AgriciDaniel
+  author: avalonreset-pro
   version: "1.6.1"
   category: seo
 ---
@@ -20,7 +20,7 @@ aspect ratios, and resolution defaults.
 
 ## Architecture Note
 
-This extension is built on [Claude Banana](https://github.com/AgriciDaniel/banana-claude),
+This extension is built on [Claude Banana](https://github.com/avalonreset-pro/banana-claude),
 the standalone AI image generation skill for Claude Code.
 
 This skill has two components with distinct roles:

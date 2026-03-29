@@ -30,7 +30,7 @@ Examples of unacceptable behavior:
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by [opening an issue](https://github.com/AgriciDaniel/claude-seo/issues) on this repository.
+reported by [opening an issue](https://github.com/avalonreset-pro/claude-seo-dungeon/issues) on this repository.
 
 All complaints will be reviewed and investigated promptly and fairly.
 

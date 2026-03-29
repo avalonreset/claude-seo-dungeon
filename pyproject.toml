@@ -1,11 +1,11 @@
 [project]
-name = "claude-seo"
-version = "1.5.0"
-description = "Comprehensive SEO analysis skill for Claude Code"
+name = "claude-seo-dungeon"
+version = "0.1.0"
+description = "Gamified 16-bit dungeon crawler that turns SEO audits into boss battles"
 requires-python = ">=3.11"
 license = "MIT"
 readme = "README.md"
 
 [project.urls]
-Homepage = "https://github.com/AgriciDaniel/claude-seo"
-Repository = "https://github.com/AgriciDaniel/claude-seo"
+Homepage = "https://github.com/avalonreset-pro/claude-seo-dungeon"
+Repository = "https://github.com/avalonreset-pro/claude-seo-dungeon"

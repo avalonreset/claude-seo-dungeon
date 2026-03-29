@@ -31,8 +31,11 @@ venv/
 env/
 .env/
 
-# Node (if any)
+# Node
 node_modules/
+
+# Vite cache
+.vite/
 
 # Logs
 *.log

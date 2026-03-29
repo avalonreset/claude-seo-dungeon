@@ -11,7 +11,7 @@ argument-hint: "[url or generate] [competitor]"
 license: MIT
 allowed-tools: Read, Grep, Glob, Bash, WebFetch
 metadata:
-  author: AgriciDaniel
+  author: avalonreset-pro
   version: "1.6.1"
   category: seo
 ---
