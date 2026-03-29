@@ -251,10 +251,16 @@
     #log-header h2 {
       font-size: 12px;
       font-weight: 600;
-      color: #8888a0;
-      letter-spacing: 4px;
+      color: #9898b0;
+      letter-spacing: 6px;
       text-transform: uppercase;
       text-align: center;
+      animation: ledgerTitle 4s ease-in-out infinite;
+    }
+
+    @keyframes ledgerTitle {
+      0%, 100% { color: #9898b0; text-shadow: 0 0 8px rgba(152, 152, 176, 0.1); }
+      50% { color: #b0b0cc; text-shadow: 0 0 16px rgba(180, 160, 220, 0.2); }
     }
 
     #log-content {
@@ -277,12 +283,7 @@
       word-wrap: break-word;
       hyphens: auto;
     }
-    .log-line.tool { color: #7dd8e8; }
-    .log-line.text { color: #c8d0c8; }
-    .log-line.error { color: #f06060; }
-    .log-line.status { color: #e8c848; }
-    .log-line.system { color: #808898; }
-    .log-line.complete { color: #60d060; }
+    /* Colors and effects injected by activity-log.js */
 
     @media (max-width: 900px) {
       #log-panel { width: 30%; min-width: 220px; }
