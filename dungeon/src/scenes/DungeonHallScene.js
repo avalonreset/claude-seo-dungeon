@@ -309,11 +309,11 @@ export class DungeonHallScene extends Phaser.Scene {
     const scoreColor = data.score >= 70 ? COLORS.green : data.score >= 40 ? COLORS.gold : COLORS.red;
     const scoreGlowHex = data.score >= 70 ? '#40c040' : data.score >= 40 ? '#f0c040' : '#e04040';
 
-    this.add.text(160, 60, 'SEO SCORE', {
+    this.add.text(160, 56, 'SEO SCORE', {
       fontFamily: HEADER_FONT, fontSize: '10px', color: '#606080'
     }).setOrigin(0.5, 0).setDepth(101);
 
-    const scoreValue = this.add.text(160, 74, `${data.score}/100`, {
+    const scoreValue = this.add.text(160, 68, `${data.score}/100`, {
       fontFamily: HEADER_FONT,
       fontSize: '14px',
       color: scoreColor,
@@ -333,11 +333,11 @@ export class DungeonHallScene extends Phaser.Scene {
     });
 
     // --- DEMON COUNT (right) ---
-    this.add.text(640, 60, 'DEMONS', {
+    this.add.text(640, 56, 'DEMONS', {
       fontFamily: HEADER_FONT, fontSize: '10px', color: '#606080'
     }).setOrigin(0.5, 0).setDepth(101);
 
-    this.add.text(640, 74, `${data.totalIssues} AWAIT`, {
+    this.add.text(640, 68, `${data.totalIssues} AWAIT`, {
       fontFamily: HEADER_FONT,
       fontSize: '14px',
       color: '#e04040',
@@ -347,7 +347,7 @@ export class DungeonHallScene extends Phaser.Scene {
     }).setOrigin(0.5, 0).setDepth(101);
 
     // --- Divider diamonds in center bottom ---
-    this.add.text(400, 60, '\u25C6  \u25C6  \u25C6', {
+    this.add.text(400, 56, '\u25C6  \u25C6  \u25C6', {
       fontFamily: BODY_FONT, fontSize: '10px', color: '#303050'
     }).setOrigin(0.5, 0).setDepth(101);
   }
@@ -646,9 +646,9 @@ export class DungeonHallScene extends Phaser.Scene {
       const desc = this.add.text(textLeftX + badgeW + 12, y + 30, truncDesc, {
         fontFamily: BODY_FONT,
         fontSize: '11px',
-        color: '#606080'
+        color: '#9898b0'
       }).setAlpha(0);
-      this.tweens.add({ targets: desc, alpha: 0.8, duration: 400, delay: 350 });
+      this.tweens.add({ targets: desc, alpha: 1, duration: 400, delay: 350 });
       this.demonContainer.add(desc);
     }
 
@@ -658,23 +658,23 @@ export class DungeonHallScene extends Phaser.Scene {
     const catText = issue.category || '';
     if (catText) {
       const catLabel = catText.toUpperCase();
-      const catTagW = catLabel.length * 7 + 14;
+      const catTagW = catLabel.length * 7 + 16;
       const catTagX = rowX + rowW - catTagW - 10;
-      const catTagY = y + ROW_HEIGHT - 22;
+      const catTagY = y + ROW_HEIGHT - 24;
 
       const catBg = this.add.graphics().setAlpha(0);
-      catBg.fillStyle(0x40c0c0, 0.1);
-      catBg.fillRoundedRect(catTagX, catTagY, catTagW, 16, 8);
-      catBg.lineStyle(1, 0x40c0c0, 0.3);
-      catBg.strokeRoundedRect(catTagX, catTagY, catTagW, 16, 8);
+      catBg.fillStyle(0x40c0c0, 0.12);
+      catBg.fillRoundedRect(catTagX, catTagY, catTagW, 18, 9);
+      catBg.lineStyle(1, 0x40c0c0, 0.4);
+      catBg.strokeRoundedRect(catTagX, catTagY, catTagW, 18, 9);
 
-      const cat = this.add.text(catTagX + catTagW * 0.5, catTagY + 8, catLabel, {
-        fontFamily: BODY_FONT,
-        fontSize: '10px',
-        color: COLORS.cyan,
+      const cat = this.add.text(catTagX + catTagW * 0.5, catTagY + 9, catLabel, {
+        fontFamily: HEADER_FONT,
+        fontSize: '9px',
+        color: '#88dddd',
       }).setOrigin(0.5).setAlpha(0);
 
-      this.tweens.add({ targets: [cat, catBg], alpha: 0.85, duration: 400, delay: 380 });
+      this.tweens.add({ targets: [cat, catBg], alpha: 1, duration: 400, delay: 380 });
       this.demonContainer.add([catBg, cat]);
     }
 
@@ -691,15 +691,15 @@ export class DungeonHallScene extends Phaser.Scene {
     const threatLabel = threatLabels[issue.severity] || 'UNKNOWN';
     const threatColor = sev.color;
 
-    const threat = this.add.text(rowX + rowW - 14, centerY, threatLabel, {
+    const threat = this.add.text(rowX + rowW - 14, y + 10, threatLabel, {
       fontFamily: HEADER_FONT,
-      fontSize: '9px',
+      fontSize: '10px',
       color: Phaser.Display.Color.IntegerToColor(threatColor).rgba,
       letterSpacing: 2,
       shadow: { offsetX: 0, offsetY: 0, color: '#000000', blur: 4, fill: true, stroke: true }
-    }).setOrigin(1, 0.5).setAlpha(0);
+    }).setOrigin(1, 0).setAlpha(0);
 
-    this.tweens.add({ targets: threat, alpha: 0.6, duration: 400, delay: 500 });
+    this.tweens.add({ targets: threat, alpha: 1, duration: 400, delay: 500 });
 
     // =========================
     // SCREEN SHAKE FOR CRITICAL
