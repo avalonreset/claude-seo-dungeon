@@ -435,7 +435,16 @@ export class DungeonHallScene extends Phaser.Scene {
   // REVEAL DEMONS
   // =====================================================================
   revealDemons(issues) {
-    issues.forEach((issue, i) => {
+    // Sort by severity: critical first, then high, medium, low, info
+    const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+    const sorted = [...issues].sort((a, b) => {
+      return (SEVERITY_ORDER[a.severity] ?? 5) - (SEVERITY_ORDER[b.severity] ?? 5);
+    });
+    // Write sorted order back so scroll/engage references match
+    issues.length = 0;
+    issues.push(...sorted);
+
+    sorted.forEach((issue, i) => {
       this.time.delayedCall(i * 350, () => {
         this.materializeDemon(issue, i);
       });
@@ -464,9 +473,7 @@ export class DungeonHallScene extends Phaser.Scene {
     const rowW = 708;
     const spriteX = 86;
     const textLeftX = 128;
-    const hpBarX = 560;
-    const hpBarW = 155;
-    const hpBarH = 12;
+    const threatX = 660;  // Right-aligned threat/category area
 
     // =========================
     // ROW BACKGROUND
@@ -608,7 +615,7 @@ export class DungeonHallScene extends Phaser.Scene {
     // =========================
     // ISSUE TITLE (14px readable)
     // =========================
-    const titleMaxW = hpBarX - textLeftX - badgeW - 20;
+    const titleMaxW = threatX - textLeftX - badgeW - 20;
     const title = this.add.text(textLeftX + badgeW + 12, y + 10, issue.title, {
       fontFamily: BODY_FONT,
       fontSize: '14px',
@@ -672,61 +679,27 @@ export class DungeonHallScene extends Phaser.Scene {
     }
 
     // =========================
-    // HP BAR (150px+ wide, gradient fill, rounded, shimmer)
+    // THREAT LEVEL (severity-based, right-aligned)
     // =========================
-    const hpBarY = centerY - 6;
-    const hpPct = Phaser.Math.Clamp(issue.hp / 100, 0, 1);
+    const threatLabels = {
+      critical: 'DEADLY',
+      high: 'DANGEROUS',
+      medium: 'MODERATE',
+      low: 'MINOR',
+      info: 'TRIVIAL'
+    };
+    const threatLabel = threatLabels[issue.severity] || 'UNKNOWN';
+    const threatColor = sev.color;
 
-    // HP bar background track
-    const hpBarBg = this.add.graphics().setAlpha(0);
-    hpBarBg.fillStyle(0x0c0408, 1);
-    hpBarBg.fillRoundedRect(hpBarX, hpBarY, hpBarW, hpBarH, 6);
-    hpBarBg.lineStyle(1, 0x301818, 0.7);
-    hpBarBg.strokeRoundedRect(hpBarX, hpBarY, hpBarW, hpBarH, 6);
-
-    // HP bar fill (animated grow with gradient simulation)
-    const hpFill = this.add.graphics();
-    const hpFillW = { value: 0 };
-
-    // HP shimmer overlay
-    const hpShimmer = this.add.graphics().setAlpha(0);
-
-    // HP text
-    const hpText = this.add.text(hpBarX + hpBarW * 0.5, hpBarY + hpBarH * 0.5, `${issue.hp} HP`, {
+    const threat = this.add.text(rowX + rowW - 14, centerY, threatLabel, {
       fontFamily: HEADER_FONT,
-      fontSize: '10px',
-      color: '#ffffff',
+      fontSize: '9px',
+      color: Phaser.Display.Color.IntegerToColor(threatColor).rgba,
+      letterSpacing: 2,
       shadow: { offsetX: 0, offsetY: 0, color: '#000000', blur: 4, fill: true, stroke: true }
-    }).setOrigin(0.5).setAlpha(0);
+    }).setOrigin(1, 0.5).setAlpha(0);
 
-    // Animate HP bar
-    this.tweens.add({ targets: hpBarBg, alpha: 1, duration: 300, delay: 300 });
-    this.tweens.add({
-      targets: hpFillW,
-      value: (hpBarW - 4) * hpPct,
-      duration: 800,
-      delay: 500,
-      ease: 'Power2',
-      onUpdate: () => {
-        hpFill.clear();
-        if (hpFillW.value > 2) {
-          // Gradient simulation: draw two layers
-          // Base darker color
-          hpFill.fillStyle(sev.barEnd, 0.9);
-          hpFill.fillRoundedRect(hpBarX + 2, hpBarY + 2, hpFillW.value, hpBarH - 4, 4);
-          // Lighter top half for gradient feel
-          hpFill.fillStyle(sev.barStart, 0.7);
-          hpFill.fillRoundedRect(hpBarX + 2, hpBarY + 2, hpFillW.value, (hpBarH - 4) * 0.5, { tl: 4, tr: 4, bl: 0, br: 0 });
-          // Bright highlight line along top
-          hpFill.fillStyle(0xffffff, 0.15);
-          hpFill.fillRoundedRect(hpBarX + 4, hpBarY + 3, Math.max(0, hpFillW.value - 4), 2, 1);
-        }
-      },
-      onComplete: () => {
-        this.startHpShimmer(hpShimmer, hpBarX + 2, hpBarY + 2, (hpBarW - 4) * hpPct, hpBarH - 4);
-      }
-    });
-    this.tweens.add({ targets: hpText, alpha: 1, duration: 300, delay: 600 });
+    this.tweens.add({ targets: threat, alpha: 0.6, duration: 400, delay: 500 });
 
     // =========================
     // SCREEN SHAKE FOR CRITICAL
@@ -769,8 +742,7 @@ export class DungeonHallScene extends Phaser.Scene {
     // Add everything to scroll container
     this.demonContainer.add([
       rowBg, rowBorder, hitArea, clickFlash, shadow, demon,
-      badgeBg, badge, title,
-      hpBarBg, hpFill, hpShimmer, hpText
+      badgeBg, badge, title, threat
     ]);
   }
 
@@ -813,34 +785,6 @@ export class DungeonHallScene extends Phaser.Scene {
   // =====================================================================
   // HP BAR SHIMMER
   // =====================================================================
-  startHpShimmer(gfx, x, y, w, h) {
-    if (w < 6) return;
-    const shimmerPos = { value: -0.1 };
-    this.tweens.add({
-      targets: shimmerPos,
-      value: 1.1,
-      duration: 2400,
-      repeat: -1,
-      ease: 'Linear',
-      onUpdate: () => {
-        gfx.clear();
-        gfx.setAlpha(0.3);
-        const bandW = 10;
-        const sx = x + shimmerPos.value * (w + bandW) - bandW;
-        const clampedX = Phaser.Math.Clamp(sx, x, x + w - 1);
-        const clampedW = Phaser.Math.Clamp(bandW, 0, Math.max(0, x + w - clampedX));
-        if (clampedW > 0) {
-          gfx.fillStyle(0xffffff, 0.35);
-          gfx.fillRect(clampedX, y + 1, clampedW, h - 2);
-          // Softer edge glow
-          gfx.fillStyle(0xffffff, 0.15);
-          gfx.fillRect(clampedX - 3, y + 1, 3, h - 2);
-          gfx.fillRect(clampedX + clampedW, y + 1, 3, h - 2);
-        }
-      }
-    });
-  }
-
   // =====================================================================
   // ENGAGE DEMON (transition to battle)
   // =====================================================================
