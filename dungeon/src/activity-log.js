@@ -717,6 +717,32 @@ export function initActivityLog() {
       padding-left: 8px;
       margin-left: -2px;
     }
+
+    /* ═══════════════════════════════════════════════
+       IDLE STATE — kill all animations when nothing is running
+       ═══════════════════════════════════════════════ */
+    .ledger-idle .log-line.latest {
+      animation: fadeInLine 0.35s ease forwards !important;
+    }
+    .ledger-idle .log-line.latest .log-text {
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      background-clip: unset !important;
+      -webkit-text-fill-color: unset !important;
+      animation: none !important;
+    }
+    .ledger-idle .log-line.latest::before {
+      animation: none !important;
+      opacity: 0.3 !important;
+      box-shadow: none !important;
+    }
+    .ledger-idle .log-line.latest .log-icon {
+      animation: none !important;
+      filter: brightness(1) !important;
+    }
+    .ledger-idle .log-dots {
+      display: none !important;
+    }
   `;
   document.head.appendChild(style);
 
@@ -744,8 +770,10 @@ export function addLog(msg) {
 
 export function showLoadingIndicator() {
   showLoading();
+  if (logEl) logEl.classList.remove('ledger-idle');
 }
 
 export function hideLoadingIndicator() {
   hideLoading();
+  if (logEl) logEl.classList.add('ledger-idle');
 }
