@@ -172,14 +172,17 @@ export class GateScene extends Phaser.Scene {
     }
 
     // Build three columns — one per character/model
-    // Each column has 1 card (uncached) or 2 cards (cached: continue + re-run)
+    // Each column always has two rows:
+    //   Top row: "Continue Quest" (if cached) or empty placeholder
+    //   Bottom row: "New Quest" (if cached, re-run) or "Begin Quest" (if uncached)
     let columnsHTML = '';
     for (const m of ALL_MODELS) {
       const cached = cachedByKey[m.key];
 
-      let cardsHTML = '';
+      let topCardHTML = '';
+      let bottomCardHTML = '';
+
       if (cached) {
-        // Card 1: Continue Quest (resume cached data)
         const ts = cached.timestamp;
         const dateStr = ts ? new Date(ts).toLocaleDateString('en-US', {
           month: 'short', day: 'numeric', year: 'numeric',
@@ -191,7 +194,7 @@ export class GateScene extends Phaser.Scene {
         const total = issues.length;
         const defeated = total - remaining;
 
-        cardsHTML += `
+        topCardHTML = `
           <div class="gate-card gate-card-continue" data-model="${m.key}" data-action="resume" style="--accent: ${m.color};">
             <div class="gate-card-label" style="color: ${m.color};">Continue Quest</div>
             <div class="gate-card-time dim">${timeAgo} &middot; ${dateStr}</div>
@@ -201,15 +204,16 @@ export class GateScene extends Phaser.Scene {
             </div>
           </div>`;
 
-        // Card 2: New Quest (wipe cache, run fresh)
-        cardsHTML += `
+        bottomCardHTML = `
           <div class="gate-card gate-card-new" data-model="${m.key}" data-action="rerun" style="--accent: ${m.color};">
             <div class="gate-card-label gate-card-label-new">New Quest</div>
             <div class="gate-card-sub dim">Abandon progress. Descend anew.</div>
           </div>`;
       } else {
-        // Single card: Begin Quest (no cached data)
-        cardsHTML += `
+        // Empty top row placeholder — keeps bottom row aligned with other columns
+        topCardHTML = '<div class="gate-card-placeholder"></div>';
+
+        bottomCardHTML = `
           <div class="gate-card gate-card-begin" data-model="${m.key}" data-action="new" style="--accent: ${m.color};">
             <div class="gate-card-label" style="color: ${m.color};">Begin Quest</div>
             <div class="gate-card-sub dim">Unexplored territory.</div>
@@ -222,7 +226,10 @@ export class GateScene extends Phaser.Scene {
             <div class="gate-col-name" style="color: ${m.color};">${m.charName}</div>
             <div class="gate-col-model" style="color: ${m.color}; border-color: ${m.color}40;">${m.label}</div>
           </div>
-          <div class="gate-col-cards">${cardsHTML}</div>
+          <div class="gate-col-cards">
+            <div class="gate-row-top">${topCardHTML}</div>
+            <div class="gate-row-bottom">${bottomCardHTML}</div>
+          </div>
         </div>`;
     }
 
@@ -310,6 +317,19 @@ export class GateScene extends Phaser.Scene {
         flex-direction: column;
         gap: 8px;
         width: 100%;
+        flex: 1;
+      }
+      .gate-row-top {
+        flex: 1;
+        display: flex;
+        align-items: flex-end;
+      }
+      .gate-row-top > * { width: 100%; }
+      .gate-row-bottom {
+        flex: 0 0 auto;
+      }
+      .gate-card-placeholder {
+        /* Empty space where "Continue Quest" would be */
       }
 
       /* ── Individual cards ── */
