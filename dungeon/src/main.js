@@ -25,18 +25,41 @@ function returnToTitle() {
     game.destroy(true);
     game = null;
   }
-  const gameContainer = document.getElementById('game-container');
-  gameContainer.style.display = 'none';
 
-  // Reuse the same cinematic transition but with "Ascending..."
-  const titleScreen = document.getElementById('title-screen');
+  // Fade to black, show "Ascending...", then reload
   const gameArea = document.getElementById('game-area');
-  titleScreen.style.display = 'flex';
-  addLog('Recalled by scroll');
+  gameArea.style.transition = 'opacity 0.5s ease-in';
+  gameArea.style.opacity = '0';
 
-  _cinematicTransition('Ascending...', () => {
-    location.reload();
-  });
+  setTimeout(() => {
+    // Show ascending label during black
+    const gameContainer = document.getElementById('game-container');
+    gameContainer.style.display = 'none';
+    const titleScreen = document.getElementById('title-screen');
+    titleScreen.innerHTML = '';
+    titleScreen.style.display = 'flex';
+    titleScreen.style.alignItems = 'center';
+    titleScreen.style.justifyContent = 'center';
+
+    const label = document.createElement('div');
+    label.textContent = 'Ascending...';
+    label.style.cssText = `
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; color: #606078;
+      letter-spacing: 2px;
+    `;
+    titleScreen.appendChild(label);
+
+    gameArea.style.transition = 'opacity 0.5s ease-out';
+    gameArea.style.opacity = '1';
+
+    // Hold briefly then reload
+    setTimeout(() => {
+      gameArea.style.transition = 'opacity 0.5s ease-in';
+      gameArea.style.opacity = '0';
+      setTimeout(() => location.reload(), 550);
+    }, 1200);
+  }, 550);
 }
 
 // Expose for Phaser scenes
