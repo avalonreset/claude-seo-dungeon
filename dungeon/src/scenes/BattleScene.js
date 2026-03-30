@@ -1248,7 +1248,7 @@ export class BattleScene extends Phaser.Scene {
         position: absolute;
         top: 0; left: 0;
         width: 100%; height: 100%;
-        background: rgba(0, 0, 10, 0.75);
+        background: radial-gradient(ellipse at center 55%, rgba(0, 0, 10, 0.75) 0%, rgba(0, 0, 10, 0.35) 55%, rgba(0, 0, 10, 0.15) 100%);
         pointer-events: auto;
       }
       .attack-prompt-box {
