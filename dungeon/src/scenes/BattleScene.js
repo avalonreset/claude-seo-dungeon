@@ -565,45 +565,49 @@ export class BattleScene extends Phaser.Scene {
     this.logVisibleHeight = logH - textPadding * 2;
     this.logTextBaseY = logY + textPadding;
 
-    this.battleLog = this.add.text(logX + textPadding, this.logTextBaseY, '', {
-      fontFamily: 'monospace',
-      fontSize: '10px',
-      color: COLORS.white,
-      lineSpacing: 6,
-      wordWrap: { width: logW - textPadding * 2 - 4 },
-      resolution: window.GAME_DPR
-    });
+    // HTML overlay for battle log — supports colors and native scrolling
+    this._battleLogEl = document.createElement('div');
+    this._battleLogEl.id = 'battle-log-overlay';
+    this._battleLogEl.style.cssText = `
+      position: absolute; overflow-y: auto; overflow-x: hidden;
+      font-family: monospace; font-size: 10px; color: #e0e0f0;
+      line-height: 1.7; padding: 10px 12px; box-sizing: border-box;
+      pointer-events: auto; z-index: 50;
+      scrollbar-width: thin; scrollbar-color: #1e1e38 transparent;
+    `;
+    const container = document.getElementById('game-container');
+    container.style.position = 'relative';
+    container.appendChild(this._battleLogEl);
 
-    // Mask so text doesn't overflow the log panel
-    const maskShape = this.make.graphics({ x: 0, y: 0, add: false });
-    maskShape.fillStyle(0xffffff);
-    maskShape.fillRect(logX + 4, logY + 4, logW - 8, logH - 8);
-    this.battleLog.setMask(new Phaser.Display.Masks.GeometryMask(this, maskShape));
+    // Position the HTML log to match the Phaser panel
+    this._positionBattleLog = () => {
+      const canvas = container.querySelector('canvas');
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const scaleX = rect.width / 800;
+      const scaleY = rect.height / 600;
+      const offsetX = rect.left - containerRect.left;
+      const offsetY = rect.top - containerRect.top;
+      this._battleLogEl.style.left = (offsetX + logX * scaleX + 6) + 'px';
+      this._battleLogEl.style.top = (offsetY + logY * scaleY + 6) + 'px';
+      this._battleLogEl.style.width = ((logW - 12) * scaleX) + 'px';
+      this._battleLogEl.style.height = ((logH - 12) * scaleY) + 'px';
+      this._battleLogEl.style.fontSize = Math.max(10, Math.round(10 * scaleY)) + 'px';
+    };
+    this._positionBattleLog();
+    this._battleLogResizeHandler = () => this._positionBattleLog();
+    window.addEventListener('resize', this._battleLogResizeHandler);
+    this._battleLogResizeObserver = new ResizeObserver(() => this._positionBattleLog());
+    const canvasEl = container.querySelector('canvas');
+    if (canvasEl) this._battleLogResizeObserver.observe(canvasEl);
+    setTimeout(() => this._positionBattleLog(), 200);
 
     // Seed with the encounter message
     const encounterMsg = ENCOUNTER_MESSAGES[Math.floor(Math.random() * ENCOUNTER_MESSAGES.length)];
     this.appendLog(encounterMsg);
 
-    // Mouse wheel scrolling over the log panel
-    this.input.on('pointerdown', () => {}); // ensure input is active
     const canvas = this.sys.game.canvas;
-    this._logWheelHandler = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
-      const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
-      if (mouseX >= logX && mouseX <= logX + logW && mouseY >= logY && mouseY <= logY + logH) {
-        e.preventDefault();
-        const textHeight = this.battleLog.height;
-        const maxScroll = Math.max(0, textHeight - this.logVisibleHeight);
-        this.battleLogScrollOffset = Phaser.Math.Clamp(
-          this.battleLogScrollOffset + e.deltaY * 0.5,
-          0,
-          maxScroll
-        );
-        this.battleLog.y = this.logTextBaseY - this.battleLogScrollOffset;
-      }
-    };
-    canvas.addEventListener('wheel', this._logWheelHandler, { passive: false });
   }
 
   // ═══════════════════════════════════════════════════
@@ -869,30 +873,38 @@ export class BattleScene extends Phaser.Scene {
   appendLog(msg) {
     this.battleLogHistory.push(msg);
 
-    // Build display text from history
-    const displayText = this.battleLogHistory.join('\n');
-    this.battleLog.setText(displayText);
+    if (this._battleLogEl) {
+      const line = document.createElement('div');
+      line.style.marginBottom = '3px';
 
-    // Auto-scroll to bottom: position text so newest messages are visible
-    const textHeight = this.battleLog.height;
-    const overflow = textHeight - this.logVisibleHeight;
-    if (overflow > 0) {
-      this.battleLogScrollOffset = overflow;
-      this.battleLog.y = this.logTextBaseY - overflow;
-    } else {
-      this.battleLogScrollOffset = 0;
-      this.battleLog.y = this.logTextBaseY;
+      if (msg.startsWith('> ')) {
+        // User prompt — gold
+        line.style.color = '#d4af37';
+        line.style.fontWeight = 'bold';
+        line.style.borderLeft = '2px solid rgba(212,175,55,0.5)';
+        line.style.paddingLeft = '6px';
+      } else if (msg.includes('channels') || msg.includes('braces') || msg.includes('strikes')) {
+        // Battle action — bright white
+        line.style.color = '#f0f0ff';
+        line.style.fontWeight = '600';
+      } else if (msg.includes('demon') || msg.includes('Demon') || msg.includes('damage')) {
+        // Demon action — red
+        line.style.color = '#e05050';
+      } else if (msg.includes('VANQUISH') || msg.includes('VICTORY') || msg.includes('defeated')) {
+        // Victory — green-gold
+        line.style.color = '#60dd60';
+        line.style.fontWeight = 'bold';
+      }
+
+      line.textContent = msg;
+      this._battleLogEl.appendChild(line);
+
+      // Auto-scroll unless user scrolled up
+      const el = this._battleLogEl;
+      const nearBottom = (el.scrollHeight - el.scrollTop - el.clientHeight) < 40;
+      if (nearBottom) el.scrollTop = el.scrollHeight;
     }
 
-    // Quick text pop effect
-    this.battleLog.setScale(1.02);
-    this.tweens.add({
-      targets: this.battleLog,
-      scaleX: 1,
-      scaleY: 1,
-      duration: 150,
-      ease: 'Back.easeOut'
-    });
 
     // Update big mode log if open
     this._updateBigModeLog();
@@ -1422,7 +1434,8 @@ export class BattleScene extends Phaser.Scene {
     this._attackDarkOverlay = this.add.rectangle(400, 300, 800, 600, 0x000010, 0.7).setDepth(49);
     // Boost battle log panel + graphics above the dark overlay
     if (this.logGfx) this.logGfx.setDepth(54);
-    if (this.battleLog) this.battleLog.setDepth(55);
+    // Battle log is now HTML — raise its z-index
+    if (this._battleLogEl) this._battleLogEl.style.zIndex = '10000';
 
     this._attackOverlayEl = overlay;
     this._attackStyleEl = style;
@@ -1457,7 +1470,7 @@ export class BattleScene extends Phaser.Scene {
       this._attackDarkOverlay = null;
     }
     if (this.logGfx) this.logGfx.setDepth(0);
-    if (this.battleLog) this.battleLog.setDepth(10);
+    if (this._battleLogEl) this._battleLogEl.style.zIndex = '50';
   }
 
   // ═══════════════════════════════════════════════════
@@ -2449,10 +2462,18 @@ Summary: ${fallbackSummary}`;
     this._removeAttackOverlay();
     this._closeBigMode();
     this._stopChanneling();
-    const canvas = this.sys.game.canvas;
-    if (this._logWheelHandler) {
-      canvas.removeEventListener('wheel', this._logWheelHandler);
-      this._logWheelHandler = null;
+    // Clean up HTML battle log
+    if (this._battleLogEl) {
+      this._battleLogEl.remove();
+      this._battleLogEl = null;
+    }
+    if (this._battleLogResizeHandler) {
+      window.removeEventListener('resize', this._battleLogResizeHandler);
+      this._battleLogResizeHandler = null;
+    }
+    if (this._battleLogResizeObserver) {
+      this._battleLogResizeObserver.disconnect();
+      this._battleLogResizeObserver = null;
     }
   }
 
