@@ -583,21 +583,6 @@ export class BattleScene extends Phaser.Scene {
     const encounterMsg = ENCOUNTER_MESSAGES[Math.floor(Math.random() * ENCOUNTER_MESSAGES.length)];
     this.appendLog(encounterMsg);
 
-    // Blinking indicator (hidden until big mode is available)
-    this.logIndicator = this.add.text(logX + logW - 22, logY + logH - 20, '\u25BC', {
-      fontFamily: '"JetBrains Mono", monospace',
-      fontSize: '10px',
-      color: COLORS.gold,
-      resolution: window.GAME_DPR
-    }).setVisible(false);
-    this.tweens.add({
-      targets: this.logIndicator,
-      alpha: 0.2,
-      duration: 500,
-      yoyo: true,
-      repeat: -1
-    });
-
     // Mouse wheel scrolling over the log panel
     this.input.on('pointerdown', () => {}); // ensure input is active
     const canvas = this.sys.game.canvas;
@@ -618,47 +603,6 @@ export class BattleScene extends Phaser.Scene {
       }
     };
     canvas.addEventListener('wheel', this._logWheelHandler, { passive: false });
-
-    // "EXPAND" label hint (top-right corner of log panel)
-    this.logExpandLabel = this.add.text(logX + logW - 58, logY + 8, '[ EXPAND ]', {
-      fontFamily: '"JetBrains Mono", monospace',
-      fontSize: '7px',
-      color: '#6060a0',
-      resolution: window.GAME_DPR
-    }).setDepth(20).setVisible(false);
-    this.tweens.add({
-      targets: this.logExpandLabel,
-      alpha: { from: 0.5, to: 1 },
-      duration: 1200,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
-
-    // Click on log panel opens Big Mode
-    this._logClickHandler = (e) => {
-      if (this._bigModeOpen || this._attackOverlayOpen) return;
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
-      const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
-      if (mouseX >= logX && mouseX <= logX + logW && mouseY >= logY && mouseY <= logY + logH) {
-        this._openBigMode();
-      }
-    };
-    canvas.addEventListener('click', this._logClickHandler);
-
-    // Pointer cursor on hover over log panel
-    this._logMoveHandler = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
-      const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
-      if (mouseX >= logX && mouseX <= logX + logW && mouseY >= logY && mouseY <= logY + logH) {
-        canvas.style.cursor = 'pointer';
-      } else {
-        canvas.style.cursor = 'default';
-      }
-    };
-    canvas.addEventListener('mousemove', this._logMoveHandler);
   }
 
   // ═══════════════════════════════════════════════════
@@ -795,17 +739,11 @@ export class BattleScene extends Phaser.Scene {
     });
     if (this.cursor) this.cursor.setVisible(false);
     if (this.menuTooltip) this.menuTooltip.setVisible(false);
-    if (this.logExpandLabel) this.logExpandLabel.setVisible(false);
-    if (this.logIndicator) this.logIndicator.setVisible(false);
   }
 
   _enableMenu() {
     if (this.cursor) this.cursor.setVisible(true);
     if (this.menuTooltip) this.menuTooltip.setVisible(true);
-    if (this._hasAttacked) {
-      if (this.logExpandLabel) this.logExpandLabel.setVisible(true);
-      if (this.logIndicator) this.logIndicator.setVisible(true);
-    }
     this.selectMenuItem(this.selectedMenuItem);
   }
 
@@ -2487,14 +2425,6 @@ Summary: ${fallbackSummary}`;
     if (this._logWheelHandler) {
       canvas.removeEventListener('wheel', this._logWheelHandler);
       this._logWheelHandler = null;
-    }
-    if (this._logClickHandler) {
-      canvas.removeEventListener('click', this._logClickHandler);
-      this._logClickHandler = null;
-    }
-    if (this._logMoveHandler) {
-      canvas.removeEventListener('mousemove', this._logMoveHandler);
-      this._logMoveHandler = null;
     }
   }
 
