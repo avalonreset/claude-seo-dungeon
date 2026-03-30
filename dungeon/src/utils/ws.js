@@ -151,6 +151,18 @@ export class BridgeClient {
   }
 
   /**
+   * Send log lines to Haiku for RPG narration.
+   */
+  narrate(logLines) {
+    return new Promise((resolve, reject) => {
+      try { this._ensureOpen(); } catch (e) { return reject(e); }
+      const id = ++this.requestId;
+      this.handlers.set(id, { resolve, reject });
+      this.ws.send(JSON.stringify({ id, type: 'narrate', command: logLines }));
+    });
+  }
+
+  /**
    * Cancel a running request by its ID.
    */
   cancel(id) {

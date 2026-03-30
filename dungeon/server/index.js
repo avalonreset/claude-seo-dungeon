@@ -100,6 +100,14 @@ wss.on('connection', (ws) => {
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
         console.log(`Commit done in ${fixCwd}`);
 
+      } else if (type === 'narrate') {
+        const result = await runClaude(command, (chunk) => {
+          safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
+        }, undefined, id, 'claude-haiku-4-5-20251001');
+        activeProcesses.delete(id);
+        safeSend(JSON.stringify({ id, type: 'result', data: result }));
+        console.log(`Narration done`);
+
       } else {
         const result = await runClaude(command, (chunk) => {
           safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));

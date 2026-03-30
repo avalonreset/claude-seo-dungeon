@@ -1620,14 +1620,15 @@ export class BattleScene extends Phaser.Scene {
         : this.issue.description
     };
 
-    // 2. Send to Claude — stream output into battle log in real-time
+    // 2. Send to Claude — stream raw output to guild ledger only
     try {
       const model = this.game.characterConfig?.model;
+      const rawLines = [];
       const result = await bridge.fix(issueWithCommand, this.game.projectPath, (stream) => {
         const clean = stream.replace(/[\n\r]+/g, ' ').trim();
         if (clean.length > 0) {
-          // Stream into both the battle log and the guild ledger
-          this.appendLog(clean);
+          rawLines.push(clean);
+          // Raw output goes to guild ledger only — battle log gets narration
           if (this.game.addLog) this.game.addLog(clean);
         }
       }, model);
@@ -1649,8 +1650,9 @@ export class BattleScene extends Phaser.Scene {
       const summary = (fixData && fixData.fixed)
         ? (fixData.summary || 'Claude made changes.')
         : (fixData?.summary || 'Claude analyzed the issue.');
-      const verb = (fixData && fixData.fixed) ? 'strikes' : 'probes';
-      this.setLog(`${this.charName} ${verb}! ${summary} Attack again or VANQUISH when done.`);
+
+      // 5. Narrate the attack via Haiku — RPG-style battle log
+      this._narrateAttack(rawLines, summary);
 
     } catch (err) {
       // Fix failed — stop channeling, no slash, no damage
@@ -1666,6 +1668,31 @@ export class BattleScene extends Phaser.Scene {
     this._hasAttacked = true;
     this.isPlayerTurn = true;
     this._enableMenu();
+  }
+
+  _narrateAttack(rawLines, fallbackSummary) {
+    const demonName = this.issue.title;
+    const charName = this.charName;
+    const severity = this.issue.severity;
+    const condensed = rawLines.slice(-15).join('\n');
+
+    const prompt = `You are the narrator of a dark fantasy dungeon crawler. The warrior "${charName}" just attacked the demon "${demonName}" (severity: ${severity}). Below is what actually happened during the attack — technical SEO actions performed by Claude. Write 2-3 short, grim sentences narrating this as a battle action. Stay relevant to the actual work described. No humor, no corniness. Dark, terse, atmospheric. Like a Souls game narrator. Do NOT use markdown. Plain text only.
+
+What happened:
+${condensed}
+
+Summary: ${fallbackSummary}`;
+
+    bridge.narrate(prompt).then(result => {
+      const text = typeof result === 'string' ? result
+        : (result?.data?.raw || result?.data?.result || result?.raw || fallbackSummary);
+      // Extract clean text from Claude's response
+      const clean = text.replace(/```[\s\S]*?```/g, '').replace(/[*#`]/g, '').trim();
+      const narration = clean.split('\n').filter(l => l.trim()).slice(0, 4).join(' ');
+      this.setLog(narration || `${charName} strikes! ${fallbackSummary}`);
+    }).catch(() => {
+      this.setLog(`${charName} strikes! ${fallbackSummary} Attack again or VANQUISH when done.`);
+    });
   }
 
   async slashAnimation() {
