@@ -447,12 +447,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Auto-resize textarea as user types
+  // Auto-resize textarea as user types — push log content up
+  const logContent = document.getElementById('log-content');
   const autoResize = () => {
     logInput.style.height = 'auto';
     logInput.style.height = Math.min(logInput.scrollHeight, 120) + 'px';
-    // Show scrollbar only when maxed out
     logInput.style.overflowY = logInput.scrollHeight > 120 ? 'auto' : 'hidden';
+    // Keep log scrolled to bottom as input grows
+    if (logContent) logContent.scrollTop = logContent.scrollHeight;
   };
   logInput.addEventListener('input', autoResize);
 
