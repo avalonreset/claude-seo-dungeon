@@ -784,6 +784,11 @@ export function initActivityLog() {
       animation: none !important;
       filter: brightness(1) !important;
     }
+    .ledger-idle .log-icon {
+      animation: none !important;
+      filter: none !important;
+      opacity: 0.6 !important;
+    }
     .ledger-idle .log-dots {
       display: none !important;
     }
