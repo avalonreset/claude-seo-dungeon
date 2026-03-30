@@ -406,45 +406,73 @@ document.addEventListener('DOMContentLoaded', () => {
   connectBridge();
   setTimeout(() => domainInput.focus(), 300);
 
-  // ── Ledger Terminal ─────────────────────────
+  // ── Ledger Terminal (persistent interactive session) ─────
   const logInput = document.getElementById('log-input');
   const logInputBar = document.getElementById('log-input-bar');
   const logCancel = document.getElementById('log-cancel');
-  let ledgerRequestId = null;
   let lastEscTime = 0;
+  let interactiveRunning = false;
 
-  const sendLedgerCommand = async (text) => {
+  // Listen for interactive session events
+  bridge.onInteractive((type, data) => {
+    if (type === 'stream') {
+      const clean = (data || '').replace(/[\n\r]+/g, ' ').trim();
+      if (clean.length > 0) addLog(clean);
+    } else if (type === 'done') {
+      interactiveRunning = false;
+      logInputBar.classList.remove('running');
+      hideLoadingIndicator();
+      addLog('[Complete]');
+    } else if (type === 'usage') {
+      // Context window tracking
+      if (data) {
+        const inputTokens = data.input_tokens || 0;
+        const outputTokens = data.output_tokens || 0;
+        const cacheRead = data.cache_read_input_tokens || 0;
+        const cacheCreate = data.cache_creation_input_tokens || 0;
+        const total = inputTokens + outputTokens;
+        const header = document.getElementById('log-header');
+        if (header) {
+          let meter = document.getElementById('context-meter');
+          if (!meter) {
+            meter = document.createElement('div');
+            meter.id = 'context-meter';
+            meter.style.cssText = 'font-size:10px; color:#606078; text-align:center; padding:2px 0; font-family:"JetBrains Mono",monospace; letter-spacing:1px;';
+            header.appendChild(meter);
+          }
+          const pct = Math.min(100, Math.round((inputTokens / 200000) * 100));
+          const barLen = 20;
+          const filled = Math.round(pct / 100 * barLen);
+          const bar = '█'.repeat(filled) + '░'.repeat(barLen - filled);
+          const color = pct > 80 ? '#cc4444' : pct > 50 ? '#d4af37' : '#60c060';
+          meter.innerHTML = `<span style="color:${color}">${bar}</span> ${pct}% · ${Math.round(inputTokens/1000)}k in · ${Math.round(outputTokens/1000)}k out`;
+        }
+      }
+    } else if (type === 'interactive_started') {
+      addLog('Session started.');
+    } else if (type === 'interactive_closed') {
+      interactiveRunning = false;
+      logInputBar.classList.remove('running');
+      hideLoadingIndicator();
+    }
+  });
+
+  const sendLedgerCommand = (text) => {
     if (!text.trim() || !bridge.connected) return;
     logInput.value = '';
     logInputBar.classList.add('running');
     showLoadingIndicator();
     addLog('> ' + text);
+    interactiveRunning = true;
 
-    try {
-      const projectPath = document.getElementById('path-input')?.value?.trim() || '.';
-      const model = window.selectedCharacter?.model || 'claude-sonnet-4-6';
+    const projectPath = document.getElementById('path-input')?.value?.trim() || '.';
+    const model = window.selectedCharacter?.model || 'claude-sonnet-4-6';
 
-      ledgerRequestId = bridge.requestId + 1;
-      const result = await bridge.send(text, {
-        onStream: (chunk) => {
-          const clean = chunk.replace(/[\n\r]+/g, ' ').trim();
-          if (clean.length > 0) addLog(clean);
-        }
-      });
-
-      // Show result if there's a summary
-      if (result?.data?.summary) {
-        addLog(result.data.summary);
-      }
-    } catch (err) {
-      if (err.message !== 'Cancelled by user') {
-        addLog('Error: ' + (err.message || 'unknown'));
-      }
-    } finally {
-      ledgerRequestId = null;
-      logInputBar.classList.remove('running');
-      hideLoadingIndicator();
+    // Auto-start interactive session if needed, then send
+    if (!bridge.interactiveActive) {
+      bridge.startInteractive(projectPath, model);
     }
+    bridge.sendInteractive(text);
   };
 
   // Auto-resize textarea as user types — push log content up
@@ -467,10 +495,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (e.key === 'Escape') {
       const now = Date.now();
-      if (now - lastEscTime < 500 && ledgerRequestId) {
-        bridge.cancel(ledgerRequestId);
-        addLog('Cancelled.');
+      if (now - lastEscTime < 500 && interactiveRunning) {
+        // Escape in interactive mode — send Escape key to Claude
+        bridge.sendInteractive('\x1b');
+        addLog('Interrupted.');
         logInputBar.classList.remove('running');
+        interactiveRunning = false;
+        hideLoadingIndicator();
       }
       lastEscTime = now;
     }
@@ -481,12 +512,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') {
       const now = Date.now();
       if (now - lastEscTime < 500) {
-        // Cancel ledger terminal command
-        if (ledgerRequestId) {
-          bridge.cancel(ledgerRequestId);
-          addLog('Cancelled.');
+        // Cancel interactive session activity
+        if (interactiveRunning) {
+          bridge.sendInteractive('\x1b');
+          addLog('Interrupted.');
           logInputBar.classList.remove('running');
-          ledgerRequestId = null;
+          interactiveRunning = false;
+          hideLoadingIndicator();
         }
         // Cancel active battle attack
         if (game) {
@@ -506,11 +538,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   logCancel.addEventListener('click', () => {
-    if (ledgerRequestId) {
-      bridge.cancel(ledgerRequestId);
-      addLog('Cancelled.');
+    if (interactiveRunning) {
+      bridge.sendInteractive('\x1b');
+      addLog('Interrupted.');
       logInputBar.classList.remove('running');
-      ledgerRequestId = null;
+      interactiveRunning = false;
+      hideLoadingIndicator();
     }
     // Also cancel battle/audit
     if (game) {

@@ -11,6 +11,8 @@ export class BridgeClient {
     this._url = 'ws://localhost:3001';
     this._reconnectTimer = null;
     this._onStatusChange = []; // callbacks: (connected: boolean) => void
+    this._onInteractive = []; // callbacks: (type, data) => void
+    this.interactiveActive = false;
   }
 
   /** Register a callback that fires whenever connection status changes. */
@@ -55,6 +57,24 @@ export class BridgeClient {
       this.ws.onmessage = (event) => {
         let data;
         try { data = JSON.parse(event.data); } catch (e) { console.warn('WS: bad JSON', e); return; }
+        // Interactive session events
+        if (data.type === 'interactive_stream') {
+          this._onInteractive.forEach(fn => { try { fn('stream', data.content); } catch(_) {} });
+          return;
+        }
+        if (data.type === 'interactive_done') {
+          this._onInteractive.forEach(fn => { try { fn('done', data.result); } catch(_) {} });
+          return;
+        }
+        if (data.type === 'interactive_usage') {
+          this._onInteractive.forEach(fn => { try { fn('usage', data.usage); } catch(_) {} });
+          return;
+        }
+        if (data.type === 'interactive_started' || data.type === 'interactive_closed') {
+          this._onInteractive.forEach(fn => { try { fn(data.type); } catch(_) {} });
+          return;
+        }
+
         const handler = this.handlers.get(data.id);
         if (handler) {
           if (data.type === 'stream') {
@@ -160,6 +180,32 @@ export class BridgeClient {
       this.handlers.set(id, { resolve, reject });
       this.ws.send(JSON.stringify({ id, type: 'narrate', command: logLines }));
     });
+  }
+
+  /** Register a callback for interactive session events. */
+  onInteractive(fn) {
+    this._onInteractive.push(fn);
+  }
+
+  /** Start a persistent interactive Claude session. */
+  startInteractive(projectPath, model) {
+    this._ensureOpen();
+    this.interactiveActive = true;
+    this.ws.send(JSON.stringify({ type: 'interactive_start', projectPath, model }));
+  }
+
+  /** Send a message to the interactive session. */
+  sendInteractive(text) {
+    this._ensureOpen();
+    this.ws.send(JSON.stringify({ type: 'interactive_send', command: text }));
+  }
+
+  /** Stop the interactive session. */
+  stopInteractive() {
+    this.interactiveActive = false;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: 'interactive_stop' }));
+    }
   }
 
   /**

@@ -63,6 +63,37 @@ wss.on('connection', (ws) => {
     if (model) console.log(`  Model: ${model}`);
     if (projectPath) console.log(`  Project: ${projectPath}`);
 
+    // Interactive session — persistent CLI
+    if (type === 'interactive_start') {
+      if (interactiveProc) {
+        interactiveProc.kill('SIGTERM');
+        interactiveProc = null;
+      }
+      const cwd = projectPath || PROJECT_ROOT;
+      interactiveProc = spawnInteractive(cwd, model);
+      safeSend(JSON.stringify({ type: 'interactive_started' }));
+      return;
+    }
+
+    if (type === 'interactive_send') {
+      if (!interactiveProc) {
+        // Auto-start session if not running
+        const cwd = projectPath || PROJECT_ROOT;
+        interactiveProc = spawnInteractive(cwd, model);
+      }
+      interactiveProc.stdin.write(command + '\n');
+      return;
+    }
+
+    if (type === 'interactive_stop') {
+      if (interactiveProc) {
+        interactiveProc.kill('SIGTERM');
+        interactiveProc = null;
+      }
+      safeSend(JSON.stringify({ type: 'interactive_closed' }));
+      return;
+    }
+
     // Cancel — kill the child process for a given request
     if (type === 'cancel') {
       const proc = activeProcesses.get(id);
@@ -121,8 +152,104 @@ wss.on('connection', (ws) => {
     }
   });
 
+  // ── Persistent Interactive Claude Session ──────────────
+  let interactiveProc = null;
+  let interactiveBuffer = '';
+
+  function spawnInteractive(cwd, model) {
+    const cliJs = path.join(process.env.APPDATA, 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
+    const modelName = model || 'claude-sonnet-4-6';
+    console.log(`  Spawning interactive session (model: ${modelName}, cwd: ${cwd})`);
+    const proc = spawn(process.execPath, [cliJs, '--model', modelName, '--output-format', 'stream-json', '--verbose'], {
+      cwd: cwd,
+      env: { ...process.env },
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+
+    proc.stdout.on('data', (data) => {
+      interactiveBuffer += data.toString();
+      const lines = interactiveBuffer.split('\n');
+      interactiveBuffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const event = JSON.parse(line);
+
+          if (event.type === 'assistant' && event.message) {
+            const content = event.message.content;
+            if (Array.isArray(content)) {
+              for (const block of content) {
+                if (block.type === 'text' && block.text) {
+                  const textLines = block.text.split('\n').filter(l => l.trim());
+                  for (const tl of textLines) {
+                    safeSend(JSON.stringify({ type: 'interactive_stream', content: tl.trim() }));
+                  }
+                }
+                if (block.type === 'tool_use') {
+                  const input = block.input || {};
+                  let detail = input.url || input.query || input.command || input.pattern || input.file_path || input.prompt || input.description || '';
+                  const toolMsg = detail ? `[${block.name}] ${detail}` : `[${block.name}]`;
+                  safeSend(JSON.stringify({ type: 'interactive_stream', content: toolMsg }));
+                }
+              }
+            }
+            // Send usage/context info if available
+            if (event.message.usage) {
+              safeSend(JSON.stringify({ type: 'interactive_usage', usage: event.message.usage }));
+            }
+          } else if (event.type === 'tool_result' || event.type === 'tool_output') {
+            const content = event.content || event.output;
+            if (typeof content === 'string' && content.trim()) {
+              const preview = content.trim().split('\n')[0];
+              if (preview.length > 5) safeSend(JSON.stringify({ type: 'interactive_stream', content: preview }));
+            } else if (Array.isArray(content)) {
+              for (const block of content) {
+                if (block.type === 'text' && block.text) {
+                  const preview = block.text.trim().split('\n')[0];
+                  if (preview.length > 5) safeSend(JSON.stringify({ type: 'interactive_stream', content: preview }));
+                }
+              }
+            }
+          } else if (event.type === 'result') {
+            safeSend(JSON.stringify({ type: 'interactive_done', result: event.result }));
+            // Send usage from result if available
+            if (event.usage) {
+              safeSend(JSON.stringify({ type: 'interactive_usage', usage: event.usage }));
+            }
+          } else if (event.type === 'system' && event.message) {
+            safeSend(JSON.stringify({ type: 'interactive_stream', content: event.message }));
+          }
+        } catch (e) {
+          // Not valid JSON — might be a plain text line from interactive mode
+          const trimmed = line.trim();
+          if (trimmed.length > 2 && !trimmed.startsWith('{')) {
+            safeSend(JSON.stringify({ type: 'interactive_stream', content: trimmed }));
+          }
+        }
+      }
+    });
+
+    proc.stderr.on('data', (data) => {
+      const msg = data.toString().trim();
+      if (msg) console.log(`  [interactive stderr] ${msg}`);
+    });
+
+    proc.on('close', (code) => {
+      console.log(`  Interactive session ended (exit ${code})`);
+      interactiveProc = null;
+      safeSend(JSON.stringify({ type: 'interactive_closed' }));
+    });
+
+    return proc;
+  }
+
   ws.on('close', () => {
     clearInterval(pingInterval);
+    if (interactiveProc) {
+      interactiveProc.kill('SIGTERM');
+      interactiveProc = null;
+    }
     console.log('Game client disconnected');
   });
 });
