@@ -1624,14 +1624,16 @@ export class BattleScene extends Phaser.Scene {
     try {
       const model = this.game.characterConfig?.model;
       const rawLines = [];
+      // Track request ID so Escape can cancel mid-attack
+      this._activeRequestId = bridge.requestId + 1;
       const result = await bridge.fix(issueWithCommand, this.game.projectPath, (stream) => {
         const clean = stream.replace(/[\n\r]+/g, ' ').trim();
         if (clean.length > 0) {
           rawLines.push(clean);
-          // Raw output goes to guild ledger only — battle log gets narration
           if (this.game.addLog) this.game.addLog(clean);
         }
       }, model);
+      this._activeRequestId = null;
 
       // 3. Claude finished — stop channeling, THEN play the slash
       this._stopChanneling();
@@ -1643,7 +1645,7 @@ export class BattleScene extends Phaser.Scene {
       // 4. Deal damage and show results (clamp so only VANQUISH can kill)
       const fixData = result.data || result;
       const rawDamage = Math.floor(this.demonMaxHp * 0.05);
-      const maxAllowed = this.demonHp - 1; // Leave at least 1 HP
+      const maxAllowed = this.demonHp - 1;
       const damage = Math.min(rawDamage, Math.max(0, maxAllowed));
       if (damage > 0) this.dealDamage(damage);
 
@@ -1651,16 +1653,22 @@ export class BattleScene extends Phaser.Scene {
         ? (fixData.summary || 'Claude made changes.')
         : (fixData?.summary || 'Claude analyzed the issue.');
 
-      // 5. Narrate the attack via Haiku — RPG-style battle log
+      // 5. Narrate the attack via Haiku
       this._narrateAttack(rawLines, summary);
 
     } catch (err) {
-      // Fix failed — stop channeling, no slash, no damage
+      this._activeRequestId = null;
       this._stopChanneling();
-      SFX.play('spellFizzle');
       this.streamText.setText('');
-      this.setLog(`The spell fizzles... ${err.message || 'Connection error'}. Try again.`);
-      if (this.game.addLog) this.game.addLog('Fix error: ' + (err.message || 'unknown'));
+      if (err.message === 'Cancelled by user') {
+        SFX.play('spellFizzle');
+        this.setLog(`${this.charName} breaks concentration. The spell dissipates.`);
+        if (this.game.addLog) this.game.addLog('Cancelled.');
+      } else {
+        SFX.play('spellFizzle');
+        this.setLog(`The spell fizzles... ${err.message || 'Connection error'}. Try again.`);
+        if (this.game.addLog) this.game.addLog('Fix error: ' + (err.message || 'unknown'));
+      }
     }
 
     // Turn returns to player — re-enable menu

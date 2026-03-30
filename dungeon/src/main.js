@@ -476,15 +476,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Global Escape handler for cancel
+  // Global Escape handler — double-tap cancels any active Claude operation
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       const now = Date.now();
-      if (now - lastEscTime < 500 && ledgerRequestId) {
-        bridge.cancel(ledgerRequestId);
-        addLog('Cancelled.');
-        logInputBar.classList.remove('running');
-        ledgerRequestId = null;
+      if (now - lastEscTime < 500) {
+        // Cancel ledger terminal command
+        if (ledgerRequestId) {
+          bridge.cancel(ledgerRequestId);
+          addLog('Cancelled.');
+          logInputBar.classList.remove('running');
+          ledgerRequestId = null;
+        }
+        // Cancel active battle attack
+        if (game) {
+          const battleScene = game.scene.getScene('Battle');
+          if (battleScene && battleScene._activeRequestId) {
+            bridge.cancel(battleScene._activeRequestId);
+          }
+        }
+        // Cancel active audit
+        if (bridge.activeAuditId) {
+          bridge.cancel(bridge.activeAuditId);
+          addLog('Audit cancelled.');
+        }
       }
       lastEscTime = now;
     }
@@ -496,6 +511,17 @@ document.addEventListener('DOMContentLoaded', () => {
       addLog('Cancelled.');
       logInputBar.classList.remove('running');
       ledgerRequestId = null;
+    }
+    // Also cancel battle/audit
+    if (game) {
+      const battleScene = game.scene.getScene('Battle');
+      if (battleScene && battleScene._activeRequestId) {
+        bridge.cancel(battleScene._activeRequestId);
+      }
+    }
+    if (bridge.activeAuditId) {
+      bridge.cancel(bridge.activeAuditId);
+      addLog('Audit cancelled.');
     }
   });
 
