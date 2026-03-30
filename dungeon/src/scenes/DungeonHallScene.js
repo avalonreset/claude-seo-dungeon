@@ -602,9 +602,7 @@ export class DungeonHallScene extends Phaser.Scene {
     this.totalDemonListHeight = cumY - LIST_TOP;
 
     sorted.forEach((issue, i) => {
-      this.time.delayedCall(i * 350, () => {
-        this.materializeDemon(issue, i);
-      });
+      this.materializeDemon(issue, i);
     });
   }
 
@@ -653,16 +651,10 @@ export class DungeonHallScene extends Phaser.Scene {
     const spriteScale = SPRITE_SCALES[issue.severity] || 1.0;
     const demonAnimKey = `demon_${issue.severity}_idle`;
     const demon = this.add.sprite(spriteX, centerY, `demon_${issue.severity}_f0`)
-      .setScale(0).setAlpha(0);
+      .setScale(spriteScale).setAlpha(1);
     if (this.anims.exists(demonAnimKey)) {
       demon.play(demonAnimKey);
     }
-
-    this.tweens.add({
-      targets: demon,
-      scaleX: spriteScale, scaleY: spriteScale, alpha: 1,
-      duration: 500, ease: 'Back.easeOut', delay: 100
-    });
     this.tweens.add({
       targets: demon, y: centerY - 3,
       duration: 1200 + index * 80, yoyo: true, repeat: -1,
@@ -690,7 +682,7 @@ export class DungeonHallScene extends Phaser.Scene {
     const badgeW = badgeMeasure.width + badgePadX * 2;
     badgeMeasure.destroy();
 
-    const badgeBg = this.add.graphics().setAlpha(0);
+    const badgeBg = this.add.graphics();
     badgeBg.fillStyle(sev.hex, 0.2);
     badgeBg.fillRoundedRect(textLeftX, badgeY, badgeW, badgeH, 8);
     badgeBg.lineStyle(1, sev.hex, 0.5);
@@ -700,9 +692,7 @@ export class DungeonHallScene extends Phaser.Scene {
       fontFamily: HEADER_FONT, fontSize: '9px', color: sev.text,
       shadow: { offsetX: 0, offsetY: 0, color: sev.glow, blur: 6, fill: true, stroke: true },
       resolution: window.GAME_DPR
-    }).setOrigin(0.5).setAlpha(0);
-
-    this.tweens.add({ targets: [badge, badgeBg], alpha: 1, duration: 400, delay: 200 });
+    }).setOrigin(0.5);
 
     // =========================
     // LAYER 4: ISSUE TITLE (below badge, full width, no truncation)
@@ -714,9 +704,7 @@ export class DungeonHallScene extends Phaser.Scene {
       shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 3, fill: true },
       wordWrap: { width: titleMaxW, useAdvancedWrap: true },
       resolution: window.GAME_DPR
-    }).setAlpha(0);
-
-    this.tweens.add({ targets: title, alpha: 1, duration: 400, delay: 300 });
+    });
 
     // =========================
     // LAYER 5: DESCRIPTION (below title, full text, no truncation)
@@ -733,8 +721,7 @@ export class DungeonHallScene extends Phaser.Scene {
         shadow: { offsetX: 1, offsetY: 1, color: '#000000', blur: 5, fill: true },
         wordWrap: { width: descMaxW, useAdvancedWrap: true },
         resolution: window.GAME_DPR
-      }).setAlpha(0);
-      this.tweens.add({ targets: desc, alpha: 1, duration: 400, delay: 350 });
+      });
     }
 
     // =========================
@@ -747,7 +734,7 @@ export class DungeonHallScene extends Phaser.Scene {
       const catTagX = rowX + rowW - catTagW - 10;
       const catTagY = y + rowH - 24;
 
-      catBg = this.add.graphics().setAlpha(0);
+      catBg = this.add.graphics();
       catBg._catX = catTagX;
       catBg._catY = catTagY;
       catBg._catW = catTagW;
@@ -760,9 +747,7 @@ export class DungeonHallScene extends Phaser.Scene {
         fontFamily: HEADER_FONT, fontSize: '10px', color: '#c0ffff',
         shadow: { offsetX: 0, offsetY: 0, color: '#000000', blur: 4, fill: true },
         resolution: window.GAME_DPR
-      }).setOrigin(0.5).setAlpha(0);
-
-      this.tweens.add({ targets: [cat, catBg], alpha: 1, duration: 400, delay: 380 });
+      }).setOrigin(0.5);
     }
 
     // =========================
@@ -777,9 +762,7 @@ export class DungeonHallScene extends Phaser.Scene {
       letterSpacing: 3,
       shadow: { offsetX: 0, offsetY: 0, color: sev.glow, blur: 8, fill: true, stroke: true },
       resolution: window.GAME_DPR
-    }).setOrigin(1, 0).setAlpha(0);
-
-    this.tweens.add({ targets: threat, alpha: 1, duration: 400, delay: 500 });
+    }).setOrigin(1, 0);
 
     // =========================
     // INTERACTIVE HIT AREA (on top for click detection, but invisible)
@@ -845,19 +828,12 @@ export class DungeonHallScene extends Phaser.Scene {
       });
     });
 
-    // Fade in row background
-    this.tweens.add({
-      targets: rowBg,
-      alpha: { from: 0, to: 1 },
-      duration: 600,
-      onComplete: () => {
-        rowBg.clear();
-        rowBg.fillStyle(0x12121e, 0.7);
-        rowBg.fillRoundedRect(rowX, y, rowW, rowH, 6);
-        rowBorder.lineStyle(1, 0x1e1e30, 0.3);
-        rowBorder.strokeRoundedRect(rowX, y, rowW, rowH, 6);
-      }
-    });
+    // Row background — instant
+    rowBg.clear();
+    rowBg.fillStyle(0x12121e, 0.7);
+    rowBg.fillRoundedRect(rowX, y, rowW, rowH, 6);
+    rowBorder.lineStyle(1, 0x1e1e30, 0.3);
+    rowBorder.strokeRoundedRect(rowX, y, rowW, rowH, 6);
 
     // Screen shake for critical (first visit only — gets jarring on repeat)
     if (issue.severity === 'critical' && !this.game._dungeonHallShakeDone) {
@@ -868,23 +844,21 @@ export class DungeonHallScene extends Phaser.Scene {
       });
     }
 
-    // Defeated overlay
+    // Defeated overlay — instant, no delay
     if (issue.defeated) {
-      this.time.delayedCall(700, () => {
-        const defeatOverlay = this.add.graphics();
-        defeatOverlay.fillStyle(0x000000, 0.7);
-        defeatOverlay.fillRoundedRect(rowX, y, rowW, rowH, 6);
-        const defeatText = this.add.text(400, centerY, 'DEFEATED', {
-          fontFamily: HEADER_FONT, fontSize: '14px', color: COLORS.green,
-          shadow: { offsetX: 0, offsetY: 0, color: '#40c040', blur: 14, fill: true, stroke: true },
-          resolution: window.GAME_DPR
-        }).setOrigin(0.5);
-        const line = this.add.graphics();
-        line.lineStyle(1, 0x40c040, 0.4);
-        line.lineBetween(rowX + 20, centerY, rowX + rowW - 20, centerY);
-        this.demonContainer.add([defeatOverlay, defeatText, line]);
-        hitArea.disableInteractive();
-      });
+      const defeatOverlay = this.add.graphics();
+      defeatOverlay.fillStyle(0x000000, 0.7);
+      defeatOverlay.fillRoundedRect(rowX, y, rowW, rowH, 6);
+      const defeatText = this.add.text(400, centerY, 'DEFEATED', {
+        fontFamily: HEADER_FONT, fontSize: '14px', color: COLORS.green,
+        shadow: { offsetX: 0, offsetY: 0, color: '#40c040', blur: 14, fill: true, stroke: true },
+        resolution: window.GAME_DPR
+      }).setOrigin(0.5);
+      const line = this.add.graphics();
+      line.lineStyle(1, 0x40c040, 0.4);
+      line.lineBetween(rowX + 20, centerY, rowX + rowW - 20, centerY);
+      this.demonContainer.add([defeatOverlay, defeatText, line]);
+      hitArea.disableInteractive();
     }
 
     // Add to container — ORDER MATTERS for z-layering:
