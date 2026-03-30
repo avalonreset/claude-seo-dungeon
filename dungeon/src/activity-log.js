@@ -31,6 +31,7 @@ const ICONS = {
   write:    '\u2741',          // ❁ flower — inscribing/writing
   bash:     '\u2623',          // ☣ biohazard — executing commands
   skill:    '\u269D',          // ⚝ outlined star — skill invocation
+  user:     '\u276F',          // ❯ chevron — user prompt
   error:    '\u2620',          // ☠ skull — something died
   complete: '\u2726',          // ✦ four-pointed star — victory
   status:   '\u25C8',          // ◈ diamond — status/progress
@@ -57,6 +58,7 @@ function classify(text) {
   if (text.startsWith('[TodoWrite]') || text.startsWith('[TaskCreate]')) return 'status';
   if (text.startsWith('[')) return 'tool';
 
+  if (text.startsWith('> ')) return 'user';
   if (text.includes('[Complete]') || text.includes('omplete')) return 'complete';
 
   if (/^(Audit|Fix|Score|Found|Scanning|Initializing|Subagent)/i.test(text)) return 'status';
@@ -315,7 +317,19 @@ export function initActivityLog() {
     .icon-demon   { color: #ff4040; }
     .icon-domain  { color: #99ccff; }
     .icon-score   { color: #f0d860; }
+    .icon-user    { color: #d4af37; }
     .icon-text    { color: #808898; }
+
+    /* User prompt lines — distinct gold color */
+    .log-line.user .log-text {
+      color: #d4af37;
+      font-weight: 600;
+    }
+    .log-line.user {
+      border-left: 2px solid rgba(212, 175, 55, 0.4);
+      padding-left: 8px;
+      margin-left: -2px;
+    }
 
     /* ═══════════════════════════════════════════════
        PER-CATEGORY ICON ANIMATIONS
