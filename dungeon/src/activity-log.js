@@ -806,6 +806,8 @@ export function addLog(msg) {
   if (clean === '[working...]') return;
   if (clean.startsWith('{') && clean.endsWith('}') && clean.includes('":"')) return;
   if (clean.startsWith('[{') && clean.includes('":"')) return;
+  if (/^`{3}\w*$/.test(clean)) return;  // markdown code fences (```json, ```)
+  if (clean === '```') return;
 
   const cls = classify(clean);
   queue.push({ text: clean, cls });
