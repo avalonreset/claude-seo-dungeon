@@ -499,7 +499,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Otherwise use the interactive session
+    // Outside battle — use bridge.send() which spawns claude -p (reliable)
     logInputBar.classList.add('running');
     showLoadingIndicator();
     addLog('> ' + text);
@@ -510,12 +510,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const projectPath = document.getElementById('path-input')?.value?.trim() || '.';
     const model = window.selectedCharacter?.model || 'claude-sonnet-4-6';
 
-    if (!bridge.interactiveActive) {
-      bridge.startInteractive(projectPath, model);
-      setTimeout(() => bridge.sendInteractive(text), 1500);
-    } else {
-      bridge.sendInteractive(text);
-    }
+    (async () => {
+      try {
+        const result = await bridge.send(text, {
+          onStream: (chunk) => {
+            lastStreamTime = Date.now();
+            const clean = chunk.replace(/[\n\r]+/g, ' ').trim();
+            if (clean.length > 0) addLog(clean);
+          }
+        });
+        if (result?.data?.summary) addLog(result.data.summary);
+      } catch (err) {
+        if (err.message !== 'Cancelled by user') {
+          addLog('Error: ' + (err.message || 'unknown'));
+        }
+      } finally {
+        resetLoadingState();
+      }
+    })();
   };
 
   // Auto-resize textarea as user types — push log content up
