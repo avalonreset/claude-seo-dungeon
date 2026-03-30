@@ -457,6 +457,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  let interactiveTimeout = null;
+  let lastStreamTime = 0;
+
+  const resetLoadingState = () => {
+    interactiveRunning = false;
+    logInputBar.classList.remove('running');
+    hideLoadingIndicator();
+    if (interactiveTimeout) { clearTimeout(interactiveTimeout); interactiveTimeout = null; }
+  };
+
+  // Watchdog: if no stream data arrives for 30s, assume it's done/dead
+  const startWatchdog = () => {
+    if (interactiveTimeout) clearTimeout(interactiveTimeout);
+    interactiveTimeout = setTimeout(() => {
+      if (interactiveRunning) {
+        resetLoadingState();
+      }
+    }, 30000);
+  };
+
+  // Reset watchdog whenever we get stream data
+  bridge.onInteractive((type) => {
+    if (type === 'stream') {
+      lastStreamTime = Date.now();
+      if (interactiveTimeout) clearTimeout(interactiveTimeout);
+      startWatchdog(); // restart the timer
+    }
+  });
+
   const sendLedgerCommand = (text) => {
     if (!text.trim() || !bridge.connected) return;
     logInput.value = '';
@@ -464,15 +493,19 @@ document.addEventListener('DOMContentLoaded', () => {
     showLoadingIndicator();
     addLog('> ' + text);
     interactiveRunning = true;
+    lastStreamTime = Date.now();
+    startWatchdog();
 
     const projectPath = document.getElementById('path-input')?.value?.trim() || '.';
     const model = window.selectedCharacter?.model || 'claude-sonnet-4-6';
 
-    // Auto-start interactive session if needed, then send
     if (!bridge.interactiveActive) {
       bridge.startInteractive(projectPath, model);
+      // Give the session a moment to start before sending
+      setTimeout(() => bridge.sendInteractive(text), 1500);
+    } else {
+      bridge.sendInteractive(text);
     }
-    bridge.sendInteractive(text);
   };
 
   // Auto-resize textarea as user types — push log content up
