@@ -883,26 +883,32 @@ export class BattleScene extends Phaser.Scene {
         line.style.fontWeight = 'bold';
         line.style.borderLeft = '2px solid rgba(212,175,55,0.5)';
         line.style.paddingLeft = '6px';
-      } else if (msg.includes('channels') || msg.includes('braces') || msg.includes('strikes')) {
+      } else if (msg.includes('channels') || msg.includes('braces')) {
         // Battle action — bright white
         line.style.color = '#f0f0ff';
         line.style.fontWeight = '600';
-      } else if (msg.includes('demon') || msg.includes('Demon') || msg.includes('damage')) {
-        // Demon action — red
+      } else if (/^(The demon|Demon deals|demon retaliates)/i.test(msg)) {
+        // Demon action — only explicit demon turn messages, not narration
         line.style.color = '#e05050';
-      } else if (msg.includes('VANQUISH') || msg.includes('VICTORY') || msg.includes('defeated')) {
+      } else if (msg.includes('VANQUISH') || msg.includes('VICTORY')) {
         // Victory — green-gold
         line.style.color = '#60dd60';
         line.style.fontWeight = 'bold';
+      } else if (msg.includes('spell fizzles') || msg.startsWith('ERROR')) {
+        // Actual errors — red
+        line.style.color = '#e05050';
+      } else if (msg.length > 60) {
+        // Narration (long text from Haiku) — soft cyan
+        line.style.color = '#88bbcc';
+        line.style.fontStyle = 'italic';
       }
 
       line.textContent = msg;
       this._battleLogEl.appendChild(line);
 
-      // Auto-scroll unless user scrolled up
+      // Always scroll to bottom when new content arrives
       const el = this._battleLogEl;
-      const nearBottom = (el.scrollHeight - el.scrollTop - el.clientHeight) < 40;
-      if (nearBottom) el.scrollTop = el.scrollHeight;
+      el.scrollTop = el.scrollHeight;
     }
 
 
