@@ -226,6 +226,9 @@ export function initActivityLog() {
   logEl = document.getElementById('log-content');
   if (!logEl) return;
 
+  // Start in idle state — no animations until something is actively loading
+  logEl.classList.add('ledger-idle');
+
   // Track user scroll intent — if they scroll up, stop auto-scrolling
   logEl.addEventListener('scroll', () => {
     userScrolledUp = !isNearBottom();
