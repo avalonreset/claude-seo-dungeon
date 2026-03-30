@@ -447,15 +447,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Auto-resize textarea as user types
+  const autoResize = () => {
+    logInput.style.height = 'auto';
+    logInput.style.height = Math.min(logInput.scrollHeight, 120) + 'px';
+    // Show scrollbar only when maxed out
+    logInput.style.overflowY = logInput.scrollHeight > 120 ? 'auto' : 'hidden';
+  };
+  logInput.addEventListener('input', autoResize);
+
   logInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && logInput.value.trim()) {
+    // Enter submits, Shift+Enter adds newline
+    if (e.key === 'Enter' && !e.shiftKey && logInput.value.trim()) {
       e.preventDefault();
       sendLedgerCommand(logInput.value);
+      logInput.style.height = 'auto'; // reset height after send
     }
     if (e.key === 'Escape') {
       const now = Date.now();
       if (now - lastEscTime < 500 && ledgerRequestId) {
-        // Double-tap Escape = cancel
         bridge.cancel(ledgerRequestId);
         addLog('Cancelled.');
         logInputBar.classList.remove('running');

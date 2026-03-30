@@ -396,7 +396,14 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
       caret-color: #d4af37;
+      resize: none;
+      overflow-y: hidden;
+      line-height: 1.5;
+      max-height: 120px;
+      scrollbar-width: none;
     }
+
+    #log-input::-webkit-scrollbar { width: 0; }
 
     #log-input::placeholder {
       color: #353548;
@@ -506,7 +513,7 @@
     </div>
     <div id="log-input-bar">
       <span id="log-input-prompt">&gt;</span>
-      <input type="text" id="log-input" placeholder="Talk to Claude..." autocomplete="off" spellcheck="false">
+      <textarea id="log-input" placeholder="Talk to Claude..." autocomplete="off" spellcheck="false" rows="1"></textarea>
       <button id="log-cancel" title="Cancel (Esc x2)">&#x25A0;</button>
     </div>
   </div>
