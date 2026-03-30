@@ -1216,16 +1216,8 @@ export class BattleScene extends Phaser.Scene {
     const overlay = document.createElement('div');
     overlay.id = 'attack-prompt-overlay';
 
-    // Build battle log content for the overlay
-    const logContent = this.battleLogHistory.slice(-10).join('\n');
-
     overlay.innerHTML = `
       <div class="attack-prompt-backdrop"></div>
-      <div class="attack-overlay-issue-panel">
-        <div class="attack-overlay-cat">${this.issue.category.toUpperCase()}</div>
-        <div class="attack-overlay-desc">${this.issue.description}</div>
-      </div>
-      <div class="attack-overlay-battlelog">${logContent || 'No battle log yet.'}</div>
       <div class="attack-prompt-box">
         <div class="attack-prompt-title">⚔ COMMAND THE ${characterName}</div>
         <div class="attack-prompt-issue">${this.issue.title}</div>
@@ -1256,57 +1248,8 @@ export class BattleScene extends Phaser.Scene {
         position: absolute;
         top: 0; left: 0;
         width: 100%; height: 100%;
-        background: rgba(0, 0, 10, 0.75);
+        background: transparent;
         pointer-events: auto;
-      }
-      .attack-overlay-issue-panel {
-        position: absolute;
-        top: 1%; left: 1%;
-        width: 76%;
-        max-height: 22%;
-        overflow-y: auto;
-        background: #0a0a1e;
-        border: 1px solid #2a2a4e;
-        border-radius: 6px;
-        padding: 10px 14px;
-        z-index: 1;
-        pointer-events: auto;
-        scrollbar-width: thin;
-        scrollbar-color: #1e1e38 #0a0a1e;
-      }
-      .attack-overlay-cat {
-        font-family: "Cinzel", "Georgia", serif;
-        font-size: 14px;
-        font-weight: bold;
-        color: #f0c848;
-        text-shadow: 0 0 10px rgba(240, 168, 32, 0.4);
-        margin-bottom: 6px;
-      }
-      .attack-overlay-desc {
-        font-family: monospace;
-        font-size: 11px;
-        color: #b0b0c8;
-        line-height: 1.5;
-      }
-      .attack-overlay-battlelog {
-        position: absolute;
-        bottom: 1%; left: 1%;
-        width: 54%;
-        max-height: 28%;
-        overflow-y: auto;
-        background: #0a0a1e;
-        border: 1px solid #2a2a4e;
-        border-radius: 6px;
-        padding: 10px 14px;
-        z-index: 1;
-        pointer-events: auto;
-        font-family: monospace;
-        font-size: 11px;
-        color: #9090a8;
-        line-height: 1.5;
-        white-space: pre-wrap;
-        scrollbar-width: thin;
-        scrollbar-color: #1e1e38 #0a0a1e;
       }
       .attack-prompt-box {
         position: relative;
@@ -1474,6 +1417,19 @@ export class BattleScene extends Phaser.Scene {
       ledgerInput.addEventListener('focus', this._ledgerFocusHandler);
     }
 
+    // Raise battle log elements above the Phaser dark overlay
+    this._attackDarkOverlay = this.add.rectangle(400, 300, 800, 600, 0x000010, 0.7).setDepth(49);
+    // Boost battle log panel to sit above the dark overlay
+    if (this.battleLog) this.battleLog.setDepth(55);
+    // Store original log graphics references for depth boosting
+    const logBounds = this.logBounds;
+    if (logBounds) {
+      this._attackLogBg = this.add.rectangle(
+        logBounds.x + logBounds.w / 2, logBounds.y + logBounds.h / 2,
+        logBounds.w, logBounds.h, 0x0a0a24, 0.95
+      ).setDepth(54).setStrokeStyle(2, 0xb8b8d8);
+    }
+
     this._attackOverlayEl = overlay;
     this._attackStyleEl = style;
   }
@@ -1501,6 +1457,16 @@ export class BattleScene extends Phaser.Scene {
       if (ledgerInput) ledgerInput.removeEventListener('focus', this._ledgerFocusHandler);
       this._ledgerFocusHandler = null;
     }
+    // Remove Phaser dark overlay and reset depths
+    if (this._attackDarkOverlay) {
+      this._attackDarkOverlay.destroy();
+      this._attackDarkOverlay = null;
+    }
+    if (this._attackLogBg) {
+      this._attackLogBg.destroy();
+      this._attackLogBg = null;
+    }
+    if (this.battleLog) this.battleLog.setDepth(10);
   }
 
   // ═══════════════════════════════════════════════════
