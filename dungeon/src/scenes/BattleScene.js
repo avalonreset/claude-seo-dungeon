@@ -2439,11 +2439,17 @@ Summary: ${fallbackSummary}`;
       }
     });
 
-    // Transition to victory
-    this.time.delayedCall(2500, () => {
+    // Log XP to guild ledger, then go straight back to DungeonHall
+    const xp = (this.issue.hp || 10) * 10;
+    this.time.delayedCall(2000, () => {
+      if (this.game.addLog) this.game.addLog(`Demon vanquished! +${xp} XP`);
+      this.appendLog(`+${xp} XP earned.`);
+    });
+
+    this.time.delayedCall(3000, () => {
       this.cameras.main.fadeOut(800, 0, 0, 0);
       this.time.delayedCall(800, () => {
-        this.scene.start('Victory', { issue: this.issue });
+        this.scene.start('DungeonHall');
       });
     });
   }
