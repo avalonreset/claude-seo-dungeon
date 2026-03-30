@@ -489,6 +489,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const sendLedgerCommand = (text) => {
     if (!text.trim() || !bridge.connected) return;
     logInput.value = '';
+
+    // If we're in a battle, route through doAttack so everything is synchronized
+    if (game) {
+      const battleScene = game.scene.getScene('Battle');
+      if (battleScene && battleScene.scene.isActive() && battleScene.isPlayerTurn && !battleScene.battleOver) {
+        battleScene.doAttack(text);
+        return;
+      }
+    }
+
+    // Otherwise use the interactive session
     logInputBar.classList.add('running');
     showLoadingIndicator();
     addLog('> ' + text);
@@ -501,7 +512,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!bridge.interactiveActive) {
       bridge.startInteractive(projectPath, model);
-      // Give the session a moment to start before sending
       setTimeout(() => bridge.sendInteractive(text), 1500);
     } else {
       bridge.sendInteractive(text);
