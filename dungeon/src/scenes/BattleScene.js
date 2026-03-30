@@ -538,6 +538,7 @@ export class BattleScene extends Phaser.Scene {
 
     // Log panel with FF-style double border
     const logGfx = this.add.graphics();
+    this.logGfx = logGfx;
 
     // Outer border
     logGfx.lineStyle(3, 0xb8b8d8, 1);
@@ -1417,18 +1418,11 @@ export class BattleScene extends Phaser.Scene {
       ledgerInput.addEventListener('focus', this._ledgerFocusHandler);
     }
 
-    // Raise battle log elements above the Phaser dark overlay
+    // Dark overlay at depth 49 — dims everything below
     this._attackDarkOverlay = this.add.rectangle(400, 300, 800, 600, 0x000010, 0.7).setDepth(49);
-    // Boost battle log panel to sit above the dark overlay
+    // Boost battle log panel + graphics above the dark overlay
+    if (this.logGfx) this.logGfx.setDepth(54);
     if (this.battleLog) this.battleLog.setDepth(55);
-    // Store original log graphics references for depth boosting
-    const logBounds = this.logBounds;
-    if (logBounds) {
-      this._attackLogBg = this.add.rectangle(
-        logBounds.x + logBounds.w / 2, logBounds.y + logBounds.h / 2,
-        logBounds.w, logBounds.h, 0x0a0a24, 0.95
-      ).setDepth(54).setStrokeStyle(2, 0xb8b8d8);
-    }
 
     this._attackOverlayEl = overlay;
     this._attackStyleEl = style;
@@ -1462,10 +1456,7 @@ export class BattleScene extends Phaser.Scene {
       this._attackDarkOverlay.destroy();
       this._attackDarkOverlay = null;
     }
-    if (this._attackLogBg) {
-      this._attackLogBg.destroy();
-      this._attackLogBg = null;
-    }
+    if (this.logGfx) this.logGfx.setDepth(0);
     if (this.battleLog) this.battleLog.setDepth(10);
   }
 
