@@ -418,6 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!text.trim() || !bridge.connected) return;
     logInput.value = '';
     logInputBar.classList.add('running');
+    showLoadingIndicator();
     addLog('> ' + text);
 
     try {
@@ -443,6 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       ledgerRequestId = null;
       logInputBar.classList.remove('running');
+      hideLoadingIndicator();
     }
   };
 
