@@ -1216,8 +1216,16 @@ export class BattleScene extends Phaser.Scene {
     const overlay = document.createElement('div');
     overlay.id = 'attack-prompt-overlay';
 
+    // Build battle log content for the overlay
+    const logContent = this.battleLogHistory.slice(-10).join('\n');
+
     overlay.innerHTML = `
       <div class="attack-prompt-backdrop"></div>
+      <div class="attack-overlay-issue-panel">
+        <div class="attack-overlay-cat">${this.issue.category.toUpperCase()}</div>
+        <div class="attack-overlay-desc">${this.issue.description}</div>
+      </div>
+      <div class="attack-overlay-battlelog">${logContent || 'No battle log yet.'}</div>
       <div class="attack-prompt-box">
         <div class="attack-prompt-title">⚔ COMMAND THE ${characterName}</div>
         <div class="attack-prompt-issue">${this.issue.title}</div>
@@ -1248,8 +1256,57 @@ export class BattleScene extends Phaser.Scene {
         position: absolute;
         top: 0; left: 0;
         width: 100%; height: 100%;
-        background: radial-gradient(ellipse at center 55%, rgba(0, 0, 10, 0.75) 0%, rgba(0, 0, 10, 0.35) 55%, rgba(0, 0, 10, 0.15) 100%);
+        background: rgba(0, 0, 10, 0.75);
         pointer-events: auto;
+      }
+      .attack-overlay-issue-panel {
+        position: absolute;
+        top: 1%; left: 1%;
+        width: 76%;
+        max-height: 22%;
+        overflow-y: auto;
+        background: #0a0a1e;
+        border: 1px solid #2a2a4e;
+        border-radius: 6px;
+        padding: 10px 14px;
+        z-index: 1;
+        pointer-events: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #1e1e38 #0a0a1e;
+      }
+      .attack-overlay-cat {
+        font-family: "Cinzel", "Georgia", serif;
+        font-size: 14px;
+        font-weight: bold;
+        color: #f0c848;
+        text-shadow: 0 0 10px rgba(240, 168, 32, 0.4);
+        margin-bottom: 6px;
+      }
+      .attack-overlay-desc {
+        font-family: monospace;
+        font-size: 11px;
+        color: #b0b0c8;
+        line-height: 1.5;
+      }
+      .attack-overlay-battlelog {
+        position: absolute;
+        bottom: 1%; left: 1%;
+        width: 54%;
+        max-height: 28%;
+        overflow-y: auto;
+        background: #0a0a1e;
+        border: 1px solid #2a2a4e;
+        border-radius: 6px;
+        padding: 10px 14px;
+        z-index: 1;
+        pointer-events: auto;
+        font-family: monospace;
+        font-size: 11px;
+        color: #9090a8;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        scrollbar-width: thin;
+        scrollbar-color: #1e1e38 #0a0a1e;
       }
       .attack-prompt-box {
         position: relative;
@@ -1408,6 +1465,15 @@ export class BattleScene extends Phaser.Scene {
     };
     document.addEventListener('keydown', this._attackKeyHandler);
 
+    // Auto-cancel attack modal if user focuses the guild ledger input
+    const ledgerInput = document.getElementById('log-input');
+    if (ledgerInput) {
+      this._ledgerFocusHandler = () => {
+        if (this._attackOverlayOpen) cancel();
+      };
+      ledgerInput.addEventListener('focus', this._ledgerFocusHandler);
+    }
+
     this._attackOverlayEl = overlay;
     this._attackStyleEl = style;
   }
@@ -1429,6 +1495,11 @@ export class BattleScene extends Phaser.Scene {
     if (this._attackKeyHandler) {
       document.removeEventListener('keydown', this._attackKeyHandler);
       this._attackKeyHandler = null;
+    }
+    if (this._ledgerFocusHandler) {
+      const ledgerInput = document.getElementById('log-input');
+      if (ledgerInput) ledgerInput.removeEventListener('focus', this._ledgerFocusHandler);
+      this._ledgerFocusHandler = null;
     }
   }
 
