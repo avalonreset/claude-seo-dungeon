@@ -206,8 +206,16 @@ function hideLoading() {
   }
 }
 
+let userScrolledUp = false;
+
 function scrollToBottom() {
-  if (logEl) logEl.scrollTop = logEl.scrollHeight;
+  if (!logEl || userScrolledUp) return;
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function isNearBottom() {
+  if (!logEl) return true;
+  return (logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight) < 60;
 }
 
 // ══════════════════════════════════════════════════
@@ -217,6 +225,36 @@ function scrollToBottom() {
 export function initActivityLog() {
   logEl = document.getElementById('log-content');
   if (!logEl) return;
+
+  // Track user scroll intent — if they scroll up, stop auto-scrolling
+  logEl.addEventListener('scroll', () => {
+    userScrolledUp = !isNearBottom();
+  });
+
+  // Keyboard navigation for the ledger
+  document.addEventListener('keydown', (e) => {
+    // Only handle if ledger-related keys and not typing in an input
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+    if (e.key === 'Home') {
+      e.preventDefault();
+      logEl.scrollTop = 0;
+      userScrolledUp = true;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      logEl.scrollTop = logEl.scrollHeight;
+      userScrolledUp = false;
+    } else if (e.key === 'PageUp') {
+      e.preventDefault();
+      logEl.scrollTop -= logEl.clientHeight * 0.8;
+      userScrolledUp = !isNearBottom();
+    } else if (e.key === 'PageDown') {
+      e.preventDefault();
+      logEl.scrollTop += logEl.clientHeight * 0.8;
+      userScrolledUp = !isNearBottom();
+    }
+  });
 
   const style = document.createElement('style');
   style.textContent = `
