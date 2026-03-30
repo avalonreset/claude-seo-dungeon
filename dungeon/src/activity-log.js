@@ -210,10 +210,13 @@ function hideLoading() {
 }
 
 let userScrolledUp = false;
+let programmaticScroll = false;
 
 function scrollToBottom() {
   if (!logEl || userScrolledUp) return;
+  programmaticScroll = true;
   logEl.scrollTop = logEl.scrollHeight;
+  requestAnimationFrame(() => { programmaticScroll = false; });
 }
 
 function isNearBottom() {
@@ -232,8 +235,9 @@ export function initActivityLog() {
   // Start in idle state — no animations until something is actively loading
   logEl.classList.add('ledger-idle');
 
-  // Track user scroll intent — if they scroll up, stop auto-scrolling
+  // Track user scroll intent — distinguish user scrolls from programmatic ones
   logEl.addEventListener('scroll', () => {
+    if (programmaticScroll) return;
     userScrolledUp = !isNearBottom();
   });
 
