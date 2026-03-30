@@ -342,9 +342,9 @@ export class VictoryScene extends Phaser.Scene {
     });
 
     // Animate panel opening (scale from thin line)
-    outerGlow.setScaleY(0);
-    outerBorder.setScaleY(0);
-    innerPanel.setScaleY(0);
+    outerGlow.setScale(1, 0);
+    outerBorder.setScale(1, 0);
+    innerPanel.setScale(1, 0);
     topBar.setAlpha(0);
     this.tweens.add({
       targets: [outerGlow, outerBorder, innerPanel],
