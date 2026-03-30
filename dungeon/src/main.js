@@ -206,7 +206,6 @@ function launchGame(domain, projectPath) {
 
   addLog(`Hunting: ${domain}`);
   addLog(`Source: ${projectPath}`);
-  showLoadingIndicator();
 
   const dpr = window.GAME_DPR;
   const config = {

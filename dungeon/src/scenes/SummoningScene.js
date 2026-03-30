@@ -881,6 +881,7 @@ export class SummoningScene extends Phaser.Scene {
     let streamedText = '';
 
     try {
+      if (this.game.showLoading) this.game.showLoading();
       const model = this.game.characterConfig?.model;
       const result = await bridge.audit(this.domain, this.projectPath, (streamData) => {
         this.streamChunks++;
@@ -922,10 +923,12 @@ export class SummoningScene extends Phaser.Scene {
       if (this.aborted) return; // User cancelled — don't transition
       this.setProgress(1);
 
+      if (this.game.hideLoading) this.game.hideLoading();
       const auditData = result.data || result;
       this._handleAuditResult(auditData, true);
 
     } catch (err) {
+      if (this.game.hideLoading) this.game.hideLoading();
       if (this.aborted) return; // User cancelled — don't handle error
       console.error('Audit error:', err);
       if (this.game.addLog) this.game.addLog('ERROR: ' + err.message);
