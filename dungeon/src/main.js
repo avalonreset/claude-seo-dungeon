@@ -487,8 +487,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const sendLedgerCommand = (text) => {
-    if (!text.trim() || !bridge.connected) return;
+    if (!text.trim()) return;
+    if (!bridge.connected) { addLog('Bridge not connected.'); return; }
     logInput.value = '';
+    logInput.style.height = 'auto'; // reset textarea height
 
     // If we're in a battle, route through doAttack so everything is synchronized
     if (game) {
