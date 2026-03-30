@@ -94,22 +94,25 @@ function markAsLatest(line) {
   }
 
   latestLine = line;
+
+  // If ledger is idle or line is a "complete" message, don't animate at all
+  const isIdle = logEl && logEl.classList.contains('ledger-idle');
+  const isComplete = line.classList.contains('complete');
+
+  if (isIdle || isComplete) {
+    // No "latest" class, no dots, no shimmer — completely static
+    latestDots = null;
+    return;
+  }
+
   line.classList.add('latest');
 
-  // Skip animated dots for "complete" lines — they should look finished, not loading
-  const isComplete = line.classList.contains('complete');
-  if (!isComplete) {
-    latestDots = document.createElement('span');
-    latestDots.className = 'log-dots';
-    latestDots.innerHTML = '<span class="dot">\u2022</span><span class="dot">\u2022</span><span class="dot">\u2022</span>';
-    const textSpan = line.querySelector('.log-text');
-    if (textSpan) {
-      textSpan.after(latestDots);
-    }
-  } else {
-    latestDots = null;
-    // Override the pulse animation — complete lines should be static
-    line.style.animation = 'fadeInLine 0.35s ease forwards';
+  latestDots = document.createElement('span');
+  latestDots.className = 'log-dots';
+  latestDots.innerHTML = '<span class="dot">\u2022</span><span class="dot">\u2022</span><span class="dot">\u2022</span>';
+  const textSpan = line.querySelector('.log-text');
+  if (textSpan) {
+    textSpan.after(latestDots);
   }
 }
 
