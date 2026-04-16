@@ -5,3 +5,4 @@ docs/** linguist-documentation
 schema/** linguist-data
 *.sh linguist-detectable=false
 *.ps1 linguist-detectable=false
+scripts/*.py linguist-generated
