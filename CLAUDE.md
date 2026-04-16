@@ -1,5 +1,24 @@
 # Claude SEO Dungeon
 
+## How to Run the Game
+
+This is a gamified 16-bit dungeon crawler for SEO audits. To start it:
+
+```bash
+cd dungeon
+npm install        # First time only
+npm start          # Builds optimized bundle + starts bridge + serves game
+```
+
+Then open http://localhost:3000 in a browser. The game auto-builds the production
+bundle on first run. Bridge server starts on port 3001 automatically.
+
+For development with hot reload: `npm run dev` (instead of `npm start`).
+
+This project is ALSO a Claude Code skill suite. The SEO skills work without the
+game. Users can run `/seo audit <url>` directly in Claude Code after running the
+installer (`install.sh` or `install.ps1`).
+
 ## Project Overview
 
 A gamified 16-bit dungeon crawler that turns SEO audits into boss battles.
@@ -87,7 +106,8 @@ Title Screen → Gate → Summoning → Dungeon Hall → Battle → Victory
 ```bash
 cd dungeon
 npm install
-npm run dev          # Starts Vite + WebSocket bridge
+npm start            # Production: auto-builds + serves optimized bundle
+npm run dev          # Development: Vite hot reload + bridge (for code changes)
 ```
 
 ### Dev Shortcuts
