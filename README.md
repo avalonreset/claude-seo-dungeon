@@ -4,12 +4,12 @@
 
 # Claude SEO Dungeon - Gamified SEO Audit Tool for Claude Code
 
-A gamified 16-bit dungeon crawler that turns SEO audits into boss battles. Built on top of **Claude SEO v1.6.1** (17 skills, 11 subagents, 17 analysis dimensions), this project bundles the entire SEO analysis pipeline into a Phaser.js game where every SEO issue becomes a demon you can fight, and every fix is a real commit to your codebase.
+A gamified 16-bit dungeon crawler that turns SEO audits into boss battles. Built on top of **Claude SEO v1.9.0** (23 skills, 17 subagents, 24 analysis dimensions), this project bundles the entire SEO analysis pipeline into a Phaser.js game where every SEO issue becomes a demon you can fight, and every fix is a real commit to your codebase.
 
 [![CI](https://github.com/avalonreset-pro/claude-seo-dungeon/actions/workflows/ci.yml/badge.svg)](https://github.com/avalonreset-pro/claude-seo-dungeon/actions/workflows/ci.yml)
 [![License: Proprietary](https://img.shields.io/badge/license-proprietary-red)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](CHANGELOG.md)
-[![Claude SEO](https://img.shields.io/badge/Claude%20SEO-v1.6.1-green)](skills/seo/SKILL.md)
+[![Version](https://img.shields.io/badge/version-1.9.0-blue)](CHANGELOG.md)
+[![Claude SEO](https://img.shields.io/badge/Claude%20SEO-v1.9.0-green)](skills/seo/SKILL.md)
 [![Built with Phaser](https://img.shields.io/badge/built%20with-Phaser%203-orange)](https://phaser.io/)
 [![Powered by Claude](https://img.shields.io/badge/powered%20by-Claude%20Code-blueviolet)](https://docs.anthropic.com/en/docs/claude-code)
 
@@ -76,7 +76,7 @@ Each demon represents a real SEO issue found on the target site. When you choose
 - **Quest caching** - Completed audits are saved to localStorage so you can resume without re-running
 - **Volume control** - SFX toggle and slider with persistent preferences
 
-### SEO Engine (Claude SEO v1.6.1)
+### SEO Engine (Claude SEO v1.9.0)
 - **17 specialized skills** covering technical SEO, content quality (E-E-A-T), schema markup, image optimization, sitemap architecture, AI search optimization (GEO), local SEO, maps intelligence, and strategic planning
 - **11 parallel subagents** that run simultaneously during a full audit for speed
 - **Industry detection** - Auto-detects SaaS, e-commerce, local business, publisher, or agency sites
@@ -101,7 +101,7 @@ cd claude-seo-dungeon
 
 ### 2. Install the Claude SEO skills
 
-The repo bundles the full **Claude SEO v1.6.1** skill suite. The installer copies skills and agents to your Claude Code configuration directory so Claude can use them.
+The repo bundles the full **Claude SEO v1.9.0** skill suite. The installer copies skills and agents to your Claude Code configuration directory so Claude can use them.
 
 **Windows (PowerShell):**
 ```powershell
@@ -114,8 +114,8 @@ bash install.sh
 ```
 
 This does three things:
-1. Copies 17 skills to `~/.claude/skills/seo*/`
-2. Copies 11 agents to `~/.claude/agents/seo*.md`
+1. Copies 23 skills to `~/.claude/skills/seo*/`
+2. Copies 17 agents to `~/.claude/agents/seo*.md`
 3. Installs Python dependencies (for page fetching, screenshots, schema validation)
 
 Playwright is optional but recommended for visual analysis. The installer will prompt you.
@@ -203,8 +203,8 @@ claude-seo-dungeon/
         BattleScene.js             # Turn-based combat (~2400 lines)
         VictoryScene.js            # XP rewards + loot drops
     assets/luizmelo/               # Character sprite sheets
-  skills/                          # Claude SEO v1.6.1 (17 skills)
-  agents/                          # 11 subagents for parallel analysis
+  skills/                          # Claude SEO v1.9.0 (23 skills)
+  agents/                          # 17 subagents for parallel analysis
   scripts/                         # Python scripts (page fetch, screenshots, schema)
   schema/                          # Schema.org JSON-LD templates
   extensions/                      # Optional add-ons
@@ -280,7 +280,7 @@ Browser (Phaser.js)  <-->  WebSocket  <-->  Bridge Server  <-->  Claude Code CLI
 | Build tool | [Vite](https://vitejs.dev/) | Dev server + production bundling |
 | Audio | [Web Audio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API) | 25+ procedural synthesized sounds |
 | Server | Express + ws | WebSocket bridge to Claude Code CLI |
-| SEO engine | Claude SEO v1.6.1 | 17 skills, 11 agents, 17 Python scripts |
+| SEO engine | Claude SEO v1.9.0 | 23 skills, 17 agents, 42 Python scripts |
 | Characters | [LuizMelo](https://luizmelo.itch.io/) | Warrior, Samurai, Knight sprite sheets |
 | Demons | [0x72](https://0x72.itch.io/dungeontileset-ii) | DungeonTileset II monster sprites |
 

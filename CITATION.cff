@@ -4,12 +4,14 @@ message: >-
   If you use this software, please cite it using the metadata from this file.
 type: software
 authors:
-  - alias: avalonreset-pro
+  - given-names: Benjamin
+    family-names: Samar
+    alias: avalonreset-pro
 repository-code: 'https://github.com/avalonreset-pro/claude-seo-dungeon'
 url: 'https://github.com/avalonreset-pro/claude-seo-dungeon'
-license: Proprietary
-version: 0.1.0
-date-released: '2026-03-29'
+license: LicenseRef-Proprietary
+version: 1.9.0
+date-released: '2026-04-16'
 keywords:
   - seo
   - dungeon-crawler
@@ -17,3 +19,6 @@ keywords:
   - phaser-js
   - claude-code
   - ai-tools
+  - backlinks
+  - seo-drift
+  - ecommerce-seo

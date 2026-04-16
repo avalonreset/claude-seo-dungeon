@@ -30,7 +30,8 @@ Examples of unacceptable behavior:
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by [opening an issue](https://github.com/avalonreset-pro/claude-seo-dungeon/issues) on this repository.
+reported by contacting the project maintainer at **benjamin@rankenstein.pro**.
+All reports will be handled confidentially.
 
 All complaints will be reviewed and investigated promptly and fairly.
 

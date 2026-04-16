@@ -2,6 +2,16 @@
 
 This project includes or depends on the following third-party software:
 
+## SEO Engine (Upstream)
+
+| Package | License | Author | Source |
+|---------|---------|--------|--------|
+| Claude SEO v1.9.0 | MIT | AgriciDaniel | https://github.com/AgriciDaniel/claude-seo |
+
+The SEO analysis backend (skills/, agents/, scripts/) is derived from Claude SEO,
+an open-source SEO skill suite for Claude Code. Used under the MIT license.
+Original copyright: Copyright (c) 2026 AgriciDaniel.
+
 ## Runtime Dependencies
 
 | Package | License | Source |
