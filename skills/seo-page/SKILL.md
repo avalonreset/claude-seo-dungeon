@@ -7,11 +7,10 @@ description: >
   "page analysis", or provides a single URL for review.
 user-invokable: true
 argument-hint: "[url]"
-license: Proprietary
-allowed-tools: Read, Grep, Glob, Bash, WebFetch
+license: MIT
 metadata:
-  author: avalonreset-pro
-  version: "1.6.1"
+  author: AgriciDaniel
+  version: "1.9.0"
   category: seo
 ---
 

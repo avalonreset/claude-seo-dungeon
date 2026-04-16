@@ -1,8 +1,8 @@
 [project]
 name = "claude-seo-dungeon"
-version = "0.1.0"
-description = "Gamified 16-bit dungeon crawler that turns SEO audits into boss battles"
-requires-python = ">=3.11"
+version = "1.9.0"
+description = "Gamified 16-bit dungeon crawler that turns SEO audits into boss battles (SEO engine v1.9.0)"
+requires-python = ">=3.10"
 license = "Proprietary"
 readme = "README.md"
 

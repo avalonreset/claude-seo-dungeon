@@ -6,7 +6,7 @@ banana Creative Director pipeline.
 
 ## Prerequisites
 
-> This extension wraps [Claude Banana](https://github.com/avalonreset-pro/banana-claude)
+> This extension wraps [Claude Banana](https://github.com/AgriciDaniel/banana-claude)
 > for SEO-specific use cases. Install the standalone skill for general-purpose image generation.
 
 - **Claude SEO** installed (`~/.claude/skills/seo/`)
@@ -86,7 +86,7 @@ The agent never auto-generates images. It produces a plan for your review.
 ./extensions/banana/uninstall.sh
 ```
 
-This removes the skill and agent. If you also use [Claude Banana](https://github.com/avalonreset-pro/banana-claude),
+This removes the skill and agent. If you also use [Claude Banana](https://github.com/AgriciDaniel/banana-claude),
 the MCP server config is preserved.
 
 ## Troubleshooting

@@ -3,10 +3,13 @@
 ## Project Overview
 
 A gamified 16-bit dungeon crawler that turns SEO audits into boss battles.
-Built with Phaser.js and powered by Claude Code's SEO analysis pipeline.
+Built with Phaser.js and powered by Claude Code's SEO analysis pipeline (v1.9.0).
 Players choose a character class (Warrior/Opus, Samurai/Sonnet, Knight/Haiku),
 enter a domain, and fight SEO issue "demons" in turn-based combat. The "Vanquish"
 action channels Claude to generate real code fixes during battle.
+
+SEO backend: 23 skills (20 core + 3 extensions), 17 subagents, 42 Python scripts
+(29 upstream + 13 dungeon-exclusive visual audit scripts).
 
 ## Architecture
 
@@ -34,20 +37,33 @@ claude-seo-dungeon/
         VictoryScene.js            # Post-battle XP + loot rewards
     assets/
       luizmelo/                    # Character sprite sheets
-  skills/                           # Claude Code SEO skills (backend)
-    seo/SKILL.md                   # Main orchestrator
-    seo-audit/SKILL.md             # Full site audit
-    seo-technical/SKILL.md         # Technical SEO
+  skills/                           # Claude Code SEO skills (backend, v1.9.0)
+    seo/SKILL.md                   # Main orchestrator (23 skills, routing table)
+    seo-audit/SKILL.md             # Full site audit with up to 15 parallel agents
+    seo-technical/SKILL.md         # Technical SEO (9 categories)
     seo-content/SKILL.md           # E-E-A-T analysis
     seo-schema/SKILL.md            # Schema.org markup
     seo-sitemap/SKILL.md           # XML sitemap analysis
-    seo-geo/SKILL.md               # AI search optimization
-    seo-local/SKILL.md             # Local SEO
+    seo-images/SKILL.md            # Image optimization + SERP analysis
+    seo-geo/SKILL.md               # AI search optimization (GEO)
+    seo-local/SKILL.md             # Local SEO (GBP, citations, reviews)
     seo-maps/SKILL.md              # Maps intelligence
-    (+ 7 more sub-skills)
-  agents/                           # Subagents for parallel analysis
-  scripts/                          # Python execution scripts
-  extensions/                       # DataForSEO + Banana MCP installers
+    seo-plan/SKILL.md              # Strategic SEO planning
+    seo-programmatic/SKILL.md      # Programmatic SEO
+    seo-competitor-pages/SKILL.md  # Competitor comparison pages
+    seo-hreflang/SKILL.md          # International SEO + cultural profiles
+    seo-page/SKILL.md              # Deep single-page analysis
+    seo-google/SKILL.md            # Google SEO APIs (GSC, CrUX, GA4, PSI)
+    seo-backlinks/SKILL.md         # Backlink profile analysis (Moz, Bing, CC)
+    seo-cluster/SKILL.md           # Semantic topic clustering
+    seo-sxo/SKILL.md               # Search Experience Optimization
+    seo-drift/SKILL.md             # SEO drift monitoring ("git for SEO")
+    seo-ecommerce/SKILL.md         # E-commerce SEO + marketplace intel
+    seo-dataforseo/SKILL.md        # Live SEO data (extension)
+    seo-image-gen/SKILL.md         # AI image generation (extension)
+  agents/                           # 17 subagents for parallel analysis
+  scripts/                          # Python execution scripts (29 upstream + 13 visual)
+  extensions/                       # DataForSEO + Banana + Firecrawl MCP installers
   docs/                             # Extended documentation
 ```
 
@@ -98,18 +114,47 @@ npm run dev          # Starts Vite + WebSocket bridge
 
 The SEO analysis is powered by Claude Code skills bundled in `skills/` and `agents/`.
 These run server-side through the WebSocket bridge when a player starts an audit.
+Based on [Claude SEO v1.9.0](https://github.com/AgriciDaniel/claude-seo) by Daniel Agrici.
 
 | Command | Purpose |
 |---------|---------|
-| `/seo audit <url>` | Full site audit with parallel subagents |
+| `/seo audit <url>` | Full site audit with up to 15 parallel subagents |
+| `/seo page <url>` | Deep single-page analysis |
 | `/seo technical <url>` | Technical SEO (crawlability, security, CWV) |
 | `/seo content <url>` | E-E-A-T and content quality |
 | `/seo schema <url>` | Schema.org detection and generation |
+| `/seo sitemap <url>` | XML sitemap analysis or generation |
+| `/seo images <url>` | Image SEO: on-page audit, SERP analysis |
 | `/seo geo <url>` | AI search / GEO optimization |
+| `/seo plan <type>` | Strategic SEO planning by industry |
+| `/seo local <url>` | Local SEO (GBP, citations, reviews, map pack) |
+| `/seo maps [cmd] [args]` | Maps intelligence (geo-grid, GBP, reviews) |
+| `/seo hreflang <url>` | International SEO / hreflang audit |
+| `/seo google [cmd] [url]` | Google SEO APIs (GSC, PageSpeed, CrUX, GA4) |
+| `/seo backlinks <url>` | Backlink profile (Moz, Bing, CC, DataForSEO) |
+| `/seo cluster <keyword>` | Semantic topic clustering + hub-spoke architecture |
+| `/seo sxo <url>` | Search Experience Optimization (page-type mismatch) |
+| `/seo drift baseline <url>` | Capture SEO baseline for change monitoring |
+| `/seo drift compare <url>` | Compare current state to stored baseline |
+| `/seo ecommerce <url>` | E-commerce SEO + marketplace intelligence |
+| `/seo programmatic` | Programmatic SEO analysis |
+| `/seo competitor-pages` | Competitor comparison page generation |
+| `/seo dataforseo [cmd]` | Live SEO data via DataForSEO (extension) |
+| `/seo firecrawl [cmd] <url>` | Full-site crawling (extension) |
+| `/seo image-gen [use-case]` | AI image generation for SEO (extension) |
+
+## Security Rules
+
+- **Never commit credentials**: `.env`, `client_secret*.json`, `oauth-token.json`, `service_account*.json` are all in `.gitignore`
+- **URL validation**: All scripts that accept user URLs must call `validate_url()` from `google_auth.py` before making API calls (SSRF protection)
+- **OAuth tokens**: Never store `client_secret` in the token file
+- **Config location**: `~/.config/claude-seo/` (user-space, not in repo)
 
 ## Ecosystem
 
 Part of the avalonreset-pro tool suite:
-- [Claude SEO](https://github.com/avalonreset-pro/claude-seo-dungeon) - this project
+- [Claude SEO Dungeon](https://github.com/avalonreset-pro/claude-seo-dungeon) - this project
 - [Claude GitHub](https://github.com/avalonreset-pro/claude-github) - GitHub repo optimization
 - [Codex SEO](https://github.com/avalonreset-pro/codex-seo) - SEO tools for Codex CLI
+
+Upstream SEO engine: [Claude SEO](https://github.com/AgriciDaniel/claude-seo) by Daniel Agrici

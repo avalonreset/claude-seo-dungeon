@@ -10,11 +10,10 @@ description: >
   "ChatGPT search", or "AI visibility".
 user-invokable: true
 argument-hint: "[url]"
-license: Proprietary
-allowed-tools: Read, Grep, Glob, Bash, WebFetch
+license: MIT
 metadata:
-  author: avalonreset-pro
-  version: "1.6.1"
+  author: AgriciDaniel
+  version: "1.9.0"
   category: seo
 ---
 

@@ -12,12 +12,11 @@ description: >
   tracking", "Share of Local Voice", or "SoLV".
 user-invokable: true
 argument-hint: "[command] [url|keyword|location]"
-license: Proprietary
-allowed-tools: Read, Grep, Glob, Bash, WebFetch, Write
+license: MIT
 compatibility: "DataForSEO MCP for Tier 1+, Google Maps API for Tier 2"
 metadata:
-  author: avalonreset-pro
-  version: "1.6.1"
+  author: AgriciDaniel
+  version: "1.9.0"
   category: seo
 ---
 

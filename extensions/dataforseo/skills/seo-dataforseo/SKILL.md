@@ -11,11 +11,10 @@ description: >
   or "real search data".
 user-invokable: true
 argument-hint: "[command] [query]"
-license: Proprietary
-allowed-tools: Read, Grep, Glob, Bash, WebFetch, Write
+license: MIT
 compatibility: "Requires DataForSEO MCP server"
 metadata:
-  author: avalonreset-pro
+  author: AgriciDaniel
   version: "1.6.1"
   category: seo
 ---

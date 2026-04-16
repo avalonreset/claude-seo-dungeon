@@ -6,11 +6,10 @@ description: >
   "generate sitemap", "sitemap issues", or "XML sitemap".
 user-invokable: true
 argument-hint: "[url or generate]"
-license: Proprietary
-allowed-tools: Read, Grep, Glob, Bash, WebFetch, Write
+license: MIT
 metadata:
-  author: avalonreset-pro
-  version: "1.6.1"
+  author: AgriciDaniel
+  version: "1.9.0"
   category: seo
 ---
 
