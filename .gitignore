@@ -1,5 +1,11 @@
 # Secrets
 .env
+*.pem
+*.key
+*.p12
+oauth-token.json
+client_secret*.json
+service_account*.json
 
 # Generated output
 output/

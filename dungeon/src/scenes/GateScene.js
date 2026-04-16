@@ -157,6 +157,12 @@ export class GateScene extends Phaser.Scene {
     this._createHTMLOverlay();
   }
 
+  _escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
   _timeAgo(ts) {
     const diff = Date.now() - ts;
     const mins = Math.floor(diff / 60000);
@@ -188,7 +194,7 @@ export class GateScene extends Phaser.Scene {
 
     overlay.innerHTML = `
       <div class="gate-title">THE GATE AWAITS</div>
-      <div class="gate-domain">${this.domain}</div>
+      <div class="gate-domain">${this._escapeHtml(this.domain)}</div>
       <div class="gate-row">
         <div class="gate-card gate-card-continue" data-model="${m.key}" data-action="resume" style="--accent: ${m.color};">
           <div class="gate-card-label" style="color: ${m.color};">Continue Quest</div>

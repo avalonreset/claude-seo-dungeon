@@ -1239,7 +1239,7 @@ export class BattleScene extends Phaser.Scene {
       <div class="attack-prompt-backdrop"></div>
       <div class="attack-prompt-box">
         <div class="attack-prompt-title">⚔ COMMAND THE ${characterName}</div>
-        <div class="attack-prompt-issue">${this.issue.title}</div>
+        <div class="attack-prompt-issue">${this._escapeHtml(this.issue.title)}</div>
         <textarea id="attack-prompt-input" class="attack-prompt-input" rows="6"
           placeholder="Describe what you want Claude to fix..."></textarea>
         <div class="attack-prompt-buttons">

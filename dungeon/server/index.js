@@ -2,21 +2,99 @@ const { WebSocketServer } = require('ws');
 const { spawn, execSync } = require('child_process');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 
 const server = http.createServer();
-const wss = new WebSocketServer({
-  server,
-  // Keep connections alive during long audits
-  perMessageDeflate: false
-});
 
 const PORT = 3001;
 
 // Project root: server/ -> dungeon/ -> claude-seo-dungeon/
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 
+// ── Security: Allowed models, message types, and rate limits ──
+const ALLOWED_MODELS = ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001', 'claude-opus-4-6'];
+const ALLOWED_TYPES = ['audit', 'fix', 'commit', 'narrate', 'cancel', 'interactive_start', 'interactive_send', 'interactive_stop'];
+const MAX_CONCURRENT_PROCESSES = 5;
+const MAX_MESSAGES_PER_MINUTE = 30;
+
+// ── Security: Origin validation ──
+const ALLOWED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'];
+
+const wss = new WebSocketServer({
+  server,
+  perMessageDeflate: false,
+  verifyClient: ({ origin, req }) => {
+    // Allow connections with no origin (non-browser clients like dev tools)
+    if (!origin) return true;
+    if (ALLOWED_ORIGINS.includes(origin)) return true;
+    console.warn(`Rejected WebSocket connection from origin: ${origin}`);
+    return false;
+  }
+});
+
 // Track active child processes so they can be cancelled
 const activeProcesses = new Map(); // id -> ChildProcess
+
+/**
+ * Validate and resolve projectPath to prevent path traversal.
+ * Returns the resolved path or null if invalid.
+ */
+function validateProjectPath(projectPath) {
+  if (!projectPath) return PROJECT_ROOT;
+  try {
+    const resolved = path.resolve(projectPath);
+    // Block obvious system directories
+    const blocked = ['/etc', '/usr', '/bin', '/sbin', '/var', '/root',
+      'C:\\Windows', 'C:\\Program Files', 'C:\\Program Files (x86)'];
+    for (const dir of blocked) {
+      if (resolved.toLowerCase().startsWith(dir.toLowerCase())) return null;
+    }
+    // Must exist and be a directory
+    if (!fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) return null;
+    return resolved;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Sanitize domain input for audit commands.
+ */
+function sanitizeDomain(input) {
+  if (!input || typeof input !== 'string') return null;
+  const trimmed = input.trim().slice(0, 253);
+  if (/^[a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,}$/.test(trimmed)) return trimmed;
+  // Allow URLs
+  try {
+    const url = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+    return url.hostname;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Validate model name against allowlist.
+ */
+function validateModel(model) {
+  if (!model) return 'claude-sonnet-4-6';
+  return ALLOWED_MODELS.includes(model) ? model : 'claude-sonnet-4-6';
+}
+
+/**
+ * Build a minimal environment for child processes.
+ */
+function safeEnv() {
+  const env = { PATH: process.env.PATH, HOME: process.env.HOME };
+  if (process.env.APPDATA) env.APPDATA = process.env.APPDATA;
+  if (process.env.USERPROFILE) env.USERPROFILE = process.env.USERPROFILE;
+  if (process.env.LOCALAPPDATA) env.LOCALAPPDATA = process.env.LOCALAPPDATA;
+  if (process.env.ANTHROPIC_API_KEY) env.ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+  if (process.env.TMPDIR) env.TMPDIR = process.env.TMPDIR;
+  if (process.env.TEMP) env.TEMP = process.env.TEMP;
+  if (process.env.TMP) env.TMP = process.env.TMP;
+  return env;
+}
 
 // Catch crashes so server stays alive
 process.on('uncaughtException', (err) => {
@@ -32,6 +110,9 @@ console.log('─'.repeat(40));
 wss.on('connection', (ws) => {
   console.log('Game client connected');
 
+  // Per-connection rate limiting
+  const messageTimestamps = [];
+
   // Keepalive ping every 15s so the connection doesn't drop during long audits
   const pingInterval = setInterval(() => {
     if (ws.readyState === ws.OPEN) {
@@ -46,6 +127,17 @@ wss.on('connection', (ws) => {
   };
 
   ws.on('message', async (raw) => {
+    // Rate limiting: max N messages per minute
+    const now = Date.now();
+    messageTimestamps.push(now);
+    while (messageTimestamps.length > 0 && messageTimestamps[0] < now - 60000) {
+      messageTimestamps.shift();
+    }
+    if (messageTimestamps.length > MAX_MESSAGES_PER_MINUTE) {
+      safeSend(JSON.stringify({ id: 0, type: 'error', message: 'Rate limit exceeded. Max 30 messages per minute.' }));
+      return;
+    }
+
     let msg;
     try {
       msg = JSON.parse(raw.toString());
@@ -56,12 +148,30 @@ wss.on('connection', (ws) => {
     }
     const { id, command, type, projectPath, model } = msg;
 
-    // Use project path for fixes, project root for audits
-    const fixCwd = projectPath || PROJECT_ROOT;
+    // Validate message type against allowlist
+    if (type && !ALLOWED_TYPES.includes(type)) {
+      console.warn(`Rejected unknown message type: ${type}`);
+      safeSend(JSON.stringify({ id, type: 'error', message: `Unknown command type: ${type}` }));
+      return;
+    }
+
+    // Validate and resolve projectPath
+    const validatedPath = validateProjectPath(projectPath);
+    if (projectPath && !validatedPath) {
+      console.warn(`Rejected invalid projectPath: ${projectPath}`);
+      safeSend(JSON.stringify({ id, type: 'error', message: 'Invalid project path' }));
+      return;
+    }
+
+    // Validate model
+    const validModel = validateModel(model);
+
+    // Use validated project path for fixes, project root for audits
+    const fixCwd = validatedPath;
 
     console.log(`Command #${id} [${type}]: ${command || '(no command)'}`);
-    if (model) console.log(`  Model: ${model}`);
-    if (projectPath) console.log(`  Project: ${projectPath}`);
+    if (validModel !== 'claude-sonnet-4-6') console.log(`  Model: ${validModel}`);
+    if (validatedPath !== PROJECT_ROOT) console.log(`  Project: ${validatedPath}`);
 
     // Interactive session — persistent CLI
     if (type === 'interactive_start') {
@@ -69,19 +179,18 @@ wss.on('connection', (ws) => {
         interactiveProc.kill('SIGTERM');
         interactiveProc = null;
       }
-      const cwd = projectPath || PROJECT_ROOT;
-      interactiveProc = spawnInteractive(cwd, model);
+      interactiveProc = spawnInteractive(fixCwd, validModel);
       safeSend(JSON.stringify({ type: 'interactive_started' }));
       return;
     }
 
     if (type === 'interactive_send') {
       if (!interactiveProc) {
-        // Auto-start session if not running
-        const cwd = projectPath || PROJECT_ROOT;
-        interactiveProc = spawnInteractive(cwd, model);
+        interactiveProc = spawnInteractive(fixCwd, validModel);
       }
-      interactiveProc.stdin.write(command + '\n');
+      // Limit command length to prevent abuse
+      const safeCmd = (command || '').slice(0, 4000);
+      interactiveProc.stdin.write(safeCmd + '\n');
       return;
     }
 
@@ -107,10 +216,21 @@ wss.on('connection', (ws) => {
     }
 
     try {
+      // Enforce max concurrent processes
+      if (activeProcesses.size >= MAX_CONCURRENT_PROCESSES) {
+        safeSend(JSON.stringify({ id, type: 'error', message: `Too many concurrent operations (max ${MAX_CONCURRENT_PROCESSES})` }));
+        return;
+      }
+
       if (type === 'audit') {
-        const result = await runAudit(command, (chunk) => {
+        const domain = sanitizeDomain(command);
+        if (!domain) {
+          safeSend(JSON.stringify({ id, type: 'error', message: 'Invalid domain' }));
+          return;
+        }
+        const result = await runAudit(domain, (chunk) => {
           safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
-        }, undefined, id, model);
+        }, undefined, id, validModel);
         activeProcesses.delete(id);
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
         console.log(`Audit done: ${result.issues.length} issues, score ${result.score}`);
@@ -118,15 +238,17 @@ wss.on('connection', (ws) => {
       } else if (type === 'fix') {
         const result = await runFix(command, fixCwd, (chunk) => {
           safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
-        }, id, model);
+        }, id, validModel);
         activeProcesses.delete(id);
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
         console.log(`Fix done: ${command}`);
 
       } else if (type === 'commit') {
-        const result = await runCommit(command, fixCwd, (chunk) => {
+        // Sanitize commit message: limit length, strip control characters
+        const safeMessage = (command || 'SEO fix').replace(/[^\x20-\x7E\n]/g, '').slice(0, 500);
+        const result = await runCommit(safeMessage, fixCwd, (chunk) => {
           safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
-        }, id, model);
+        }, id, validModel);
         activeProcesses.delete(id);
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
         console.log(`Commit done in ${fixCwd}`);
@@ -138,13 +260,6 @@ wss.on('connection', (ws) => {
         activeProcesses.delete(id);
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
         console.log(`Narration done`);
-
-      } else {
-        const result = await runClaude(command, (chunk) => {
-          safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
-        }, undefined, id, model);
-        activeProcesses.delete(id);
-        safeSend(JSON.stringify({ id, type: 'result', data: result }));
       }
     } catch (err) {
       console.error(`Error on #${id}:`, err.message);
@@ -162,7 +277,7 @@ wss.on('connection', (ws) => {
     console.log(`  Spawning interactive session (model: ${modelName}, cwd: ${cwd})`);
     const proc = spawn(process.execPath, [cliJs, '--model', modelName, '--output-format', 'stream-json', '--verbose'], {
       cwd: cwd,
-      env: { ...process.env },
+      env: safeEnv(),
       stdio: ['pipe', 'pipe', 'pipe']
     });
 
@@ -470,7 +585,7 @@ function runClaude(prompt, onStream, cwd, requestId, model) {
     console.log(`  CWD: ${workDir}`);
     const proc = spawn(process.execPath, [cliJs, '-p', prompt, '--model', modelName, '--output-format', 'stream-json', '--verbose'], {
       cwd: workDir,
-      env: { ...process.env }
+      env: safeEnv()
     });
 
     // Register for cancellation
@@ -586,8 +701,8 @@ function runClaude(prompt, onStream, cwd, requestId, model) {
   });
 }
 
-server.listen(PORT, () => {
-  console.log(`Bridge listening on ws://localhost:${PORT}`);
+server.listen(PORT, '127.0.0.1', () => {
+  console.log(`Bridge listening on ws://127.0.0.1:${PORT} (localhost only)`);
   console.log(`Claude runs from: ${PROJECT_ROOT}`);
   console.log('─'.repeat(40));
 });
