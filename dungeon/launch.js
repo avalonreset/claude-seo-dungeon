@@ -3,32 +3,46 @@
 /**
  * Claude SEO Dungeon — One-click launcher.
  *
- * Starts the bridge server (hidden) and the game (opens browser).
- * The user just runs: node launch.js
- * Then opens Claude Code in their terminal as usual.
+ * Builds the optimized production bundle (if needed), starts the bridge
+ * server, and serves the game. The user just runs: npm start
  */
 
-const { spawn } = require('child_process');
+const { spawn, execFileSync } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 const ROOT = __dirname;
+const DIST = path.join(ROOT, 'dist');
 
 console.log('');
 console.log('  ⚔  Claude SEO Dungeon  ⚔');
 console.log('  ─────────────────────────');
 console.log('');
 
-// Start bridge server in background (silent)
+// Build production bundle if dist/ doesn't exist or is empty
+if (!fs.existsSync(path.join(DIST, 'index.html'))) {
+  console.log('  Building optimized production bundle...');
+  try {
+    execFileSync('npx', ['vite', 'build'], { cwd: ROOT, stdio: 'inherit', shell: true });
+    console.log('  ✓ Build complete');
+    console.log('');
+  } catch (e) {
+    console.error('  ✗ Build failed. Try running: npm run build');
+    process.exit(1);
+  }
+}
+
+// Start bridge server in background
 const bridge = spawn('node', [path.join(ROOT, 'server', 'index.js')], {
   cwd: ROOT,
   stdio: 'ignore',
   detached: true
 });
 bridge.unref();
-console.log('  ✓ Bridge server started (background, port 3001)');
+console.log('  ✓ Bridge server started (port 3001)');
 
-// Start Vite dev server (opens browser)
-const vite = spawn('npx', ['vite', '--port', '3000', '--open'], {
+// Serve optimized production build
+const serve = spawn('npx', ['serve', 'dist', '-l', '3000', '-s'], {
   cwd: ROOT,
   shell: true,
   stdio: 'inherit'
@@ -36,8 +50,8 @@ const vite = spawn('npx', ['vite', '--port', '3000', '--open'], {
 
 console.log('  ✓ Game server starting (port 3000)');
 console.log('');
-console.log('  Open Claude Code in another terminal and play!');
-console.log('  The game will connect automatically.');
+console.log('  Open http://localhost:3000 in your browser.');
+console.log('  Then open Claude Code in another terminal and play!');
 console.log('');
 
 // Clean up bridge on exit

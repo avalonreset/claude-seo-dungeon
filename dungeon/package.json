@@ -7,7 +7,8 @@
     "dev": "concurrently \"npm run server\" \"npm run game\"",
     "server": "node server/index.js",
     "game": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "serve": "npx serve dist -l 3000 -s"
   },
   "dependencies": {
     "concurrently": "^9.1.2",
