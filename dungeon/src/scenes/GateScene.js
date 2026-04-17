@@ -288,7 +288,7 @@ export class GateScene extends Phaser.Scene {
         flex: 1;
         min-height: 120px;
         padding: 18px 16px;
-        background: rgba(12, 12, 20, 0.88);
+        background: rgba(6, 6, 9, 0.90);
         border-radius: 6px;
         cursor: pointer;
         text-align: center;
@@ -306,12 +306,12 @@ export class GateScene extends Phaser.Scene {
       }
       .gate-card-continue:hover {
         border-color: var(--accent);
-        background: rgba(20, 18, 28, 0.94);
+        background: rgba(12, 10, 8, 0.95);
         box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 12%, transparent);
       }
 
       .gate-card-new {
-        border: 1px solid #2a2030;
+        border: 1px solid #2a1818;
       }
       .gate-card-new:hover {
         border-color: #cc4444;
@@ -325,7 +325,7 @@ export class GateScene extends Phaser.Scene {
       .gate-card-begin:hover {
         border-style: solid;
         border-color: var(--accent);
-        background: rgba(20, 18, 28, 0.94);
+        background: rgba(12, 10, 8, 0.95);
         box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 12%, transparent);
       }
 
@@ -351,7 +351,7 @@ export class GateScene extends Phaser.Scene {
         color: #505068;
         letter-spacing: 2px;
         cursor: pointer;
-        border: 1px solid #1a1a2e;
+        border: 1px solid #1a1710;
         border-radius: 4px;
         transition: color 0.2s, border-color 0.2s;
         pointer-events: auto;

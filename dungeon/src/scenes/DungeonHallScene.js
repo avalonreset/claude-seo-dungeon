@@ -375,7 +375,7 @@ export class DungeonHallScene extends Phaser.Scene {
     headerBg.setDepth(100);
 
     // Solid dark panel
-    headerBg.fillStyle(0x08081a, 0.97);
+    headerBg.fillStyle(0x050508, 0.97);
     headerBg.fillRect(0, 0, 800, 90);
 
     // Ornamental bottom border -- double line with gold
@@ -478,7 +478,7 @@ export class DungeonHallScene extends Phaser.Scene {
   drawFooter() {
     const footerBg = this.add.graphics();
     footerBg.setDepth(100);
-    footerBg.fillStyle(0x08081a, 0.97);
+    footerBg.fillStyle(0x050508, 0.97);
     footerBg.fillRect(0, LIST_BOTTOM, 800, 82);
 
     // Top border
@@ -775,7 +775,7 @@ export class DungeonHallScene extends Phaser.Scene {
       catBg._catX = catTagX;
       catBg._catY = catTagY;
       catBg._catW = catTagW;
-      catBg.fillStyle(0x0a0a18, 0.85);
+      catBg.fillStyle(0x070708, 0.88);
       catBg.fillRoundedRect(catTagX, catTagY, catTagW, 18, 9);
       catBg.lineStyle(1, 0x60d8d8, 0.6);
       catBg.strokeRoundedRect(catTagX, catTagY, catTagW, 18, 9);
@@ -837,10 +837,10 @@ export class DungeonHallScene extends Phaser.Scene {
     });
     hitArea.on('pointerout', () => {
       rowBg.clear();
-      rowBg.fillStyle(0x12121e, 0.7);
+      rowBg.fillStyle(0x08080c, 0.78);
       rowBg.fillRoundedRect(rowX, y, rowW, rowH, 6);
       rowBorder.clear();
-      rowBorder.lineStyle(1, 0x1e1e30, 0.3);
+      rowBorder.lineStyle(1, 0x2a2418, 0.45);
       rowBorder.strokeRoundedRect(rowX, y, rowW, rowH, 6);
       title.setColor('#d8d8e8');
       if (desc) { desc.setColor('#d0d0e8'); desc.setShadow(1, 1, '#000000', 5, true, false); }
@@ -848,7 +848,7 @@ export class DungeonHallScene extends Phaser.Scene {
       if (cat) { cat.setColor('#c0ffff'); cat.setShadow(0, 0, '#000000', 4, true, false); }
       if (catBg) {
         catBg.clear();
-        catBg.fillStyle(0x0a0a18, 0.85);
+        catBg.fillStyle(0x070708, 0.88);
         catBg.fillRoundedRect(catBg._catX, catBg._catY, catBg._catW, 18, 9);
         catBg.lineStyle(1, 0x60d8d8, 0.6);
         catBg.strokeRoundedRect(catBg._catX, catBg._catY, catBg._catW, 18, 9);
@@ -869,7 +869,7 @@ export class DungeonHallScene extends Phaser.Scene {
     rowBg.clear();
     rowBg.fillStyle(0x12121e, 0.7);
     rowBg.fillRoundedRect(rowX, y, rowW, rowH, 6);
-    rowBorder.lineStyle(1, 0x1e1e30, 0.3);
+    rowBorder.lineStyle(1, 0x2a2418, 0.45);
     rowBorder.strokeRoundedRect(rowX, y, rowW, rowH, 6);
 
     // Screen shake for critical (first visit only - gets jarring on repeat)

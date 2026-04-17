@@ -324,9 +324,9 @@ export class VictoryScene extends Phaser.Scene {
     // Outer gold border glow
     const outerGlow = this.add.rectangle(cx, panelY + 50, panelW + 14, panelH + 14, 0xd4af37, 0.15).setDepth(4);
     // Outer stone border
-    const outerBorder = this.add.rectangle(cx, panelY + 50, panelW + 8, panelH + 8, 0x3a3a5e).setDepth(5);
-    // Inner dark panel
-    const innerPanel = this.add.rectangle(cx, panelY + 50, panelW, panelH, 0x0e0e20, 0.97).setDepth(5);
+    const outerBorder = this.add.rectangle(cx, panelY + 50, panelW + 8, panelH + 8, 0x3a2a18).setDepth(5);
+    // Inner dark panel - black content surface, gold stroke
+    const innerPanel = this.add.rectangle(cx, panelY + 50, panelW, panelH, 0x060608, 0.97).setDepth(5);
     innerPanel.setStrokeStyle(2, 0xd4af37);
     // Top ornamental bar (treasure chest lid feel)
     const topBar = this.add.rectangle(cx, panelY - 53, panelW + 8, 10, 0xd4af37).setDepth(5);

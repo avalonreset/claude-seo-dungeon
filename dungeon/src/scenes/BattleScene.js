@@ -542,20 +542,20 @@ export class BattleScene extends Phaser.Scene {
     const logGfx = this.add.graphics();
     this.logGfx = logGfx;
 
-    // Outer border
-    logGfx.lineStyle(3, 0xb8b8d8, 1);
+    // Outer border - muted gold (content surface: parchment / lore)
+    logGfx.lineStyle(2, 0x6a5a3a, 0.9);
     logGfx.strokeRoundedRect(logX, logY, logW, logH, 6);
 
-    // Inner fill
-    logGfx.fillStyle(0x0a0a24, 0.95);
+    // Inner fill - near-black so narrator italic text glows unfought
+    logGfx.fillStyle(0x060608, 0.96);
     logGfx.fillRoundedRect(logX + 2, logY + 2, logW - 4, logH - 4, 5);
 
     // Inner border highlight
-    logGfx.lineStyle(1, 0x3a3a6e, 0.6);
+    logGfx.lineStyle(1, 0x3a2a18, 0.7);
     logGfx.strokeRoundedRect(logX + 4, logY + 4, logW - 8, logH - 8, 4);
 
-    // Corner accents
-    logGfx.fillStyle(0xb8b8d8, 0.5);
+    // Corner accents - gold stamps
+    logGfx.fillStyle(0xd4af37, 0.55);
     logGfx.fillRect(logX + 6, logY + 6, 3, 3);
     logGfx.fillRect(logX + logW - 9, logY + 6, 3, 3);
     logGfx.fillRect(logX + 6, logY + logH - 9, 3, 3);
@@ -625,16 +625,17 @@ export class BattleScene extends Phaser.Scene {
     // Menu panel with double border (FF style)
     const menuGfx = this.add.graphics();
 
-    // Outer border
-    menuGfx.lineStyle(3, 0xb8b8d8, 1);
+    // Outer border - gold (interactive surface: "this is where you act")
+    menuGfx.lineStyle(2, 0xd4af37, 0.95);
     menuGfx.strokeRoundedRect(menuX, menuY, menuW, menuH, 6);
 
-    // Inner fill
-    menuGfx.fillStyle(0x0a0a24, 0.95);
+    // Inner fill - keep the deep blue that signals "interactive menu"
+    // distinct from the black content surfaces around it
+    menuGfx.fillStyle(0x0c0c2e, 0.95);
     menuGfx.fillRoundedRect(menuX + 2, menuY + 2, menuW - 4, menuH - 4, 5);
 
-    // Inner border highlight
-    menuGfx.lineStyle(1, 0x3a3a6e, 0.6);
+    // Inner border highlight - brighter blue, reinforces interactivity
+    menuGfx.lineStyle(1, 0x5a5a9e, 0.65);
     menuGfx.strokeRoundedRect(menuX + 4, menuY + 4, menuW - 8, menuH - 8, 4);
 
     // Corner accents (gold)
@@ -845,11 +846,12 @@ export class BattleScene extends Phaser.Scene {
     // Dynamic height based on actual content
     const detH = pad + 22 + descObj.height + pad;
 
-    // Draw panel background sized to fit
+    // Draw panel background sized to fit - black content surface with
+    // thin muted-gold border (parchment treatment, not blue chrome)
     const detGfx = this.add.graphics().setDepth(50);
-    detGfx.fillStyle(0x0a0a1e, 0.92);
+    detGfx.fillStyle(0x060608, 0.94);
     detGfx.fillRoundedRect(detX, detY, detW, detH, 4);
-    detGfx.lineStyle(1, 0x2a2a4e, 0.5);
+    detGfx.lineStyle(1, 0x6a5a3a, 0.55);
     detGfx.strokeRoundedRect(detX, detY, detW, detH, 4);
   }
 
