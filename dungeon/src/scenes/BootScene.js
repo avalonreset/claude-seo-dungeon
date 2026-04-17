@@ -16,14 +16,6 @@ export class BootScene extends Phaser.Scene {
       console.warn(`Failed to load asset: ${file.key} (${file.url})`);
     });
 
-    // Load real pixel art PNG sprites (32x32 each) - static fallbacks
-    this.load.image('knight_real', 'assets/monsters/knight.png');
-    this.load.image('demon_critical_real', 'assets/monsters/demon_critical.png');
-    this.load.image('demon_high_real', 'assets/monsters/demon_high.png');
-    this.load.image('demon_medium_real', 'assets/monsters/demon_medium.png');
-    this.load.image('demon_low_real', 'assets/monsters/demon_low.png');
-    this.load.image('demon_info_real', 'assets/monsters/demon_info.png');
-
     // Load 4-frame idle animation for every demon in the roster.
     // Every character is from 0x72 DungeonTileset II (CC0). All face
     // right natively - scenes flip them horizontally to face the player.
@@ -87,9 +79,7 @@ export class BootScene extends Phaser.Scene {
     // Ensure all sprite textures use NEAREST filter for crisp pixel art
     // (global pixelArt is off so text renders smoothly).
     const texKeys = [
-      'knight_real', 'demon_critical_real', 'demon_high_real',
-      'demon_medium_real', 'demon_low_real', 'demon_info_real',
-      'char_idle', 'char_run', 'char_attack', 'char_hit', 'char_death'
+      'char_idle', 'char_run', 'char_attack', 'char_hit', 'char_death',
     ];
     // Add every demon frame texture - critical for crisp pixel rendering
     for (const demon of getAllDemons()) {

@@ -341,22 +341,16 @@ claude-seo-dungeon/
 
 ## Asset Credits
 
-| Asset | Creator | License | Link |
-|-------|---------|---------|------|
-| Medieval Warrior Pack | LuizMelo | CC0 | [itch.io](https://luizmelo.itch.io/medieval-warrior-pack) |
-| Medieval Warrior Pack 2 | LuizMelo | CC0 | [itch.io](https://luizmelo.itch.io/medieval-warrior-pack-2) |
-| Samurai | LuizMelo | CC0 | [itch.io](https://luizmelo.itch.io/samurai) |
-| DungeonTileset II | 0x72 | CC0 | [itch.io](https://0x72.itch.io/dungeontileset-ii) |
-| Dungeon Crawl Stone Soup tiles (monsters, demons, dragons, liches, demon lords) | DCSS contributors | CC0 | [GitHub](https://github.com/crawl/crawl) |
-| Animated Monster Pack (Skeleton, Minotaur, Orcs, Goblins) | Calciumtrice | CC-BY 3.0 | [OpenGameArt](https://opengameart.org/users/calciumtrice) |
-| Zombie - Fully Animated | Cethiel | CC0 | [OpenGameArt](https://opengameart.org/content/zombie-fully-animated) |
-| Bosses and Monsters (Ars Notoria) | Balmer + Redshrike | CC-BY 3.0 | [OpenGameArt](https://opengameart.org/content/bosses-and-monsters-spritesheets-ars-notoria) |
-| Harlequin Epicycle three-form boss | Redshrike | CC-BY 3.0 | [OpenGameArt](https://opengameart.org/users/redshrike) |
-| Icy Tower Demon | surt | CC0 | [OpenGameArt](https://opengameart.org/content/icy-tower-demon) |
-| Floating Eye, Worm, Plant | Stephen Challener | CC0 | [OpenGameArt](https://opengameart.org/) |
-| RPG GUI Construction Kit | Lamoot | CC-BY 3.0 | [OpenGameArt](https://opengameart.org/content/rpg-gui-construction-kit-v10) |
+| Asset | Creator | License | Source |
+|-------|---------|---------|--------|
+| DungeonTileset II (13-demon roster: big_demon, ogre, orc_warrior, big_zombie, skelet, chort, masked_orc, pumpkin_dude, orc_shaman, imp, wogol, goblin, tiny_zombie) | 0x72 | CC0 | [itch.io](https://0x72.itch.io/dungeontileset-ii) |
+| Medieval Warrior Pack (Warrior class / Opus) | LuizMelo | Free for personal and commercial use | [itch.io](https://luizmelo.itch.io/medieval-warrior-pack-2) |
+| Martial Hero Pack (Samurai class / Sonnet) | LuizMelo | Free for personal and commercial use | [itch.io](https://luizmelo.itch.io/martial-hero) |
+| Warrior Pack 2 (Knight class / Haiku) | LuizMelo | Free for personal and commercial use | [itch.io](https://luizmelo.itch.io/medieval-warrior-pack-2) |
+| RPG GUI Construction Kit v1.0 | Lamoot | CC-BY 3.0 (attribution required) | [OpenGameArt](https://opengameart.org/content/rpg-gui-construction-kit-v10) |
+| Golden UI | Buch | CC0 | [OpenGameArt](https://opengameart.org/content/golden-ui) |
 
-All assets used under their respective open licenses. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for full attribution including the Claude SEO engine (MIT).
+All assets used under their respective open licenses. CC-BY attribution is rendered in the UI credits card and in [dungeon/public/assets/ATTRIBUTION.md](dungeon/public/assets/ATTRIBUTION.md). See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for full attribution including the Claude SEO engine (MIT).
 
 ## Contributing
 
