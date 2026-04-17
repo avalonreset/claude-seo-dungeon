@@ -1,5 +1,5 @@
 /**
- * SoundManager — procedural sound effects using Web Audio API.
+ * SoundManager - procedural sound effects using Web Audio API.
  * No audio files needed. All sounds are synthesized on the fly.
  *
  * Usage:
@@ -296,7 +296,7 @@ export const SFX = {
     try {
       if (sounds[name]) sounds[name]();
     } catch (e) {
-      // Silently ignore audio errors — never break gameplay
+      // Silently ignore audio errors - never break gameplay
     }
   },
 

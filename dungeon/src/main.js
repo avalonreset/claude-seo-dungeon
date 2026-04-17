@@ -81,7 +81,7 @@ async function connectBridge() {
       _createDisconnectBanner();
       addLog('Bridge disconnected!');
       if (status) {
-        status.textContent = 'Bridge disconnected — reconnecting...';
+        status.textContent = 'Bridge disconnected - reconnecting...';
         status.className = 'error';
       }
     }
@@ -521,7 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Outside battle — neutral chat. Pass-through to claude -p in the
+    // Outside battle - neutral chat. Pass-through to claude -p in the
     // user's project dir with their selected model. No demon anchoring;
     // the user can ask anything, just like a normal CLI session.
     logInputBar.classList.add('running');
@@ -552,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
   };
 
-  // Auto-resize textarea as user types — push log content up
+  // Auto-resize textarea as user types - push log content up
   const logContent = document.getElementById('log-content');
   const autoResize = () => {
     logInput.style.height = 'auto';
@@ -573,7 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') {
       const now = Date.now();
       if (now - lastEscTime < 500 && interactiveRunning) {
-        // Escape in interactive mode — send Escape key to Claude
+        // Escape in interactive mode - send Escape key to Claude
         bridge.sendInteractive('\x1b');
         addLog('Interrupted.');
         logInputBar.classList.remove('running');
@@ -584,7 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Global Escape handler — double-tap cancels any active Claude operation
+  // Global Escape handler - double-tap cancels any active Claude operation
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       const now = Date.now();
@@ -644,7 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cached?.auditData?.issues?.length) {
         const issueIdx = parseInt(params.get('issue') || '0', 10);
         const issue = cached.auditData.issues[issueIdx] || cached.auditData.issues[0];
-        addLog(`DEV: jumping to battle — ${issue.title}`);
+        addLog(`DEV: jumping to battle - ${issue.title}`);
         document.getElementById('title-screen').style.display = 'none';
         document.getElementById('game-container').style.display = 'block';
         const dpr = window.GAME_DPR;

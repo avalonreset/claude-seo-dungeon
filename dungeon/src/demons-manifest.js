@@ -1,5 +1,5 @@
 // =====================================================================
-// DEMON MANIFEST — 13 animated characters from 0x72 DungeonTileset II.
+// DEMON MANIFEST - 13 animated characters from 0x72 DungeonTileset II.
 //
 // POLICY: Every demon in this roster has a real 4-frame idle animation
 // (sourced from 0x72's CC0 tileset). No static sprites. No fake breath
@@ -24,35 +24,35 @@ const d = (name, label) => ({
   frames: 4,                           // all 0x72 idle anims are 4 frames
 });
 
-// ── TIER 5: CRITICAL — the archdemons ────────────────────────────────
+// ── TIER 5: CRITICAL - the archdemons ────────────────────────────────
 // Biggest sprites, most glorious. Rank-0 gets the worst issue.
 export const CRITICAL_POOL = [
   d('big_demon', 'The Archdemon'),
   d('ogre',      'The Ogre'),
 ];
 
-// ── TIER 4: HIGH — major threats ─────────────────────────────────────
+// ── TIER 4: HIGH - major threats ─────────────────────────────────────
 export const HIGH_POOL = [
   d('orc_warrior', 'Orc Warrior'),
   d('big_zombie',  'Risen Colossus'),
   d('skelet',      'Skeleton Warrior'),
 ];
 
-// ── TIER 3: MEDIUM — mid-tier ────────────────────────────────────────
+// ── TIER 3: MEDIUM - mid-tier ────────────────────────────────────────
 export const MEDIUM_POOL = [
   d('chort',        'Chort'),
   d('masked_orc',   'Masked Orc'),
   d('pumpkin_dude', 'Pumpkin Fiend'),
 ];
 
-// ── TIER 2: LOW — lesser threats ─────────────────────────────────────
+// ── TIER 2: LOW - lesser threats ─────────────────────────────────────
 export const LOW_POOL = [
   d('orc_shaman', 'Orc Shaman'),
   d('imp',        'Imp'),
   d('wogol',      'Wogol'),
 ];
 
-// ── TIER 1: INFO — the weakest pests ─────────────────────────────────
+// ── TIER 1: INFO - the weakest pests ─────────────────────────────────
 export const INFO_POOL = [
   d('goblin',      'Goblin'),
   d('tiny_zombie', 'Tiny Zombie'),
@@ -93,7 +93,7 @@ export const POOLS = {
 
 // SEO-category → demon-archetype mappings. First match wins.
 // Each theme lists preferred demon LABELS (matched via demon.label.includes).
-// Order inside `prefer` is the theme's own ranking — most-appropriate first.
+// Order inside `prefer` is the theme's own ranking - most-appropriate first.
 const THEME_HINTS = [
   // Schema / structured data → lawful enforcers
   { keywords: ['schema', 'structured data', 'json-ld', 'microdata', 'rich result', 'rich snippet', 'markup'],

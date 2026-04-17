@@ -4,7 +4,7 @@ import { DESCENT_MESSAGES, TICKER_IDLE_MESSAGES, TICKER_FAILURE_MESSAGES, LEDGER
 import { SFX } from '../utils/sound-manager.js';
 
 /**
- * Summoning scene — Castlevania-style side-scroller.
+ * Summoning scene - Castlevania-style side-scroller.
  * Knight runs RIGHT through a torchlit stone corridor while the audit runs.
  * Parallax scrolling: far wall, main wall with torch brackets, cobblestone floor.
  * Transitions to DungeonHall once audit completes.
@@ -32,7 +32,7 @@ export class SummoningScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(0x05050f);
     this.cameras.main.fadeIn(800, 0, 0, 0);
 
-    // Scroll speeds (pixels per second) — leftward
+    // Scroll speeds (pixels per second) - leftward
     this.farWallSpeed = 60;
     this.mainWallSpeed = 120;
     this.floorSpeed = 170;
@@ -55,14 +55,14 @@ export class SummoningScene extends Phaser.Scene {
       .setOrigin(0, 0)
       .setDepth(2);
 
-    // Floor top edge — dark line separating wall from floor
+    // Floor top edge - dark line separating wall from floor
     const floorEdge = this.add.graphics().setDepth(3);
     floorEdge.fillStyle(0x000000, 0.7);
     floorEdge.fillRect(0, 438, W, 4);
     floorEdge.fillStyle(0x1a1a0e, 0.5);
     floorEdge.fillRect(0, 436, W, 2);
 
-    // Torch glows removed — torches are baked into the wall tile
+    // Torch glows removed - torches are baked into the wall tile
 
     // ── Embers drifting LEFT and UP ────────────────────────────
     this._createEmbers(W, H);
@@ -204,7 +204,7 @@ export class SummoningScene extends Phaser.Scene {
     // ── Vignette Overlay ───────────────────────────────────────
     this._drawVignette(W, H);
 
-    // ── Atmospheric Messages — shuffled bag, organic pacing, varied FX ──
+    // ── Atmospheric Messages - shuffled bag, organic pacing, varied FX ──
     this.flavorMessages = DESCENT_MESSAGES;
     this._flavorBag = [];         // refilled & reshuffled when empty
     this._flavorBaseX = cx;       // remember center for transitions
@@ -259,7 +259,7 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   /**
-   * Far wall — very dark, subtle bricks, no detail. Provides depth behind main wall.
+   * Far wall - very dark, subtle bricks, no detail. Provides depth behind main wall.
    */
   _generateFarWallTexture() {
     const TW = 400;
@@ -302,7 +302,7 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   /**
-   * Main wall — stone bricks with torch brackets baked in every ~180px.
+   * Main wall - stone bricks with torch brackets baked in every ~180px.
    * 400px wide tile, torches at x=90 and x=270 (so every 180px when tiled).
    */
   _generateMainWallTexture() {
@@ -417,7 +417,7 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   /**
-   * Floor texture — dark cobblestone, horizontally tileable.
+   * Floor texture - dark cobblestone, horizontally tileable.
    */
   _generateFloorTexture() {
     const TW = 400;
@@ -428,7 +428,7 @@ export class SummoningScene extends Phaser.Scene {
     g.fillStyle(0x0c0c0a, 1);
     g.fillRect(0, 0, TW, TH);
 
-    // Cobblestones — irregular rounded rectangles
+    // Cobblestones - irregular rounded rectangles
     const stoneW = 40;
     const stoneH = 36;
     const rows = Math.ceil(TH / stoneH) + 1;
@@ -469,7 +469,7 @@ export class SummoningScene extends Phaser.Scene {
       }
     }
 
-    // Top edge of floor — slightly lighter line for definition
+    // Top edge of floor - slightly lighter line for definition
     g.fillStyle(0x1a1a14, 0.6);
     g.fillRect(0, 0, TW, 2);
 
@@ -514,7 +514,7 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   /**
-   * Embers drift LEFT and UP — matching the side-scroll direction.
+   * Embers drift LEFT and UP - matching the side-scroll direction.
    */
   _createEmbers(W, H) {
     for (let i = 0; i < 30; i++) {
@@ -546,7 +546,7 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   /**
-   * Dust motes — slow gentle drift.
+   * Dust motes - slow gentle drift.
    */
   _createDustMotes(W, H) {
     for (let i = 0; i < 15; i++) {
@@ -569,7 +569,7 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   /**
-   * Progress bar at bottom — dark track, blue-to-gold gradient fill, shimmer, centered percentage.
+   * Progress bar at bottom - dark track, blue-to-gold gradient fill, shimmer, centered percentage.
    */
   _createProgressBar(cx) {
     const barY = 570;
@@ -698,28 +698,28 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // UPDATE LOOP — scroll all parallax layers LEFT + animate shimmer
+  // UPDATE LOOP - scroll all parallax layers LEFT + animate shimmer
   // ═══════════════════════════════════════════════════════════════
 
   update(time, delta) {
     const dt = delta / 1000;
 
     // ── Sound effect timers ───────────────────────────────────
-    // Footsteps — every ~350ms while the knight runs
+    // Footsteps - every ~350ms while the knight runs
     this._footstepTimer = (this._footstepTimer || 0) + delta;
     if (this._footstepTimer > 350) {
       this._footstepTimer = 0;
       SFX.play('footstep');
     }
 
-    // Torch crackle — every ~1.5s for ambient atmosphere
+    // Torch crackle - every ~1.5s for ambient atmosphere
     this._torchTimer = (this._torchTimer || 0) + delta;
     if (this._torchTimer > 1500) {
       this._torchTimer = 0;
       SFX.play('torchCrackle');
     }
 
-    // Summoning pulse — every ~2.5s for the mystical hum
+    // Summoning pulse - every ~2.5s for the mystical hum
     this._pulseTimer = (this._pulseTimer || 0) + delta;
     if (this._pulseTimer > 2500) {
       this._pulseTimer = 0;
@@ -741,7 +741,7 @@ export class SummoningScene extends Phaser.Scene {
       this.floorTile.tilePositionX += this.floorSpeed * dt;
     }
 
-    // Knight glow removed — was dead code
+    // Knight glow removed - was dead code
 
     // Animate shimmer across progress bar
     this.shimmerX = (this.shimmerX || 0) + delta * 0.08;
@@ -753,7 +753,7 @@ export class SummoningScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════════════════
 
   // ═══════════════════════════════════════════════════════════════
-  //  STREAM TICKER — single-line typewriter with queue
+  //  STREAM TICKER - single-line typewriter with queue
   //  Keeps the middle-of-screen activity readout to one dynamic line
   //  with type-in + hold + type-out animation. Full verbosity lives
   //  in the Guild Ledger on the right; this is the cinematic readout.
@@ -810,7 +810,7 @@ export class SummoningScene extends Phaser.Scene {
     });
   }
 
-  // Fast chunked type-in: reveal 3–5 chars per tick so a ~20-char line
+  // Fast chunked type-in: reveal 3-5 chars per tick so a ~20-char line
   // completes in roughly 4 frames (~65ms) instead of 20+ frames. Still
   // reads as "typing" because the burst pattern is visible, but doesn't
   // hog the hold window. ~5-6x faster than the single-char stepper.
@@ -825,7 +825,7 @@ export class SummoningScene extends Phaser.Scene {
     let i = 0;
     const step = () => {
       if (!t || !t.active) return;
-      const chunk = 3 + Math.floor(Math.random() * 3); // 3–5 chars
+      const chunk = 3 + Math.floor(Math.random() * 3); // 3-5 chars
       i = Math.min(i + chunk, text.length);
       t.setText(text.slice(0, i));
       this._positionTickerCursor(t.text);
@@ -833,13 +833,13 @@ export class SummoningScene extends Phaser.Scene {
         if (done) done();
         return;
       }
-      // ~4–10ms — effectively one frame at 60fps, maybe two
+      // ~4-10ms - effectively one frame at 60fps, maybe two
       this.time.delayedCall(4 + Math.random() * 6, step);
     };
     step();
   }
 
-  // Varied exit animations — width-preserving so the line never visually
+  // Varied exit animations - width-preserving so the line never visually
   // contracts back into the center (which reads as disorienting
   // expand/contract oscillation against the type-in). Picks one of three
   // tasteful options per cycle:
@@ -988,7 +988,7 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   _setTickerFinalState(msg) {
-    // Used for terminal states ("no demons", "silent") — clear queue,
+    // Used for terminal states ("no demons", "silent") - clear queue,
     // set text directly, and hide the cursor so nothing blinks after.
     this._tickerQueue.length = 0;
     this._tickerBusy = false;
@@ -1002,7 +1002,7 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  //  FLAVOR MESSAGES — shuffled bag, variable timing, varied FX
+  //  FLAVOR MESSAGES - shuffled bag, variable timing, varied FX
   // ═══════════════════════════════════════════════════════════════
 
   _nextFlavorMessage() {
@@ -1272,7 +1272,7 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   /**
-   * Abandon Scroll — a dark rune in the corner that kills the audit and returns to title.
+   * Abandon Scroll - a dark rune in the corner that kills the audit and returns to title.
    */
   _createAbandonScroll(W) {
     const scrollX = W - 50;
@@ -1281,11 +1281,11 @@ export class SummoningScene extends Phaser.Scene {
     // Draw a small arcane rune / scroll icon using graphics
     const rune = this.add.graphics().setDepth(60);
 
-    // Outer circle — dim blood red
+    // Outer circle - dim blood red
     rune.lineStyle(1.5, 0x661111, 0.6);
     rune.strokeCircle(scrollX, scrollY, 16);
 
-    // Inner glyph — an X mark (rune of severance)
+    // Inner glyph - an X mark (rune of severance)
     rune.lineStyle(2, 0x992222, 0.7);
     rune.lineBetween(scrollX - 7, scrollY - 7, scrollX + 7, scrollY + 7);
     rune.lineBetween(scrollX + 7, scrollY - 7, scrollX - 7, scrollY + 7);
@@ -1341,7 +1341,7 @@ export class SummoningScene extends Phaser.Scene {
       label.setAlpha(0);
     });
 
-    // Click — sever the connection and abort the audit
+    // Click - sever the connection and abort the audit
     hitZone.on('pointerdown', () => {
       this.aborted = true;
       bridge.cancelAll();
@@ -1358,7 +1358,7 @@ export class SummoningScene extends Phaser.Scene {
     this.auditRunning = true;
     this.aborted = false;
 
-    // Fresh quest — wipe the end-of-quest timer state. DungeonHall
+    // Fresh quest - wipe the end-of-quest timer state. DungeonHall
     // stamps the real start when the player first enters the hall;
     // main.js's visibilitychange listener handles pause/resume.
     this.game._questStartMs = null;
@@ -1367,16 +1367,16 @@ export class SummoningScene extends Phaser.Scene {
 
     // Three-phase progress model calibrated from real audits:
     //
-    // Phase 1: Setup & Agent Launch (0–25%)
+    // Phase 1: Setup & Agent Launch (0-25%)
     //   First ~20 events: skill invocation, tool searches, initial fetches,
     //   agent spawn messages. Every event is worth a lot here.
     //
-    // Phase 2: Agent Work (25–80%)
-    //   Bulk of the audit — agents running bash, fetch, read, grep commands.
+    // Phase 2: Agent Work (25-80%)
+    //   Bulk of the audit - agents running bash, fetch, read, grep commands.
     //   ~100-250 events depending on site. Logarithmic curve so it moves
     //   steadily but slows as it approaches the ceiling.
     //
-    // Phase 3: Completion (80–100%)
+    // Phase 3: Completion (80-100%)
     //   Agent completion signals, consolidation, JSON output.
     //
     let totalEvents = 0;
@@ -1394,8 +1394,8 @@ export class SummoningScene extends Phaser.Scene {
       // Each early event is worth ~1.25% (feels responsive immediately)
       const setupProgress = Math.min(totalEvents / 20, 1) * 0.25;
 
-      // Phase 2: events 20+ fill 25%–80% on a log curve
-      // log(1) = 0, log(~150) ≈ 5 — normalized to 0–1 range
+      // Phase 2: events 20+ fill 25%-80% on a log curve
+      // log(1) = 0, log(~150) ≈ 5 - normalized to 0-1 range
       const workEvents = Math.max(totalEvents - 20, 0);
       const workProgress = workEvents > 0
         ? Math.min(Math.log(1 + workEvents) / Math.log(180), 1) * 0.55
@@ -1453,7 +1453,7 @@ export class SummoningScene extends Phaser.Scene {
         this.demonCounter.setText(phase);
       }, model);
 
-      if (this.aborted) return; // User cancelled — don't transition
+      if (this.aborted) return; // User cancelled - don't transition
       this.setProgress(1);
 
       if (this.game.hideLoading) this.game.hideLoading();
@@ -1462,17 +1462,17 @@ export class SummoningScene extends Phaser.Scene {
 
     } catch (err) {
       if (this.game.hideLoading) this.game.hideLoading();
-      if (this.aborted) return; // User cancelled — don't handle error
+      if (this.aborted) return; // User cancelled - don't handle error
       console.error('Audit error:', err);
       if (this.game.addLog) this.game.addLog('ERROR: ' + err.message);
 
       // Try to extract partial results from whatever streamed in
       const partial = this._extractPartialIssues(streamedText);
       if (partial && partial.issues && partial.issues.length > 0) {
-        this.addLog(`Interrupted — ${partial.issues.length} demons found before failure`);
+        this.addLog(`Interrupted - ${partial.issues.length} demons found before failure`);
         this._handleAuditResult(partial, false);
       } else {
-        // Truly nothing came back — gothic copy only, no tech-speak
+        // Truly nothing came back - gothic copy only, no tech-speak
         const pickLedger = LEDGER_FAILURE_MESSAGES[Math.floor(Math.random() * LEDGER_FAILURE_MESSAGES.length)];
         const pickTicker = TICKER_FAILURE_MESSAGES[Math.floor(Math.random() * TICKER_FAILURE_MESSAGES.length)];
         this.addLog(pickLedger);
@@ -1485,7 +1485,7 @@ export class SummoningScene extends Phaser.Scene {
   }
 
   /**
-   * Handle a successful or partial audit result — cache it and transition.
+   * Handle a successful or partial audit result - cache it and transition.
    */
   _handleAuditResult(auditData, cacheResult = false) {
     if (!auditData || !auditData.issues || auditData.issues.length === 0) {
@@ -1501,7 +1501,7 @@ export class SummoningScene extends Phaser.Scene {
 
     this.game.auditData = auditData;
 
-    // Only cache fully successful audits — not partial/interrupted results
+    // Only cache fully successful audits - not partial/interrupted results
     if (cacheResult) {
       try {
         const modelKey = this.game.characterConfig?.model || 'unknown';
@@ -1586,7 +1586,7 @@ export class SummoningScene extends Phaser.Scene {
         }
       }
     } catch (e) {
-      // JSON incomplete — expected for interrupted audits
+      // JSON incomplete - expected for interrupted audits
     }
     return null;
   }

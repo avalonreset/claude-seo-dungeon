@@ -1,6 +1,6 @@
 // =====================================================================
 // Messages shown while descending/loading (the audit is running).
-// 300+ entries — players wait 10-15 minutes, so variety is critical.
+// 300+ entries - players wait 10-15 minutes, so variety is critical.
 // Tone: dark, brooding, low fantasy. Despair, dread, isolation, decay.
 // =====================================================================
 export const DESCENT_MESSAGES = [
@@ -70,7 +70,7 @@ export const DESCENT_MESSAGES = [
   "Something old settled in the walls.",
   "Stone does not forget footsteps.",
   "The dark is older here.",
-  "A sound. Then nothing. Then—",
+  "A sound. Then nothing. Then-",
   "The pit goes further down.",
   "Cold hands left these marks.",
   "The flame leans toward nothing.",
@@ -735,7 +735,7 @@ export const DESCENT_MESSAGES = [
   "The silence has texture now.",
 ];
 
-// Ticker idle phrases — shown in the single-line readout while Claude
+// Ticker idle phrases - shown in the single-line readout while Claude
 // is spinning up, before any real tool-call data arrives. Gothic, terse.
 // The ticker swaps to real stream data the moment it arrives.
 export const TICKER_IDLE_MESSAGES = [
@@ -766,7 +766,7 @@ export const TICKER_IDLE_MESSAGES = [
   "Breath held. Not yet released.",
 ];
 
-// Phrases shown when the audit genuinely returns nothing — gothic
+// Phrases shown when the audit genuinely returns nothing - gothic
 // replacement for \"No issues could be retrieved.\" tech-speak.
 export const TICKER_FAILURE_MESSAGES = [
   "The oracle refused to speak.",
@@ -854,7 +854,7 @@ export const VICTORY_MESSAGES = [
 ];
 
 // Messages for the dungeon hall (shown as subtitle/flavor)
-// ~260 entries — players browse for a while, so variety matters.
+// ~260 entries - players browse for a while, so variety matters.
 // Tone: dark, cold, terse. Gothic. The hall as a gallery of horrors
 // waiting to be faced one at a time.
 export const HALL_MESSAGES = [

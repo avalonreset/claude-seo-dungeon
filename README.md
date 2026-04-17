@@ -86,20 +86,20 @@ This release brings the SEO engine from v1.6.1 to v1.9.0, adding 6 major new ski
 
 ### Combat and Gameplay
 - **Turn-based combat atmosphere** with HP bars, attack animations, and an RPG narrator
-- **Attack** sends your message to Claude with the selected demon as a structured focus header — severity, category, URL, file, selector all travel with every turn. Claude reads your intent naturally, so polite directives work as fixes and questions get answered without triggering edits.
+- **Attack** sends your message to Claude with the selected demon as a structured focus header - severity, category, URL, file, selector all travel with every turn. Claude reads your intent naturally, so polite directives work as fixes and questions get answered without triggering edits.
 - **Vanquish** is your judgment call. You decide when the issue has been handled enough to mark it defeated.
-- **Neutral chat outside battle** — the Guild Ledger input becomes a plain pass-through to `claude -p` when no demon is selected, so you can ask anything with no SEO scope applied.
+- **Neutral chat outside battle** - the Guild Ledger input becomes a plain pass-through to `claude -p` when no demon is selected, so you can ask anything with no SEO scope applied.
 - **Quest caching** via localStorage so you can resume audits without re-running them
 - **Dynamic difficulty** where demon HP scales with issue severity (critical = boss fight, info = goblin)
 
 ### Audio and Visuals
 - **25+ procedural sound effects** synthesized via Web Audio API (zero audio files shipped)
 - **Three animated character classes** with idle, run, attack, hit, and death sprite animations
-- **13-demon animated roster** from 0x72 DungeonTileset II — every demon has a real 4-frame idle animation, tier-ranked across Critical / High / Medium / Low / Info. Themed assignment matches SEO category to demon archetype (schema → enforcers, broken links → skeletons, performance → imps, stale content → zombies)
+- **13-demon animated roster** from 0x72 DungeonTileset II - every demon has a real 4-frame idle animation, tier-ranked across Critical / High / Medium / Low / Info. Themed assignment matches SEO category to demon archetype (schema → enforcers, broken links → skeletons, performance → imps, stale content → zombies)
 - **Cinematic silhouette state** for undefeated demons with tier-escalating aura (critical adds embers + halo)
-- **Painterly defeated state** — blood-drain tint, slump rotation, layered pool with drip droplets, killing-blow slashes, spatter ring, corner `DEFEATED` stamp. Every corpse freezes on a deterministic random idle frame so no two look the same.
-- **Final victory sequence — "The Hall Is Still"** — four-phase Dark-Souls-inspired finale when every demon falls. Parchment stat ledger (tier counts, XP, active quest time), name awarded by total XP, then `SEEK ANOTHER` or `REMAIN`.
-- **Visibility-aware quest timer** — `TIME IN THE DARK` pauses when the tab is hidden
+- **Painterly defeated state** - blood-drain tint, slump rotation, layered pool with drip droplets, killing-blow slashes, spatter ring, corner `DEFEATED` stamp. Every corpse freezes on a deterministic random idle frame so no two look the same.
+- **Final victory sequence - "The Hall Is Still"** - four-phase Dark-Souls-inspired finale when every demon falls. Parchment stat ledger (tier counts, XP, active quest time), name awarded by total XP, then `SEEK ANOTHER` or `REMAIN`.
+- **Visibility-aware quest timer** - `TIME IN THE DARK` pauses when the tab is hidden
 - **4K rendering** with DPR-aware canvas scaling (3x minimum) for crisp text on high-DPI displays
 - **Atmospheric effects** including dust motes, embers, ground fog, blood drip transitions, and procedural brick walls
 - **Cinematic transitions** with fade-to-black sequences for descending and ascending
@@ -364,6 +364,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
 ## License
 
-[MIT](LICENSE) — Copyright (c) 2026 Avalon Reset
+[MIT](LICENSE) - Copyright (c) 2026 Avalon Reset
 
 SEO engine based on [Claude SEO](https://github.com/AgriciDaniel/claude-seo) by Daniel Agrici (MIT).

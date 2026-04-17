@@ -1,7 +1,7 @@
 import { COLORS } from '../utils/colors.js';
 
 /**
- * Persistent activity log — right 1/3 of the screen.
+ * Persistent activity log - right 1/3 of the screen.
  * Always visible on top of all other scenes.
  */
 export class LogScene extends Phaser.Scene {
@@ -16,7 +16,7 @@ export class LogScene extends Phaser.Scene {
   }
 
   create() {
-    // Solid panel background — distinct from game area
+    // Solid panel background - distinct from game area
     this.add.rectangle(1000, 337, this.panelW, 675, 0x0e0e1a);
 
     // Subtle left border to separate from game

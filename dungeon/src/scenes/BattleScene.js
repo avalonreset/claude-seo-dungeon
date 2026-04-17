@@ -4,7 +4,7 @@ import { ENCOUNTER_MESSAGES, VICTORY_MESSAGES } from '../utils/flavor-text.js';
 import { SFX } from '../utils/sound-manager.js';
 
 /**
- * Battle scene — Final Fantasy style turn-based combat.
+ * Battle scene - Final Fantasy style turn-based combat.
  * Knight vs SEO Demon. Selecting ATTACK triggers Claude to fix the issue.
  * High-quality 16-bit retro RPG battle screen with dramatic animations.
  */
@@ -138,7 +138,7 @@ export class BattleScene extends Phaser.Scene {
 
         const mote = this.add.circle(startX, startY, size, color, alpha).setDepth(1);
 
-        // Slow, gentle drift — slightly upward and sideways
+        // Slow, gentle drift - slightly upward and sideways
         const driftX = Phaser.Math.Between(-40, 40);
         const driftY = Phaser.Math.Between(-30, -60);
         const duration = Phaser.Math.Between(4000, 8000);
@@ -292,7 +292,7 @@ export class BattleScene extends Phaser.Scene {
 
   createDemon() {
     // Every demon is a 0x72 4-frame idle animation. Scale per severity,
-    // flip to face the player on the left. NO fake breath tweens — the
+    // flip to face the player on the left. NO fake breath tweens - the
     // real idle animation carries the "alive" feel.
     const BATTLE_SCALES = { critical: 5, high: 5.5, medium: 4.3, low: 3.2, info: 3.2 };
     const demonScale = BATTLE_SCALES[this.issue.severity] || 4;
@@ -315,7 +315,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   createKnight() {
-    // Knight — feet on ground line y=300
+    // Knight - feet on ground line y=300
     this.knight = this.add.sprite(180, 280, 'char_idle').setScale(2.5).setAlpha(0).play('char_idle_anim');
   }
 
@@ -567,7 +567,7 @@ export class BattleScene extends Phaser.Scene {
     this.logVisibleHeight = logH - textPadding * 2;
     this.logTextBaseY = logY + textPadding;
 
-    // HTML overlay for battle log — supports colors and native scrolling
+    // HTML overlay for battle log - supports colors and native scrolling
     this._battleLogEl = document.createElement('div');
     this._battleLogEl.id = 'battle-log-overlay';
     this._battleLogEl.style.cssText = `
@@ -719,7 +719,7 @@ export class BattleScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    // Command descriptions — shown below menu when hovering
+    // Command descriptions - shown below menu when hovering
     this.commandDescs = [
       'Talk to Claude. Describe what to fix or ask questions.',
       'Mark this demon defeated. Use when the issue is resolved.',
@@ -804,7 +804,7 @@ export class BattleScene extends Phaser.Scene {
     const detW = 780;
     const pad = 10;
 
-    // Category title — fantasy RPG style
+    // Category title - fantasy RPG style
     const catTitle = this.issue.category.toUpperCase();
     const catBadge = this.add.text(detX + pad, detY + pad - 2, catTitle, {
       fontFamily: '"Cinzel", "Palatino Linotype", "Book Antiqua", "Georgia", serif',
@@ -854,7 +854,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   createStreamText() {
-    // Stream text for fix output — positioned in battle log area
+    // Stream text for fix output - positioned in battle log area
     this.streamText = this.add.text(30, 460, '', {
       fontFamily: 'monospace',
       fontSize: '10px',
@@ -880,27 +880,27 @@ export class BattleScene extends Phaser.Scene {
       line.style.marginBottom = '3px';
 
       if (msg.startsWith('> ')) {
-        // User prompt — gold
+        // User prompt - gold
         line.style.color = '#d4af37';
         line.style.fontWeight = 'bold';
         line.style.borderLeft = '2px solid rgba(212,175,55,0.5)';
         line.style.paddingLeft = '6px';
       } else if (msg.includes('channels') || msg.includes('braces')) {
-        // Battle action — bright white
+        // Battle action - bright white
         line.style.color = '#f0f0ff';
         line.style.fontWeight = '600';
       } else if (/^(The demon|Demon deals|demon retaliates)/i.test(msg)) {
-        // Demon action — only explicit demon turn messages, not narration
+        // Demon action - only explicit demon turn messages, not narration
         line.style.color = '#e05050';
       } else if (msg.includes('VANQUISH') || msg.includes('VICTORY')) {
-        // Victory — green-gold
+        // Victory - green-gold
         line.style.color = '#60dd60';
         line.style.fontWeight = 'bold';
       } else if (msg.includes('spell fizzles') || msg.startsWith('ERROR')) {
-        // Actual errors — red
+        // Actual errors - red
         line.style.color = '#e05050';
       } else if (msg.length > 60) {
-        // Narration (long text from Haiku) — soft cyan
+        // Narration (long text from Haiku) - soft cyan
         line.style.color = '#88bbcc';
         line.style.fontStyle = 'italic';
       }
@@ -1438,11 +1438,11 @@ export class BattleScene extends Phaser.Scene {
       ledgerInput.addEventListener('focus', this._ledgerFocusHandler);
     }
 
-    // Dark overlay at depth 49 — dims everything below
+    // Dark overlay at depth 49 - dims everything below
     this._attackDarkOverlay = this.add.rectangle(400, 300, 800, 600, 0x000010, 0.7).setDepth(49);
     // Boost battle log panel + graphics above the dark overlay
     if (this.logGfx) this.logGfx.setDepth(54);
-    // Battle log is now HTML — raise its z-index
+    // Battle log is now HTML - raise its z-index
     if (this._battleLogEl) this._battleLogEl.style.zIndex = '10000';
 
     this._attackOverlayEl = overlay;
@@ -1598,7 +1598,7 @@ export class BattleScene extends Phaser.Scene {
     this._disableMenu();
     this._startChanneling();
 
-    // 2. Send to Claude — pass the full demon (issue) object and the
+    // 2. Send to Claude - pass the full demon (issue) object and the
     //    user's turn message as separate fields. The server builds a
     //    structured focus header so Claude always knows which demon we
     //    are fighting, regardless of how vague the user's message is.
@@ -1618,7 +1618,7 @@ export class BattleScene extends Phaser.Scene {
       }, model);
       this._activeRequestId = null;
 
-      // 3. Claude finished — stop channeling, THEN play the slash
+      // 3. Claude finished - stop channeling, THEN play the slash
       this._stopChanneling();
       SFX.play('channelComplete');
       this.streamText.setText('');
@@ -1654,7 +1654,7 @@ export class BattleScene extends Phaser.Scene {
       }
     }
 
-    // Turn returns to player — re-enable menu
+    // Turn returns to player - re-enable menu
     if (this.game.hideLoading) this.game.hideLoading();
     this._hasAttacked = true;
     this.isPlayerTurn = true;
@@ -1667,7 +1667,7 @@ export class BattleScene extends Phaser.Scene {
     const severity = this.issue.severity;
     const condensed = rawLines.slice(-15).join('\n');
 
-    const prompt = `You are the narrator of a dark fantasy dungeon crawler. The warrior "${charName}" just attacked the demon "${demonName}" (severity: ${severity}). Below is what actually happened during the attack — technical SEO actions performed by Claude. Write 2-3 short, grim sentences narrating this as a battle action. Stay relevant to the actual work described. No humor, no corniness. Dark, terse, atmospheric. Like a Souls game narrator. Do NOT use markdown. Plain text only.
+    const prompt = `You are the narrator of a dark fantasy dungeon crawler. The warrior "${charName}" just attacked the demon "${demonName}" (severity: ${severity}). Below is what actually happened during the attack - technical SEO actions performed by Claude. Write 2-3 short, grim sentences narrating this as a battle action. Stay relevant to the actual work described. No humor, no corniness. Dark, terse, atmospheric. Like a Souls game narrator. Do NOT use markdown. Plain text only.
 
 What happened:
 ${condensed}
@@ -2023,7 +2023,7 @@ Summary: ${fallbackSummary}`;
   }
 
   // ═══════════════════════════════════════════════════
-  //  VANQUISH — instant kill, only the player decides when
+  //  VANQUISH - instant kill, only the player decides when
   // ═══════════════════════════════════════════════════
 
   doVanquish() {
@@ -2034,7 +2034,7 @@ Summary: ${fallbackSummary}`;
 
     this.setLog(`\u2694 EXECUTION STRIKE! The ${this.charName} delivers the final blow!`);
 
-    // Dramatic pause — knight glows gold before the strike
+    // Dramatic pause - knight glows gold before the strike
     this.knight.setTint(0xf0c040);
     this.cameras.main.flash(150, 60, 40, 10);
 
@@ -2116,7 +2116,7 @@ Summary: ${fallbackSummary}`;
   }
 
   // ═══════════════════════════════════════════════════
-  //  DEFEND — brace for impact, demon gets a free hit
+  //  DEFEND - brace for impact, demon gets a free hit
   // ═══════════════════════════════════════════════════
 
   doDefend() {
@@ -2127,7 +2127,7 @@ Summary: ${fallbackSummary}`;
     this.setLog(`${this.charName} braces for impact!`);
     this._disableMenu();
 
-    // Knight raises guard — blue tint pulses
+    // Knight raises guard - blue tint pulses
     this.knight.setTint(0x40c0f0);
 
     // Hexagonal shield materializes in front of knight
@@ -2167,7 +2167,7 @@ Summary: ${fallbackSummary}`;
     }
     shieldGfx.fillPath();
 
-    // Shield materializes — scale from 0
+    // Shield materializes - scale from 0
     shieldGfx.setScale(0);
     SFX.play('shieldBlock');
     this.tweens.add({

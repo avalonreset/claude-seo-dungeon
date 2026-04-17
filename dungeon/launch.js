@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Claude SEO Dungeon — One-click launcher.
+ * Claude SEO Dungeon - One-click launcher.
  *
  * Builds the optimized production bundle (if needed), starts the bridge
  * server, and serves the game. The user just runs: npm start

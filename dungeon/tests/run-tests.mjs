@@ -2,12 +2,12 @@
 // Runs with: node tests/run-tests.mjs
 //
 // Covers the parts you can't see from a compile-clean build:
-//   1. Demon manifest — assignment, hierarchy, theme matching, no collisions
-//   2. Battle prompt shape — demon focus header contains every expected field
-//   3. Neutral chat prompt shape — zero framing
-//   4. Asset reachability — every demon frame served from :3000
-//   5. Bridge routing — the `chat` type is accepted, `fix` payload validated
-//   6. Playwright smoke — the game page loads, canvas mounts, no JS errors
+//   1. Demon manifest - assignment, hierarchy, theme matching, no collisions
+//   2. Battle prompt shape - demon focus header contains every expected field
+//   3. Neutral chat prompt shape - zero framing
+//   4. Asset reachability - every demon frame served from :3000
+//   5. Bridge routing - the `chat` type is accepted, `fix` payload validated
+//   6. Playwright smoke - the game page loads, canvas mounts, no JS errors
 
 import { assignAllDemons, POOLS, pickDemonForIssue, getAllDemons } from '../src/demons-manifest.js';
 import http from 'node:http';
@@ -28,7 +28,7 @@ function section(name) { console.log(`\n── ${name} ──`); }
 // ───────── 1. Demon manifest ─────────
 section('1. Demon manifest');
 
-// Shape check — every demon has the keys scenes expect
+// Shape check - every demon has the keys scenes expect
 const all = getAllDemons();
 assert(all.length === 13, `expected 13 demons, got ${all.length}`);
 for (const d of all) {
@@ -48,24 +48,24 @@ assert(POOLS.medium.length === 3,   'medium pool should have 3 demons');
 assert(POOLS.low.length === 3,      'low pool should have 3 demons');
 assert(POOLS.info.length === 2,     'info pool should have 2 demons');
 
-// Rank hierarchy — most severe HP per tier should get rank 0 → pool[0]
+// Rank hierarchy - most severe HP per tier should get rank 0 → pool[0]
 const issues = [
-  // critical tier — two demons, higher HP should get Archdemon (pool[0])
+  // critical tier - two demons, higher HP should get Archdemon (pool[0])
   { id: 1, severity: 'critical', title: 'Massive content issue',  description: 'E-E-A-T problem',      hp: 100 },
   { id: 2, severity: 'critical', title: 'Minor critical',          description: 'Second critical',     hp:  50 },
-  // high tier — three demons
+  // high tier - three demons
   { id: 3, severity: 'high', title: 'Broken links everywhere',     description: 'many 404s',           hp: 80 },
   { id: 4, severity: 'high', title: 'Slightly broken link',        description: 'one 404',             hp: 40 },
   { id: 5, severity: 'high', title: 'Outdated post',               description: 'stale content',       hp: 30 },
-  // medium — three demons
+  // medium - three demons
   { id: 6, severity: 'medium', title: 'Mobile viewport bug',       description: 'responsive issue',    hp: 50 },
   { id: 7, severity: 'medium', title: 'Duplicate canonical',       description: 'duplicate pages',     hp: 40 },
   { id: 8, severity: 'medium', title: 'Generic issue',             description: 'no theme match',      hp: 30 },
-  // low — three demons
+  // low - three demons
   { id: 9,  severity: 'low', title: 'Image alt missing',           description: 'image alt attribute', hp: 20 },
   { id: 10, severity: 'low', title: 'Internal link audit',         description: 'link graph weak',     hp: 15 },
   { id: 11, severity: 'low', title: 'Generic low',                 description: 'nothing special',     hp: 10 },
-  // info — two demons
+  // info - two demons
   { id: 12, severity: 'info', title: 'Mobile tap target small',    description: 'tap target',          hp:  5 },
   { id: 13, severity: 'info', title: 'Trivial nit',                description: 'barely matters',      hp:  3 },
 ];
@@ -96,7 +96,7 @@ assignAllDemons([perfIssue]);
 assert(['demon_imp', 'demon_chort', 'demon_goblin', 'demon_wogol'].includes(perfIssue._demonKey) || perfIssue._demonKey === POOLS.low[0].key,
   `performance issue should get themed or rank-0 demon, got ${perfIssue._demonKey}`);
 
-// Overflow — more issues than demons in a tier
+// Overflow - more issues than demons in a tier
 const flood = [];
 for (let i = 0; i < 10; i++) flood.push({ id: 1000+i, severity: 'info', title: `issue ${i}`, description: 'x', hp: 1 });
 assignAllDemons(flood);
@@ -115,7 +115,7 @@ function findsThemeMatch(issue, pool) {
 // ───────── 2. Battle prompt shape ─────────
 section('2. Battle prompt shape (demon focus header)');
 // Reproduce the server's buildDemonHeader to assert on its output.
-// Keeping this in sync with server/index.js is a trade-off — if you
+// Keeping this in sync with server/index.js is a trade-off - if you
 // change the prompt there, update this mirror. Breakage shows up
 // immediately on the next test run.
 function buildDemonHeader(issue) {
@@ -165,7 +165,7 @@ for (const must of ['Name:', 'Severity:   CRITICAL', 'Category:   Technical',
   assert(header.includes(must), `header missing field: ${must}`);
 }
 
-// Minimal issue — header should gracefully skip missing fields
+// Minimal issue - header should gracefully skip missing fields
 const tinyIssue = { id: 1, severity: 'info', title: 'Tiny nit', description: 'x' };
 const tinyHeader = buildDemonHeader(tinyIssue);
 assert(tinyHeader.includes('Name:       Tiny nit'), 'tiny header should include name');
@@ -173,7 +173,7 @@ assert(!tinyHeader.includes('URL:'), 'tiny header should not include URL line (n
 assert(!tinyHeader.includes('File:'), 'tiny header should not include File line');
 assert(!tinyHeader.includes('Selector:'), 'tiny header should not include Selector line');
 
-// User-intent guidance block — no hard branching anymore
+// User-intent guidance block - no hard branching anymore
 // (We just check the documentation string present in server/index.js
 // by reading the file directly.)
 import('node:fs').then(async (fs) => {
@@ -214,7 +214,7 @@ import('node:fs').then(async (fs) => {
   await testBridgeType('narrate',/narrat/i, 'narrate handler should accept the type');
   await testBridgeRejects('not_a_real_type', 'unknown types should be rejected');
 
-  // ───────── 5. Playwright smoke — page loads cleanly ─────────
+  // ───────── 5. Playwright smoke - page loads cleanly ─────────
   section('5. Playwright smoke (headless Chromium)');
   await smokeTest();
 
@@ -245,7 +245,7 @@ function testBridgeType(type, expectHandlerLog, msg) {
     const ws = new WebSocket('ws://127.0.0.1:3001');
     let gotReply = false;
     const timeout = setTimeout(() => {
-      if (!gotReply) { assert(false, `${msg} — timeout waiting for reply`); }
+      if (!gotReply) { assert(false, `${msg} - timeout waiting for reply`); }
       try { ws.terminate(); } catch {}
       resolve();
     }, 3500);
@@ -261,10 +261,10 @@ function testBridgeType(type, expectHandlerLog, msg) {
       gotReply = true;
       const m = JSON.parse(data.toString());
       // The test passes if the server didn't reject with "Unknown command type".
-      // It can return an error (invalid path, spawn fail) — that means the
+      // It can return an error (invalid path, spawn fail) - that means the
       // type routing reached the handler.
       const rejectedByAllowlist = m.type === 'error' && /Unknown command type/.test(m.message || '');
-      assert(!rejectedByAllowlist, `${msg} — got: ${m.message || m.type}`);
+      assert(!rejectedByAllowlist, `${msg} - got: ${m.message || m.type}`);
       clearTimeout(timeout);
       try { ws.close(); } catch {}
       resolve();
@@ -277,7 +277,7 @@ function testBridgeRejects(type, msg) {
   return new Promise((resolve) => {
     const ws = new WebSocket('ws://127.0.0.1:3001');
     const timeout = setTimeout(() => {
-      assert(false, `${msg} — timeout`);
+      assert(false, `${msg} - timeout`);
       try { ws.terminate(); } catch {}
       resolve();
     }, 3500);
@@ -287,7 +287,7 @@ function testBridgeRejects(type, msg) {
     ws.on('message', (data) => {
       const m = JSON.parse(data.toString());
       const rejected = m.type === 'error' && /Unknown command type/.test(m.message || '');
-      assert(rejected, `${msg} — got: ${m.message || m.type}`);
+      assert(rejected, `${msg} - got: ${m.message || m.type}`);
       clearTimeout(timeout);
       try { ws.close(); } catch {}
       resolve();

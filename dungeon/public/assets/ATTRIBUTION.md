@@ -40,7 +40,7 @@ each with a real 4-frame idle animation loaded from `assets/0x72/frames/`:
 big_demon, ogre, orc_warrior, big_zombie, skelet, chort, masked_orc,
 pumpkin_dude, orc_shaman, imp, wogol, goblin, tiny_zombie.
 
-No fake breath tweens — every demon has a proper idle loop.
+No fake breath tweens - every demon has a proper idle loop.
 
 ---
 

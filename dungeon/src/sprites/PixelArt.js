@@ -1,7 +1,7 @@
 import { COLORS } from '../utils/colors.js';
 
 /**
- * Generates all pixel art sprites programmatically — no external assets needed.
+ * Generates all pixel art sprites programmatically - no external assets needed.
  * SNES-style 16-bit aesthetic, Dark Souls meets Final Fantasy.
  */
 export class PixelArt {
@@ -17,7 +17,7 @@ export class PixelArt {
     this.generateParticles(scene);
   }
 
-  // ── Knight (protagonist) — detailed Dark Souls style, 24x28 canvas, 4 walk frames + static ──
+  // ── Knight (protagonist) - detailed Dark Souls style, 24x28 canvas, 4 walk frames + static ──
   static generateKnight(scene) {
     const s = 4; // pixel scale
     const W = 24, H = 28; // canvas in pixel units
@@ -43,7 +43,7 @@ export class PixelArt {
 
       // ── Cape (drawn first, behind everything) ──
       const cx = 4 + f.capeSwayX;
-      // Main cape body — wide, flowing down past knees
+      // Main cape body - wide, flowing down past knees
       rect(cx, 10, 3, 14 + f.capeExtraLen, cape);
       rect(cx - 1, 12, 1, 12 + f.capeExtraLen, cape);
       rect(cx + 3, 11, 1, 11 + f.capeExtraLen, capeDk);
@@ -51,7 +51,7 @@ export class PixelArt {
       for (const hy of f.capeHighlight) {
         p(cx, hy, capeLt); p(cx + 1, hy, capeMid);
       }
-      // Cape bottom fringe — ragged edge
+      // Cape bottom fringe - ragged edge
       const cBot = 24 + f.capeExtraLen;
       p(cx - 1, cBot, capeDk); p(cx, cBot, cape); p(cx + 1, cBot, capeLt);
       p(cx + 2, cBot, cape); p(cx + 3, cBot - 1, capeDk);
@@ -74,7 +74,7 @@ export class PixelArt {
       // Top ridge
       row(9, 3, 3, helmetHi);
       p(8, 3, helmet);
-      // Helmet dome — rounded shape
+      // Helmet dome - rounded shape
       row(8, 4, 6, helmetHi);
       p(7, 4, helmet); p(14, 4, helmet);
       // Main helmet body
@@ -85,7 +85,7 @@ export class PixelArt {
       row(8, 6, 6, visor);       // horizontal bar of the T
       p(10, 7, visor); p(11, 7, visor); // vertical bar of the T
       p(10, 8, visorDim); p(11, 8, visorDim); // lower visor glow
-      // Visor glow aura — subtle pixels beside the slit
+      // Visor glow aura - subtle pixels beside the slit
       p(7, 6, visorDim); p(14, 6, visorDim);
       // Chin guard
       row(8, 9, 6, helmetDk);
@@ -116,7 +116,7 @@ export class PixelArt {
 
       // ── Chest plate (detailed with center ridge, gold emblem) ──
       rect(7, 11, 8, 6, steel);
-      // Center ridge — vertical bright line
+      // Center ridge - vertical bright line
       rect(10, 11, 2, 6, steelHi);
       // Darker edges
       p(7, 11, steelDk); p(14, 11, steelDk);
@@ -151,7 +151,7 @@ export class PixelArt {
       row(16, raY + 3, 3, gold);
       p(17, raY + 1, steelDk);
 
-      // ── Shield (left hand — heater shape with pointed bottom) ──
+      // ── Shield (left hand - heater shape with pointed bottom) ──
       const shY = f.leftArmY + 2;
       // Main shield body (wider at top, pointed at bottom)
       rect(1, shY, 4, 5, shieldBlue);
@@ -161,12 +161,12 @@ export class PixelArt {
       row(1, shY + 5, 4, shieldBlue);
       row(2, shY + 6, 2, shieldBlue);
       p(2, shY + 7, shieldBlue);
-      // Gold border — top
+      // Gold border - top
       row(0, shY, 6, gold);
-      // Gold border — sides
+      // Gold border - sides
       p(0, shY + 1, gold); p(0, shY + 2, gold); p(0, shY + 3, gold);
       p(5, shY + 1, gold); p(5, shY + 2, gold); p(5, shY + 3, gold);
-      // Gold border — pointed bottom edges
+      // Gold border - pointed bottom edges
       p(1, shY + 5, gold); p(4, shY + 5, gold);
       p(1, shY + 6, gold); p(4, shY + 6, gold);
       p(2, shY + 7, gold);
@@ -178,9 +178,9 @@ export class PixelArt {
       // Shield highlight
       p(1, shY + 1, shieldBlueLt); p(4, shY + 1, shieldBlueLt);
 
-      // ── Sword (right hand — long gleaming blade, bobs with step) ──
+      // ── Sword (right hand - long gleaming blade, bobs with step) ──
       const sBy = 2 + f.swordBobY;
-      // Blade — alternating bright/dark for gleam effect, 12 pixels long
+      // Blade - alternating bright/dark for gleam effect, 12 pixels long
       for (let bi = 0; bi < 12; bi++) {
         const bladeColor = (bi % 3 === 0) ? bladeShine : (bi % 3 === 1) ? bladeBright : bladeDk;
         p(20, sBy + bi, bladeColor);
@@ -230,7 +230,7 @@ export class PixelArt {
 
     // Per-frame variation data for the 4-frame walk cycle (24x28 canvas)
     const walkFrames = [
-      { // Frame 0 — left foot forward stride
+      { // Frame 0 - left foot forward stride
         leftLegX: 7,  leftLegY: 18, leftLegH: 6,
         rightLegX: 13, rightLegY: 19, rightLegH: 5,
         leftBootX: 6,  leftBootY: 24,
@@ -239,7 +239,7 @@ export class PixelArt {
         capeSwayX: 0,  capeExtraLen: 1, capeHighlight: [13, 16, 20],
         swordBobY: -1, isStride: true,
       },
-      { // Frame 1 — feet together, passing position
+      { // Frame 1 - feet together, passing position
         leftLegX: 8,  leftLegY: 18, leftLegH: 5,
         rightLegX: 12, rightLegY: 18, rightLegH: 5,
         leftBootX: 7,  leftBootY: 23,
@@ -248,7 +248,7 @@ export class PixelArt {
         capeSwayX: 1,  capeExtraLen: 0, capeHighlight: [13, 16, 19],
         swordBobY: 0, isStride: false,
       },
-      { // Frame 2 — right foot forward stride
+      { // Frame 2 - right foot forward stride
         leftLegX: 9,  leftLegY: 19, leftLegH: 5,
         rightLegX: 11, rightLegY: 18, rightLegH: 6,
         leftBootX: 9,  leftBootY: 24,
@@ -257,7 +257,7 @@ export class PixelArt {
         capeSwayX: 0,  capeExtraLen: 1, capeHighlight: [14, 17, 21],
         swordBobY: -1, isStride: true,
       },
-      { // Frame 3 — feet together, other passing position
+      { // Frame 3 - feet together, other passing position
         leftLegX: 8,  leftLegY: 18, leftLegH: 5,
         rightLegX: 12, rightLegY: 18, rightLegH: 5,
         leftBootX: 7,  leftBootY: 23,
@@ -306,7 +306,7 @@ export class PixelArt {
     });
   }
 
-  // ── Demons (one per severity) — Dark Souls style dungeon monsters ─────────
+  // ── Demons (one per severity) - Dark Souls style dungeon monsters ─────────
   static generateDemons(scene) {
     this._demonCritical(scene);
     this._demonHigh(scene);
@@ -315,7 +315,7 @@ export class PixelArt {
     this._demonInfo(scene);
   }
 
-  // ── CRITICAL: Massive Horned Demon Lord with wings — 24x28, red/black ─────
+  // ── CRITICAL: Massive Horned Demon Lord with wings - 24x28, red/black ─────
   static _demonCritical(scene) {
     const s = 4;
     const g = scene.make.graphics({ add: false });
@@ -438,7 +438,7 @@ export class PixelArt {
     g.destroy();
   }
 
-  // ── HIGH: Skeletal Death Knight with scythe — 20x24, orange/dark ──────────
+  // ── HIGH: Skeletal Death Knight with scythe - 20x24, orange/dark ──────────
   static _demonHigh(scene) {
     const s = 4;
     const g = scene.make.graphics({ add: false });
@@ -529,7 +529,7 @@ export class PixelArt {
     g.destroy();
   }
 
-  // ── MEDIUM: Hulking Armored Orc/Troll — 18x22, yellow/brown ──────────────
+  // ── MEDIUM: Hulking Armored Orc/Troll - 18x22, yellow/brown ──────────────
   static _demonMedium(scene) {
     const s = 4;
     const g = scene.make.graphics({ add: false });
@@ -625,7 +625,7 @@ export class PixelArt {
     g.destroy();
   }
 
-  // ── LOW: Sneaky Goblin Rogue — 14x18, green ──────────────────────────────
+  // ── LOW: Sneaky Goblin Rogue - 14x18, green ──────────────────────────────
   static _demonLow(scene) {
     const s = 4;
     const g = scene.make.graphics({ add: false });
@@ -704,7 +704,7 @@ export class PixelArt {
     g.destroy();
   }
 
-  // ── INFO: Small Imp/Bat creature — 12x16, blue/gray ──────────────────────
+  // ── INFO: Small Imp/Bat creature - 12x16, blue/gray ──────────────────────
   static _demonInfo(scene) {
     const s = 4;
     const g = scene.make.graphics({ add: false });
@@ -726,7 +726,7 @@ export class PixelArt {
     p(3, 0, horn); p(2, 1, hornHi);
     p(8, 0, horn); p(9, 1, hornHi);
 
-    // ── Head (round, oversized — impish) ──
+    // ── Head (round, oversized - impish) ──
     rect(3, 1, 6, 4, skin);
     row(4, 1, 4, skinHi);
     p(4, 2, eyeGlow); p(5, 2, eyeCore); // big eyes

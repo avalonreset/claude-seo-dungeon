@@ -3,7 +3,7 @@ import { VICTORY_MESSAGES } from '../utils/flavor-text.js';
 import { SFX } from '../utils/sound-manager.js';
 
 /**
- * Victory scene — epic loot screen after defeating a demon.
+ * Victory scene - epic loot screen after defeating a demon.
  * Shows what was fixed, XP gained, then returns to dungeon hall.
  */
 export class VictoryScene extends Phaser.Scene {

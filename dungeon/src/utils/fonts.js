@@ -1,7 +1,7 @@
 // ============================================================
-// FONT SYSTEM — Dark 16-bit RPG
+// FONT SYSTEM - Dark 16-bit RPG
 // Primary typeface: JetBrains Mono (loaded via Google Fonts)
-// DO NOT use "Press Start 2P" — it renders poorly at all sizes
+// DO NOT use "Press Start 2P" - it renders poorly at all sizes
 // ============================================================
 
 const FONT_PRIMARY = '"JetBrains Mono", monospace';

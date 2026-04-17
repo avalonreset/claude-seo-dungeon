@@ -97,7 +97,7 @@ export class BridgeClient {
       if (this.connected) { this._clearReconnect(); return; }
       console.log('Bridge: attempting reconnect...');
       try {
-        this.connect().catch(() => {}); // swallow — onclose will retry again
+        this.connect().catch(() => {}); // swallow - onclose will retry again
       } catch (_) {}
     }, 3000);
   }
@@ -116,7 +116,7 @@ export class BridgeClient {
   }
 
   /**
-   * Neutral "talk to Claude" — used outside of battle (Demon Lodge /
+   * Neutral "talk to Claude" - used outside of battle (Demon Lodge /
    * Dungeon Hall / between fights). No demon context, no framing. The
    * message goes to `claude -p <text>` in the user's project directory
    * under their selected character model. Functionally the same as
@@ -157,7 +157,7 @@ export class BridgeClient {
    * Send a fix/diagnose request scoped to ONE demon (SEO issue).
    *
    * @param {object} payload       { issue, userMessage }
-   * @param {object} payload.issue Full issue object — severity, category,
+   * @param {object} payload.issue Full issue object - severity, category,
    *                               title, description, plus any url/selector/
    *                               file/line/hp fields present.
    * @param {string} payload.userMessage  What the user typed this turn.

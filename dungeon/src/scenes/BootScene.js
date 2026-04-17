@@ -2,7 +2,7 @@ import { PixelArt } from '../sprites/PixelArt.js';
 import { getAllDemons } from '../demons-manifest.js';
 
 /**
- * Boot scene — generates pixel art, then goes straight to Summoning.
+ * Boot scene - generates pixel art, then goes straight to Summoning.
  * Title screen is handled by HTML before Phaser starts.
  */
 export class BootScene extends Phaser.Scene {
@@ -16,7 +16,7 @@ export class BootScene extends Phaser.Scene {
       console.warn(`Failed to load asset: ${file.key} (${file.url})`);
     });
 
-    // Load real pixel art PNG sprites (32x32 each) — static fallbacks
+    // Load real pixel art PNG sprites (32x32 each) - static fallbacks
     this.load.image('knight_real', 'assets/monsters/knight.png');
     this.load.image('demon_critical_real', 'assets/monsters/demon_critical.png');
     this.load.image('demon_high_real', 'assets/monsters/demon_high.png');
@@ -26,7 +26,7 @@ export class BootScene extends Phaser.Scene {
 
     // Load 4-frame idle animation for every demon in the roster.
     // Every character is from 0x72 DungeonTileset II (CC0). All face
-    // right natively — scenes flip them horizontally to face the player.
+    // right natively - scenes flip them horizontally to face the player.
     for (const demon of getAllDemons()) {
       for (let f = 0; f < demon.frames; f++) {
         this.load.image(`${demon.framePrefix}${f}`, `assets/0x72/frames/${demon.name}_idle_anim_f${f}.png`);
@@ -34,7 +34,7 @@ export class BootScene extends Phaser.Scene {
     }
 
     // Remove old character textures if this is a re-entry (character swap from Gate).
-    // Phaser caches textures by key — without removal, load() silently skips the new files
+    // Phaser caches textures by key - without removal, load() silently skips the new files
     // and the old character's sprites remain on screen.
     for (const key of this.textures.getTextureKeys()) {
       if (key.startsWith('char_')) {
@@ -91,7 +91,7 @@ export class BootScene extends Phaser.Scene {
       'demon_medium_real', 'demon_low_real', 'demon_info_real',
       'char_idle', 'char_run', 'char_attack', 'char_hit', 'char_death'
     ];
-    // Add every demon frame texture — critical for crisp pixel rendering
+    // Add every demon frame texture - critical for crisp pixel rendering
     for (const demon of getAllDemons()) {
       for (let f = 0; f < demon.frames; f++) texKeys.push(`${demon.framePrefix}${f}`);
     }
@@ -122,7 +122,7 @@ export class BootScene extends Phaser.Scene {
     this.anims.create({ key: 'char_death_anim', frames: this.anims.generateFrameNumbers('char_death', { start: 0, end: cfg.deathFrames - 1 }), frameRate: 8, repeat: 0 });
 
     // Create one 4-frame idle animation per demon character. Every
-    // demon in the roster has its own distinct idle loop — no fake
+    // demon in the roster has its own distinct idle loop - no fake
     // scale-tween "breathing" anywhere.
     for (const demon of getAllDemons()) {
       if (this.anims.exists(demon.animKey)) this.anims.remove(demon.animKey);

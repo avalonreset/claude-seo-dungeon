@@ -28,7 +28,7 @@ Original copyright: Copyright (c) 2026 AgriciDaniel.
 | Vite | MIT | https://github.com/vitejs/vite |
 | Playwright | Apache-2.0 | https://github.com/microsoft/playwright |
 
-## Art Assets — Hero Sprites
+## Art Assets - Hero Sprites
 
 | Asset | License | Author |
 |-------|---------|--------|
@@ -36,17 +36,17 @@ Original copyright: Copyright (c) 2026 AgriciDaniel.
 | Martial Hero Pack (Samurai) | Free for personal and commercial use | [LuizMelo](https://luizmelo.itch.io/) |
 | Warrior Pack 2 (Knight) | Free for personal and commercial use | [LuizMelo](https://luizmelo.itch.io/) |
 
-## Art Assets — UI
+## Art Assets - UI
 
 | Asset | License | Author |
 |-------|---------|--------|
 | RPG GUI Construction Kit | CC-BY 3.0 | [Lamoot](https://opengameart.org/users/lamoot) |
 | Golden UI | CC0 | [Buch](https://opengameart.org/users/buch) |
 
-## Art Assets — Demons and Monsters
+## Art Assets - Demons and Monsters
 
 | Asset | License | Source |
 |-------|---------|--------|
-| DungeonTileset II (0x72) — full 13-demon roster with 4-frame idle animations (big_demon, ogre, orc_warrior, big_zombie, skelet, chort, masked_orc, pumpkin_dude, orc_shaman, imp, wogol, goblin, tiny_zombie) | CC0 | [0x72 on itch.io](https://0x72.itch.io/dungeontileset-ii) |
+| DungeonTileset II (0x72) - full 13-demon roster with 4-frame idle animations (big_demon, ogre, orc_warrior, big_zombie, skelet, chort, masked_orc, pumpkin_dude, orc_shaman, imp, wogol, goblin, tiny_zombie) | CC0 | [0x72 on itch.io](https://0x72.itch.io/dungeontileset-ii) |
 
 See [dungeon/public/assets/ATTRIBUTION.md](dungeon/public/assets/ATTRIBUTION.md) for full asset attribution details.

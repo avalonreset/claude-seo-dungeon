@@ -8,7 +8,7 @@ for (const [charKey, cfg] of Object.entries(CHARACTERS)) {
 }
 
 /**
- * GateScene — "Choose your path" checkpoint between Boot and Summoning.
+ * GateScene - "Choose your path" checkpoint between Boot and Summoning.
  * Checks localStorage for cached audit data and presents continue/restart options.
  * If no cached data exists, auto-transitions to Summoning after a brief pause.
  *
@@ -81,7 +81,7 @@ export class GateScene extends Phaser.Scene {
       } catch (_) {}
     }
 
-    // No cached data for this model — skip straight to Summoning
+    // No cached data for this model - skip straight to Summoning
     if (!this.cachedRun) {
       this._drawBackground(W, H);
       this.time.delayedCall(400, () => {
@@ -98,7 +98,7 @@ export class GateScene extends Phaser.Scene {
       return;
     }
 
-    // ── Cached data exists — show choice screen ──────────────────
+    // ── Cached data exists - show choice screen ──────────────────
     this._drawBackground(W, H);
     this._createEmbers(W, H);
     this._createAbandonScroll(W);
@@ -376,7 +376,7 @@ export class GateScene extends Phaser.Scene {
 
       .dim { color: #606078; }
 
-      /* removed old gate-rune — replaced by gate-return */
+      /* removed old gate-rune - replaced by gate-return */
     `;
 
     const container = document.getElementById('game-container');
@@ -488,7 +488,7 @@ export class GateScene extends Phaser.Scene {
         this.scene.start('Boot');
       });
     } else {
-      // Same character — go directly, no reload needed
+      // Same character - go directly, no reload needed
       this._removeOverlay();
       SFX.play('doorOpen');
       SFX.play('sceneTransition');
@@ -615,7 +615,7 @@ export class GateScene extends Phaser.Scene {
     v.fillRect(W - 60, 0, 60, H);
   }
 
-  // ── Abandon Scroll Rune (Phaser, fallback — not used when HTML overlay active)
+  // ── Abandon Scroll Rune (Phaser, fallback - not used when HTML overlay active)
   _createAbandonScroll() {
     // Handled by HTML overlay rune instead
   }

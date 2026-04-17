@@ -3,7 +3,7 @@ import { bridge } from '../utils/ws.js';
 import { SFX } from '../utils/sound-manager.js';
 
 /**
- * Title screen — clean retro design with domain + project path inputs.
+ * Title screen - clean retro design with domain + project path inputs.
  * HTML inputs are positioned inside the game container for proper scaling.
  */
 export class TitleScene extends Phaser.Scene {
@@ -196,10 +196,10 @@ export class TitleScene extends Phaser.Scene {
   async connectToBridge() {
     try {
       await bridge.connect();
-      this.statusText.setText('Bridge connected — ready for battle');
+      this.statusText.setText('Bridge connected - ready for battle');
       this.statusText.setColor('#50a050');
     } catch (err) {
-      this.statusText.setText('Bridge offline — start server first');
+      this.statusText.setText('Bridge offline - start server first');
       this.statusText.setColor('#a05050');
     }
   }

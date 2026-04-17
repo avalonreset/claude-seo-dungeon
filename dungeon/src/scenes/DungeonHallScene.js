@@ -12,7 +12,7 @@ const LIST_TOP = 94;
 const LIST_BOTTOM = 518;
 const LIST_VISIBLE = LIST_BOTTOM - LIST_TOP; // 424px
 
-// Demon sprite scales per severity — bigger = scarier. All demons are
+// Demon sprite scales per severity - bigger = scarier. All demons are
 // 0x72 4-frame idle animations at roughly 16x16 → 32x36 native px.
 const SPRITE_SCALES = {
   critical: 2.4,  // 32x36 native → ~86px tall (biggest)
@@ -302,7 +302,7 @@ export class DungeonHallScene extends Phaser.Scene {
   _bloodDripTransition() {
     const W = 800, H = 600;
 
-    // Blood wash overlay — dark red that fades
+    // Blood wash overlay - dark red that fades
     const wash = this.add.rectangle(400, 300, W, H, 0x400000, 0.6).setDepth(2000);
     this.tweens.add({
       targets: wash,
@@ -508,9 +508,9 @@ export class DungeonHallScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    // Flavor text — shuffled bag, organic pacing, varied transitions.
+    // Flavor text - shuffled bag, organic pacing, varied transitions.
     // Matches the philosophy used in the Summoning scene: no repetitive
-    // rotation, no mechanical fade — a small motion-graphics system so
+    // rotation, no mechanical fade - a small motion-graphics system so
     // players can sit and read the world without seeing the same line.
     this._hallBag = [];
     this._hallBaseX = 460;
@@ -665,7 +665,7 @@ export class DungeonHallScene extends Phaser.Scene {
     // =========================
     // Every demon in the roster is a 0x72 4-frame idle animation.
     // assignAllDemons() already stamped _demonKey/_demonAnimKey on the
-    // issue — we just look up, scale to the tier target, and play the
+    // issue - we just look up, scale to the tier target, and play the
     // anim. No fake scale-breath tweens anywhere; real frame animation
     // carries the "alive" feel.
     const picked = pickDemonForIssue(issue.severity, issue.id, issue);
@@ -677,7 +677,7 @@ export class DungeonHallScene extends Phaser.Scene {
       .setAlpha(1)
       .setFlipX(true);                // face left, toward player perspective
     if (this.anims.exists(picked.animKey)) demon.play(picked.animKey);
-    // Subtle vertical bob only — the 4-frame idle handles "breathing."
+    // Subtle vertical bob only - the 4-frame idle handles "breathing."
     this.tweens.add({
       targets: demon, y: centerY - 3,
       duration: 1200 + index * 80, yoyo: true, repeat: -1,
@@ -809,10 +809,10 @@ export class DungeonHallScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
 
     // =========================
-    // HOVER / CLICK — bg redraws BEHIND content via z-order in container
+    // HOVER / CLICK - bg redraws BEHIND content via z-order in container
     // =========================
     hitArea.on('pointerover', () => {
-      // Throttled hover sound — only plays once per row change
+      // Throttled hover sound - only plays once per row change
       if (this._lastHoveredRow !== index) {
         this._lastHoveredRow = index;
         SFX.play('demonRowHover');
@@ -865,14 +865,14 @@ export class DungeonHallScene extends Phaser.Scene {
       });
     });
 
-    // Row background — instant
+    // Row background - instant
     rowBg.clear();
     rowBg.fillStyle(0x12121e, 0.7);
     rowBg.fillRoundedRect(rowX, y, rowW, rowH, 6);
     rowBorder.lineStyle(1, 0x1e1e30, 0.3);
     rowBorder.strokeRoundedRect(rowX, y, rowW, rowH, 6);
 
-    // Screen shake for critical (first visit only — gets jarring on repeat)
+    // Screen shake for critical (first visit only - gets jarring on repeat)
     if (issue.severity === 'critical' && !this.game._dungeonHallShakeDone) {
       this.game._dungeonHallShakeDone = true;
       this.time.delayedCall(250, () => {
@@ -882,7 +882,7 @@ export class DungeonHallScene extends Phaser.Scene {
     }
 
     // =========================
-    // DEFEATED STATE — cinematic, painterly, deterministic-per-demon
+    // DEFEATED STATE - cinematic, painterly, deterministic-per-demon
     // =========================
     // No source art has a death pose, so we compose one: blood-red
     // drain of the idle sprite, slump-rotation, blood pool seeping
@@ -891,14 +891,14 @@ export class DungeonHallScene extends Phaser.Scene {
     // corner. For legacy 0x72 4-frame demons we freeze the animation
     // on a deterministically-picked random frame so every kill shows
     // the demon in a slightly different pose. All randomness is
-    // seeded from the issue id — stable across renders, varied across
+    // seeded from the issue id - stable across renders, varied across
     // demons. Dimmed row chrome sells "inactive."
     // =========================
     let defeatedLayers = null;
     if (issue.defeated) {
       hitArea.disableInteractive();
 
-      // Stop idle motion — dead demons don't breathe or bob
+      // Stop idle motion - dead demons don't breathe or bob
       this.tweens.killTweensOf(demon);
       this.tweens.killTweensOf(shadow);
       demon.setPosition(spriteX, centerY);
@@ -973,7 +973,7 @@ export class DungeonHallScene extends Phaser.Scene {
         // Mid
         slashes.lineStyle(thickness + 2, core, coreAlpha * 0.42);
         slashes.lineBetween(sC - dx * 0.95, sR - dy * 0.95, sC + dx * 0.95, sR + dy * 0.95);
-        // Core bright stroke — slightly shorter to fake taper at tips
+        // Core bright stroke - slightly shorter to fake taper at tips
         slashes.lineStyle(thickness, core, coreAlpha);
         slashes.lineBetween(sC - dx * 0.86, sR - dy * 0.86, sC + dx * 0.86, sR + dy * 0.86);
         // Tiny bright hit point at impact center
@@ -981,7 +981,7 @@ export class DungeonHallScene extends Phaser.Scene {
         slashes.fillCircle(sC + (H(91) - 0.5) * 6, sR + (H(93) - 0.5) * 4, 1.2);
       };
 
-      // Primary X — two crossing diagonals with slight angle jitter
+      // Primary X - two crossing diagonals with slight angle jitter
       const a1 = -48 + (H(31) - 0.5) * 16;
       drawSlash(a1, 2, 0.86, 0xd42030, 0xf04050);
       const a2 =  48 + (H(37) - 0.5) * 16;
@@ -1042,7 +1042,7 @@ export class DungeonHallScene extends Phaser.Scene {
 
       // --- Corner DEFEATED stamp ---
       // Gothic, dim, off-white-red. Sits at bottom-left of the row,
-      // under the badge column — out of the way of category tag.
+      // under the badge column - out of the way of category tag.
       const stampW = 78, stampH = 15;
       const stampX = textLeftX;                  // bottom-left corner
       const stampY = y + rowH - stampH - 6;
@@ -1066,7 +1066,7 @@ export class DungeonHallScene extends Phaser.Scene {
       defeatedLayers = { bloodPool, slashes, spatter, stampBg, stampIcon, stampText };
     }
 
-    // Add to container — ORDER MATTERS for z-layering:
+    // Add to container - ORDER MATTERS for z-layering:
     // Background layers FIRST (bottom), then all visible content on TOP
     // Silhouette aura layers sit BEHIND the demon sprite so the
     // blacked-out silhouette reads clearly against them. Silhouette
@@ -1106,7 +1106,7 @@ export class DungeonHallScene extends Phaser.Scene {
   }
 
   // =====================================================================
-  // HALL FLAVOR TEXT — shuffled bag, variable timing, varied FX
+  // HALL FLAVOR TEXT - shuffled bag, variable timing, varied FX
   // =====================================================================
   _nextHallMessage() {
     if (!this._hallBag || this._hallBag.length === 0) {
@@ -1317,7 +1317,7 @@ export class DungeonHallScene extends Phaser.Scene {
   // DUNGEON CLEARED OVERLAY (shown when all demons defeated)
   // =====================================================================
   // =====================================================================
-  //  THE HALL GROWS STILL — final victory sequence
+  //  THE HALL GROWS STILL - final victory sequence
   //  Four phases: dim, reckon, tally, choose. Dark, restrained, terse.
   //  No gold confetti, no "YOU WIN", no triumph. You endured, and the
   //  thirteen are still.
@@ -1342,7 +1342,7 @@ export class DungeonHallScene extends Phaser.Scene {
     }
     const total = defeated.length;
 
-    // Quest time in mm:ss — visibility-aware accumulation. Excludes any
+    // Quest time in mm:ss - visibility-aware accumulation. Excludes any
     // wall-clock time where the tab was hidden (Alt-Tab, minimize, etc.).
     let activeMs = this.game._questActiveMs || 0;
     if (this.game._questVisibleSince) {
@@ -1353,14 +1353,14 @@ export class DungeonHallScene extends Phaser.Scene {
     const ss = Math.floor((elapsed % 60000) / 1000);
     const timeStr = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
 
-    // Name awarded — terse, gothic, scaled by total XP (not demon count)
+    // Name awarded - terse, gothic, scaled by total XP (not demon count)
     const name = totalXP >= 3000 ? 'THE UNDYING'
                : totalXP >= 1500 ? 'THE CLEANSER'
                : totalXP >=  500 ? 'THE WARDEN'
                                  : 'THE TRESPASSER';
 
     // ------------------------------------------------------------------
-    // PHASE 1 — the hall grows still (1.5s)
+    // PHASE 1 - the hall grows still (1.5s)
     // A slow veil drops over the hall. The corpses remain visible beneath
     // but washed of colour. No text yet.
     // ------------------------------------------------------------------
@@ -1368,12 +1368,12 @@ export class DungeonHallScene extends Phaser.Scene {
     this.tweens.add({ targets: backdrop, alpha: 0.78, duration: 1400, ease: 'Sine.easeIn' });
     SFX.play('doorOpen');
 
-    // A single long drone beat — use summoningPulse to fake a bell
+    // A single long drone beat - use summoningPulse to fake a bell
     this.time.delayedCall(400, () => SFX.play('summoningPulse'));
     this.time.delayedCall(1400, () => SFX.play('summoningPulse'));
 
-    // Golden dust motes drifting up from the base of the screen — very
-    // sparse, very slow. Not celebration — aftermath.
+    // Golden dust motes drifting up from the base of the screen - very
+    // sparse, very slow. Not celebration - aftermath.
     for (let i = 0; i < 22; i++) {
       this.time.delayedCall(200 + i * 80, () => {
         const mx = 60 + Math.random() * (W - 120);
@@ -1392,7 +1392,7 @@ export class DungeonHallScene extends Phaser.Scene {
     }
 
     // ------------------------------------------------------------------
-    // PHASE 2 — the reckoning (title + subtitle, 2.5s window)
+    // PHASE 2 - the reckoning (title + subtitle, 2.5s window)
     // Type-in title, no Back.easeOut scale-punch. Just fades, held.
     // ------------------------------------------------------------------
     const titleY = 150;
@@ -1427,7 +1427,7 @@ export class DungeonHallScene extends Phaser.Scene {
     });
 
     // ------------------------------------------------------------------
-    // PHASE 3 — the chronicle (stat tally, ~4s in)
+    // PHASE 3 - the chronicle (stat tally, ~4s in)
     // Parchment-style ledger. Right-aligned values with dot leaders.
     // ------------------------------------------------------------------
     const ledgerY = 240;
@@ -1458,7 +1458,7 @@ export class DungeonHallScene extends Phaser.Scene {
       makeLedgerLine(l[0], l[1], ledgerY + idx * 18, ledgerDelay + idx * 120);
     });
 
-    // The name awarded — separate, emphasized. Blood-red label, pale name.
+    // The name awarded - separate, emphasized. Blood-red label, pale name.
     const nameLabelY = ledgerY + ledgerLines.length * 18 + 24;
     const nameLabel = this.add.text(cx, nameLabelY, 'WHAT YOU ARE CALLED NOW', {
       fontFamily: '"JetBrains Mono", monospace', fontSize: '10px',
@@ -1477,7 +1477,7 @@ export class DungeonHallScene extends Phaser.Scene {
     this.time.delayedCall(nameDelay + 200, () => SFX.play('xpGain'));
 
     // ------------------------------------------------------------------
-    // PHASE 4 — the choice (two restrained cards at the bottom)
+    // PHASE 4 - the choice (two restrained cards at the bottom)
     //   SEEK ANOTHER   |   REMAIN
     // No pulse, no glow. Bone-white text on charcoal. They wait.
     // ------------------------------------------------------------------
@@ -1496,7 +1496,7 @@ export class DungeonHallScene extends Phaser.Scene {
       ease: 'Sine.easeOut',
     });
 
-    // Left — SEEK ANOTHER: wipe quest state, back to splash for new audit
+    // Left - SEEK ANOTHER: wipe quest state, back to splash for new audit
     const doSeek = () => {
       SFX.play('menuConfirm');
       // Clear quest persistence so the new audit starts fresh
@@ -1510,7 +1510,7 @@ export class DungeonHallScene extends Phaser.Scene {
     };
     leftCard.hit.on('pointerdown', doSeek);
 
-    // Right — REMAIN: fade out the overlay but leave a small
+    // Right - REMAIN: fade out the overlay but leave a small
     // "LEAVE THE HALL" escape in the top-right so they aren't trapped.
     const doRemain = () => {
       SFX.play('menuHover');
@@ -1618,7 +1618,7 @@ export class DungeonHallScene extends Phaser.Scene {
     const emberCount = { info: 0,    low: 0,    medium: 1,   high: 2,    critical: 4    }[tier];
     const pulseDur   = { info: 1600, low: 1400, medium: 1200, high: 1000, critical: 900 }[tier];
 
-    // Aura layer (goes behind the demon). Skip entirely for info — pure
+    // Aura layer (goes behind the demon). Skip entirely for info - pure
     // black silhouette is enough at that tier.
     if (auraSize > 0) {
       const aura = this.add.circle(x, y, auraSize, auraColor, auraAlpha);

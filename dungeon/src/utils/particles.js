@@ -1,4 +1,4 @@
-// particles.js — Shared particle effects for the dungeon RPG
+// particles.js - Shared particle effects for the dungeon RPG
 // Uses basic Phaser shapes (circles, rectangles) + tweens. No particle emitters.
 
 /**
@@ -150,7 +150,7 @@ export function createTorchFlame(scene, x, y, scale = 1) {
 }
 
 /**
- * Warm torch glow — a soft radial light pool behind the flame.
+ * Warm torch glow - a soft radial light pool behind the flame.
  * Uses a large, low-alpha circle with a gentle pulsing tween.
  */
 export function createTorchGlow(scene, x, y, radius = 80) {
@@ -174,7 +174,7 @@ export function createTorchGlow(scene, x, y, radius = 80) {
 }
 
 /**
- * Sparkle burst at a position — gold sparkles that radiate outward and fade.
+ * Sparkle burst at a position - gold sparkles that radiate outward and fade.
  * Great for reveals, item pickups, transitions.
  */
 export function createSparkleBurst(scene, x, y, count = 12, color = 0xd4af37) {
@@ -213,7 +213,7 @@ export function createSparkleBurst(scene, x, y, count = 12, color = 0xd4af37) {
 }
 
 /**
- * Full-screen vignette overlay — darkened edges that frame the viewport.
+ * Full-screen vignette overlay - darkened edges that frame the viewport.
  * Built from four gradient-ish rectangles along each edge.
  */
 export function createVignette(scene, width = 800, height = 600) {
@@ -263,7 +263,7 @@ export function createVignette(scene, width = 800, height = 600) {
 }
 
 /**
- * Damage burst — red/orange particles that explode outward from a hit point.
+ * Damage burst - red/orange particles that explode outward from a hit point.
  * Each particle is a small rectangle that spins and fades.
  */
 export function createDamageBurst(scene, x, y, count = 16, color = 0xff3030) {
@@ -307,7 +307,7 @@ export function createDamageBurst(scene, x, y, count = 16, color = 0xff3030) {
 }
 
 /**
- * Victory confetti — colorful rectangles that rain down from the top.
+ * Victory confetti - colorful rectangles that rain down from the top.
  * A celebratory shower of spinning, tumbling shapes.
  */
 export function createConfetti(scene, count = 50) {

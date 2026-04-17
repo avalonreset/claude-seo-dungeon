@@ -46,11 +46,11 @@ interactive cluster map visualizations.
 
 Expand the seed keyword into 30-50 variants using WebSearch:
 
-1. **Related searches** — Search the seed, extract "related searches" and "people also search for"
-2. **People Also Ask (PAA)** — Extract all PAA questions from SERP results
-3. **Long-tail modifiers** — Append common modifiers: "best", "how to", "vs", "for beginners", "tools", "examples", "guide", "template", "mistakes", "checklist"
-4. **Question mining** — Generate who/what/when/where/why/how variants
-5. **Intent modifiers** — Add commercial modifiers: "pricing", "review", "alternative", "comparison", "free", "top"
+1. **Related searches** - Search the seed, extract "related searches" and "people also search for"
+2. **People Also Ask (PAA)** - Extract all PAA questions from SERP results
+3. **Long-tail modifiers** - Append common modifiers: "best", "how to", "vs", "for beginners", "tools", "examples", "guide", "template", "mistakes", "checklist"
+4. **Question mining** - Generate who/what/when/where/why/how variants
+5. **Intent modifiers** - Add commercial modifiers: "pricing", "review", "alternative", "comparison", "free", "top"
 
 **Deduplication:** Normalize variants (lowercase, strip articles), remove exact duplicates.
 Target: 30-50 unique keyword variants. If under 30, run a second expansion pass
@@ -105,10 +105,10 @@ Load `references/hub-spoke-architecture.md` for full specifications.
 
 **Design the cluster structure:**
 
-1. **Select the pillar keyword** — Highest volume, broadest intent, most SERP overlap with other keywords
-2. **Group spokes into clusters** — Each cluster is a subtopic area (2-5 clusters per pillar)
-3. **Assign posts to clusters** — Each cluster gets 2-4 spoke posts
-4. **Select templates per post** — Based on intent classification:
+1. **Select the pillar keyword** - Highest volume, broadest intent, most SERP overlap with other keywords
+2. **Group spokes into clusters** - Each cluster is a subtopic area (2-5 clusters per pillar)
+3. **Assign posts to clusters** - Each cluster gets 2-4 spoke posts
+4. **Select templates per post** - Based on intent classification:
 
 | Intent Pattern | Template Options |
 |---------------|-----------------|
@@ -125,7 +125,7 @@ Load `references/hub-spoke-architecture.md` for full specifications.
    - Pillar page: 2500-4000 words
    - Spoke posts: 1200-1800 words
 
-6. **Cannibalization check** — No two posts share the same primary keyword. If SERP
+6. **Cannibalization check** - No two posts share the same primary keyword. If SERP
    overlap is 7+, merge those keywords into a single post targeting both.
 
 ### Step 5: Internal Link Matrix

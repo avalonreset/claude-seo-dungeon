@@ -1,5 +1,5 @@
 /**
- * Guild Ledger — Animated activity log with rich color coding,
+ * Guild Ledger - Animated activity log with rich color coding,
  * typewriter effects, per-category icons with unique animations,
  * flowing glow effects, pulse animations, and a living "latest line"
  * that makes it obvious work is still happening.
@@ -23,24 +23,24 @@ let latestDots = null;
 // ── Thematic icons per category ──
 // Each gets a unique Unicode symbol that matches its role in the dungeon
 const ICONS = {
-  tool:     '\u2692\uFE0E',   // ⚒ hammer & pick — generic tool work
-  agent:    '\u273F',          // ✿ rosette — summoned agent
-  fetch:    '\u21AF',          // ↯ lightning zigzag — fetching from the web
-  search:   '\u2609',          // ☉ sun/eye — searching/scanning
-  read:     '\u2234',          // ∴ therefore dots — reading/analyzing
-  write:    '\u2741',          // ❁ flower — inscribing/writing
-  bash:     '\u2623',          // ☣ biohazard — executing commands
-  skill:    '\u269D',          // ⚝ outlined star — skill invocation
-  user:     '\u276F',          // ❯ chevron — user prompt
-  error:    '\u2620',          // ☠ skull — something died
-  complete: '\u2726',          // ✦ four-pointed star — victory
-  status:   '\u25C8',          // ◈ diamond — status/progress
-  system:   '\u2042',          // ⁂ asterism — system message
-  domain:   '\u2302',          // ⌂ house — domain/site
-  score:    '\u2694\uFE0E',   // ⚔ crossed swords — scoring
-  demon:    '\u2666',          // ♦ diamond suit — demon
-  fix:      '\u2726',          // ✦ star — vanquished
-  text:     '\u203A',          // › single angle quote — generic text
+  tool:     '\u2692\uFE0E',   // ⚒ hammer & pick - generic tool work
+  agent:    '\u273F',          // ✿ rosette - summoned agent
+  fetch:    '\u21AF',          // ↯ lightning zigzag - fetching from the web
+  search:   '\u2609',          // ☉ sun/eye - searching/scanning
+  read:     '\u2234',          // ∴ therefore dots - reading/analyzing
+  write:    '\u2741',          // ❁ flower - inscribing/writing
+  bash:     '\u2623',          // ☣ biohazard - executing commands
+  skill:    '\u269D',          // ⚝ outlined star - skill invocation
+  user:     '\u276F',          // ❯ chevron - user prompt
+  error:    '\u2620',          // ☠ skull - something died
+  complete: '\u2726',          // ✦ four-pointed star - victory
+  status:   '\u25C8',          // ◈ diamond - status/progress
+  system:   '\u2042',          // ⁂ asterism - system message
+  domain:   '\u2302',          // ⌂ house - domain/site
+  score:    '\u2694\uFE0E',   // ⚔ crossed swords - scoring
+  demon:    '\u2666',          // ♦ diamond suit - demon
+  fix:      '\u2726',          // ✦ star - vanquished
+  text:     '\u203A',          // › single angle quote - generic text
 };
 
 // ── Classify log text into categories ──
@@ -102,7 +102,7 @@ function markAsLatest(line) {
   const isComplete = line.classList.contains('complete');
 
   if (isIdle || isComplete) {
-    // No "latest" class, no dots, no shimmer — completely static
+    // No "latest" class, no dots, no shimmer - completely static
     latestDots = null;
     return;
   }
@@ -234,10 +234,10 @@ export function initActivityLog() {
   logEl = document.getElementById('log-content');
   if (!logEl) return;
 
-  // Start in idle state — no animations until something is actively loading
+  // Start in idle state - no animations until something is actively loading
   logEl.classList.add('ledger-idle');
 
-  // Track user scroll intent — distinguish user scrolls from programmatic ones
+  // Track user scroll intent - distinguish user scrolls from programmatic ones
   logEl.addEventListener('scroll', () => {
     if (programmaticScroll) return;
     userScrolledUp = !isNearBottom();
@@ -288,7 +288,7 @@ export function initActivityLog() {
     .log-line.typing { opacity: 1; }
 
     /* ═══════════════════════════════════════════════
-       ICON BASE — bigger, bolder, colored to match category
+       ICON BASE - bigger, bolder, colored to match category
        ═══════════════════════════════════════════════ */
     .log-icon {
       display: inline-block;
@@ -320,7 +320,7 @@ export function initActivityLog() {
     .icon-user    { color: #d4af37; }
     .icon-text    { color: #808898; }
 
-    /* User prompt lines — distinct gold color */
+    /* User prompt lines - distinct gold color */
     .log-line.user .log-text {
       color: #d4af37;
       font-weight: 600;
@@ -336,7 +336,7 @@ export function initActivityLog() {
        Each icon type gets its own characteristic motion
        ═══════════════════════════════════════════════ */
 
-    /* Agent — slow orbit/breathing, it's a summoned entity */
+    /* Agent - slow orbit/breathing, it's a summoned entity */
     .icon-agent {
       animation: iconOrbit 3s ease-in-out infinite;
     }
@@ -345,7 +345,7 @@ export function initActivityLog() {
       50%      { transform: scale(1.2) rotate(15deg); opacity: 1; text-shadow: 0 0 8px #c9a8ff; }
     }
 
-    /* Fetch — quick downward bounce, grabbing data */
+    /* Fetch - quick downward bounce, grabbing data */
     .icon-fetch {
       animation: iconBounce 1.8s ease-in-out infinite;
     }
@@ -355,7 +355,7 @@ export function initActivityLog() {
       60%      { transform: translateY(-1px); opacity: 0.9; }
     }
 
-    /* Search — slow rotation like a radar sweep */
+    /* Search - slow rotation like a radar sweep */
     .icon-search {
       animation: iconRadar 4s linear infinite;
     }
@@ -367,7 +367,7 @@ export function initActivityLog() {
       100% { transform: rotate(360deg); opacity: 0.6; }
     }
 
-    /* Read — gentle page-flip pulse */
+    /* Read - gentle page-flip pulse */
     .icon-read {
       animation: iconFlip 2.5s ease-in-out infinite;
     }
@@ -376,7 +376,7 @@ export function initActivityLog() {
       50%      { transform: scaleX(-1); opacity: 1; text-shadow: 0 0 4px #9ec8dd; }
     }
 
-    /* Write — quill writing motion */
+    /* Write - quill writing motion */
     .icon-write {
       animation: iconScribe 2s ease-in-out infinite;
     }
@@ -387,7 +387,7 @@ export function initActivityLog() {
       75%      { transform: translate(-1px, 1px) rotate(-5deg); opacity: 1; }
     }
 
-    /* Bash — rapid blink like a terminal cursor */
+    /* Bash - rapid blink like a terminal cursor */
     .icon-bash {
       animation: iconTerminal 1.2s step-end infinite;
     }
@@ -396,7 +396,7 @@ export function initActivityLog() {
       50%, 100% { opacity: 0.3; text-shadow: none; }
     }
 
-    /* Skill — golden shimmer/sparkle */
+    /* Skill - golden shimmer/sparkle */
     .icon-skill {
       animation: iconSparkle 2s ease-in-out infinite;
     }
@@ -406,7 +406,7 @@ export function initActivityLog() {
       60%      { transform: scale(0.9); filter: brightness(0.8); opacity: 0.5; }
     }
 
-    /* Error — alarming shake */
+    /* Error - alarming shake */
     .icon-error {
       animation: iconShake 0.6s ease-in-out infinite;
     }
@@ -418,7 +418,7 @@ export function initActivityLog() {
       80%      { transform: translateX(1px) rotate(2deg); }
     }
 
-    /* Complete — triumphant scale pop */
+    /* Complete - triumphant scale pop */
     .icon-complete {
       animation: iconTriumph 1.5s ease-in-out infinite;
     }
@@ -428,7 +428,7 @@ export function initActivityLog() {
       40%      { transform: scale(1); opacity: 0.9; }
     }
 
-    /* Status — steady diamond pulse */
+    /* Status - steady diamond pulse */
     .icon-status {
       animation: iconPulse 2s ease-in-out infinite;
     }
@@ -437,7 +437,7 @@ export function initActivityLog() {
       50%      { opacity: 1; transform: scale(1.15); text-shadow: 0 0 6px #f0d860; }
     }
 
-    /* System — slow fade breathing */
+    /* System - slow fade breathing */
     .icon-system {
       animation: iconBreathe 3s ease-in-out infinite;
     }
@@ -446,7 +446,7 @@ export function initActivityLog() {
       50%      { opacity: 0.8; }
     }
 
-    /* Domain — house glow */
+    /* Domain - house glow */
     .icon-domain {
       animation: iconGlow 2.5s ease-in-out infinite;
     }
@@ -455,7 +455,7 @@ export function initActivityLog() {
       50%      { opacity: 1; text-shadow: 0 0 8px #99ccff, 0 0 14px #6699cc; }
     }
 
-    /* Demon — sinister red throb */
+    /* Demon - sinister red throb */
     .icon-demon {
       animation: iconThrob 1.5s ease-in-out infinite;
     }
@@ -464,7 +464,7 @@ export function initActivityLog() {
       50%      { opacity: 1; transform: scale(1.2); text-shadow: 0 0 10px #ff4040, 0 0 18px #cc0000; }
     }
 
-    /* Score — crossed swords clash */
+    /* Score - crossed swords clash */
     .icon-score {
       animation: iconClash 2s ease-in-out infinite;
     }
@@ -475,7 +475,7 @@ export function initActivityLog() {
       75%      { transform: rotate(-5deg) scale(1.05); opacity: 0.9; }
     }
 
-    /* Fix — victorious star burst */
+    /* Fix - victorious star burst */
     .icon-fix {
       animation: iconBurst 2s ease-in-out infinite;
     }
@@ -484,7 +484,7 @@ export function initActivityLog() {
       50%      { transform: scale(1.3) rotate(30deg); opacity: 1; text-shadow: 0 0 10px #e8c040; }
     }
 
-    /* Tool — generic hammer swing */
+    /* Tool - generic hammer swing */
     .icon-tool {
       animation: iconSwing 2s ease-in-out infinite;
     }
@@ -494,7 +494,7 @@ export function initActivityLog() {
       60%      { transform: rotate(5deg); opacity: 0.8; }
     }
 
-    /* Text — subtle chevron pulse */
+    /* Text - subtle chevron pulse */
     .icon-text {
       animation: iconChevron 3s ease-in-out infinite;
     }
@@ -565,7 +565,7 @@ export function initActivityLog() {
     }
 
     /* ═══════════════════════════════════════════════
-       LATEST LINE — the living/active indicator
+       LATEST LINE - the living/active indicator
        Shows the user that the system is still working
        ═══════════════════════════════════════════════ */
     .log-line.latest {
@@ -609,7 +609,7 @@ export function initActivityLog() {
       }
     }
 
-    /* Animated trailing dots — bouncing wave */
+    /* Animated trailing dots - bouncing wave */
     .log-dots {
       display: inline-block;
       margin-left: 6px;
@@ -724,14 +724,14 @@ export function initActivityLog() {
        SPECIAL LINE TYPES
        ═══════════════════════════════════════════════ */
 
-    /* Agent lines — left accent bar (when not latest) */
+    /* Agent lines - left accent bar (when not latest) */
     .log-line.agent:not(.latest) {
       border-left: 2px solid rgba(180, 140, 255, 0.3);
       padding-left: 8px;
       margin-left: -2px;
     }
 
-    /* Error lines — red background pulse */
+    /* Error lines - red background pulse */
     .log-line.error:not(.latest) {
       animation: fadeInLine 0.35s ease forwards, errorPulse 2s ease-in-out 1;
     }
@@ -742,7 +742,7 @@ export function initActivityLog() {
       80%      { background: transparent; }
     }
 
-    /* Complete lines — pop scale */
+    /* Complete lines - pop scale */
     .log-line.complete:not(.latest) {
       animation: fadeInLine 0.35s ease forwards, completePop 0.6s ease 1;
     }
@@ -753,7 +753,7 @@ export function initActivityLog() {
       100%{ transform: scale(1); }
     }
 
-    /* Skill lines — golden shimmer */
+    /* Skill lines - golden shimmer */
     .log-line.skill:not(.latest) {
       animation: fadeInLine 0.35s ease forwards, skillShimmer 3s ease-in-out 1;
     }
@@ -763,7 +763,7 @@ export function initActivityLog() {
       50%      { filter: brightness(1.4); }
     }
 
-    /* Fetch lines — subtle slide-in from left */
+    /* Fetch lines - subtle slide-in from left */
     .log-line.fetch:not(.latest) {
       animation: fetchSlide 0.5s ease forwards;
     }
@@ -773,7 +773,7 @@ export function initActivityLog() {
       to   { opacity: 1; transform: translateX(0); }
     }
 
-    /* Bash lines — green left bar */
+    /* Bash lines - green left bar */
     .log-line.bash:not(.latest) {
       border-left: 2px solid rgba(120, 220, 120, 0.25);
       padding-left: 8px;
@@ -781,7 +781,7 @@ export function initActivityLog() {
     }
 
     /* ═══════════════════════════════════════════════
-       IDLE STATE — kill all animations when nothing is running
+       IDLE STATE - kill all animations when nothing is running
        ═══════════════════════════════════════════════ */
     .ledger-idle .log-line.latest {
       animation: fadeInLine 0.35s ease forwards !important;

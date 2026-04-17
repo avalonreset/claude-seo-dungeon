@@ -128,7 +128,7 @@ process.on('unhandledRejection', (err) => {
   console.error('Unhandled rejection (server stays alive):', err.message || err);
 });
 
-console.log('Claude SEO Dungeon — Bridge Server');
+console.log('Claude SEO Dungeon - Bridge Server');
 console.log('─'.repeat(40));
 
 wss.on('connection', (ws) => {
@@ -201,7 +201,7 @@ wss.on('connection', (ws) => {
     if (validModel !== 'sonnet') console.log(`  Model: ${validModel}`);
     if (validatedPath !== PROJECT_ROOT) console.log(`  Project: ${validatedPath}`);
 
-    // Interactive session — persistent CLI
+    // Interactive session - persistent CLI
     if (type === 'interactive_start') {
       if (interactiveProc) {
         interactiveProc.kill('SIGTERM');
@@ -231,7 +231,7 @@ wss.on('connection', (ws) => {
       return;
     }
 
-    // Cancel — kill the child process for a given request
+    // Cancel - kill the child process for a given request
     if (type === 'cancel') {
       const proc = activeProcesses.get(id);
       if (proc) {
@@ -290,7 +290,7 @@ wss.on('connection', (ws) => {
         console.log(`Narration done`);
 
       } else if (type === 'chat') {
-        // Neutral pass-through — used outside of battle (Hall, Lodge,
+        // Neutral pass-through - used outside of battle (Hall, Lodge,
         // between fights). Zero framing, zero demon context. Claude
         // sees exactly what the user typed, runs in their project
         // directory, under their selected character model. Functionally
@@ -375,7 +375,7 @@ wss.on('connection', (ws) => {
             safeSend(JSON.stringify({ type: 'interactive_stream', content: event.message }));
           }
         } catch (e) {
-          // Not valid JSON — might be a plain text line from interactive mode
+          // Not valid JSON - might be a plain text line from interactive mode
           const trimmed = line.trim();
           if (trimmed.length > 2 && !trimmed.startsWith('{')) {
             safeSend(JSON.stringify({ type: 'interactive_stream', content: trimmed }));
@@ -434,7 +434,7 @@ function isGitRepo(cwd) {
 function ensureFixBranch(projectCwd) {
   try {
     if (!isGitRepo(projectCwd)) {
-      console.log('  [branch] Not a git repo — skipping branch protection');
+      console.log('  [branch] Not a git repo - skipping branch protection');
       return null;
     }
 
@@ -458,14 +458,14 @@ function ensureFixBranch(projectCwd) {
         cwd: projectCwd,
         stdio: 'pipe'
       });
-      // Branch exists — switch to it
+      // Branch exists - switch to it
       execSync(`git checkout ${branchName}`, {
         cwd: projectCwd,
         stdio: 'pipe'
       });
       console.log(`  [branch] Switched to existing ${branchName}`);
     } catch {
-      // Branch doesn't exist — create it
+      // Branch doesn't exist - create it
       execSync(`git checkout -b ${branchName}`, {
         cwd: projectCwd,
         stdio: 'pipe'
@@ -475,7 +475,7 @@ function ensureFixBranch(projectCwd) {
 
     return branchName;
   } catch (err) {
-    console.warn(`  [branch] Warning: could not set up fix branch — ${err.message}`);
+    console.warn(`  [branch] Warning: could not set up fix branch - ${err.message}`);
     return null;
   }
 }
@@ -486,11 +486,11 @@ function ensureFixBranch(projectCwd) {
 async function runAudit(domain, onStream, cwd, requestId, model) {
   const prompt = `Run /seo audit on ${domain}. This will trigger the full SEO audit skill which spawns multiple subagents for technical SEO, content quality, schema markup, performance, crawlability, images, and more.
 
-After the audit completes, CONSOLIDATE the findings into actionable groups. Do NOT list every granular finding as a separate issue. Instead, group related problems that would be fixed together into a single issue. For example, all mobile responsiveness problems (touch targets, font sizes, overflow) become one issue. All missing meta tags become one issue. Aim for 8-15 total issues maximum — each one should represent a meaningful, distinct area of work.
+After the audit completes, CONSOLIDATE the findings into actionable groups. Do NOT list every granular finding as a separate issue. Instead, group related problems that would be fixed together into a single issue. For example, all mobile responsiveness problems (touch targets, font sizes, overflow) become one issue. All missing meta tags become one issue. Aim for 8-15 total issues maximum - each one should represent a meaningful, distinct area of work.
 
-ORDER THE ISSUES BY SEO IMPACT — the issue that would make the single biggest difference to search rankings and user experience goes first (id:1). The last issue should be the least impactful nice-to-have. Use severity labels that reflect this: "critical" for top-priority ranking killers, "high" for significant problems, "medium" for meaningful improvements, "low" for minor optimizations, "info" for best-practice suggestions.
+ORDER THE ISSUES BY SEO IMPACT - the issue that would make the single biggest difference to search rankings and user experience goes first (id:1). The last issue should be the least impactful nice-to-have. Use severity labels that reflect this: "critical" for top-priority ranking killers, "high" for significant problems, "medium" for meaningful improvements, "low" for minor optimizations, "info" for best-practice suggestions.
 
-Format as a single JSON object. Return ONLY valid JSON at the very end (no markdown fences): {"domain":"${domain}","score":<overall 0-100>,"totalIssues":<n>,"issues":[{"id":<n>,"severity":"<critical|high|medium|low|info>","title":"<clear actionable title>","description":"<what specifically is wrong and what needs to be fixed — include key details so the fix agent knows what to do>","category":"<category>","hp":<10-100 based on combined effort to fix all items in this group>}]}
+Format as a single JSON object. Return ONLY valid JSON at the very end (no markdown fences): {"domain":"${domain}","score":<overall 0-100>,"totalIssues":<n>,"issues":[{"id":<n>,"severity":"<critical|high|medium|low|info>","title":"<clear actionable title>","description":"<what specifically is wrong and what needs to be fixed - include key details so the fix agent knows what to do>","category":"<category>","hp":<10-100 based on combined effort to fix all items in this group>}]}
 
 Quality over quantity. Each issue should be a real battle worth fighting, not busywork.`;
 
@@ -501,10 +501,10 @@ Quality over quantity. Each issue should be a real battle worth fighting, not bu
   if (parsed) return parsed;
 
   // RETRY: Ask Claude to reformat the raw output as JSON
-  console.log('  First parse failed — retrying with reformat prompt...');
+  console.log('  First parse failed - retrying with reformat prompt...');
   onStream('[Reformatting results...]');
   const rawText = typeof raw === 'string' ? raw : (raw.raw || JSON.stringify(raw));
-  const retryPrompt = `The following is the raw output of an SEO audit on ${domain}. Convert it into a single valid JSON object with this exact structure (no markdown fences, no extra text — ONLY the JSON):
+  const retryPrompt = `The following is the raw output of an SEO audit on ${domain}. Convert it into a single valid JSON object with this exact structure (no markdown fences, no extra text - ONLY the JSON):
 {"domain":"${domain}","score":<0-100>,"totalIssues":<n>,"issues":[{"id":<n>,"severity":"<critical|high|medium|low|info>","title":"<title>","description":"<description>","category":"<category>","hp":<10-100>}]}
 
 Raw audit output:
@@ -515,7 +515,7 @@ ${rawText.slice(-12000)}`;
   if (retryParsed) return retryParsed;
 
   // Last resort: return a single issue so the game doesn't get stuck
-  console.error('  Retry also failed — returning fallback issue');
+  console.error('  Retry also failed - returning fallback issue');
   return {
     domain,
     score: 50,
@@ -582,7 +582,7 @@ function _normalizeAudit(parsed, domain) {
  * Build the demon-focus header that anchors every battle turn to the
  * selected SEO issue. Every available field (severity, category, URL,
  * selector, file, line, etc.) is included so Claude has full situational
- * awareness — even when the user's message is vague or conversational.
+ * awareness - even when the user's message is vague or conversational.
  */
 function buildDemonHeader(issue) {
   const i = issue || {};
@@ -620,7 +620,7 @@ function buildDemonHeader(issue) {
  * Run a battle turn against one demon.
  *
  * The demon-focus header anchors the turn. The user's message is
- * passed through verbatim — Claude reads their intent. No heuristic
+ * passed through verbatim - Claude reads their intent. No heuristic
  * mode switching: if they ask a question, Claude answers; if they
  * give a directive, Claude acts; if they're polite or ambiguous,
  * Claude figures it out. This matches how Claude normally handles
@@ -636,7 +636,7 @@ async function runFix(issue, userMessage, projectCwd, onStream, requestId, model
   const msg = (userMessage || '').trim();
   const userBlock = msg
     ? `USER'S MESSAGE THIS TURN\n------------------------\n${msg}`
-    : `USER'S MESSAGE THIS TURN\n------------------------\n(empty — the user hit Attack without typing. Proceed with fixing what the demon above describes.)`;
+    : `USER'S MESSAGE THIS TURN\n------------------------\n(empty - the user hit Attack without typing. Proceed with fixing what the demon above describes.)`;
 
   const prompt = `You are working in a website project directory.
 
@@ -648,17 +648,17 @@ HOW TO RESPOND
 --------------
 Stay focused on the ONE demon above. Read the user's message and react
 to it naturally:
-  - If they asked a question, answer it — grounded in this demon and
+  - If they asked a question, answer it - grounded in this demon and
     any project files you need to read to verify your answer.
   - If they gave a directive (including a polite one like "can you fix
-    this"), do the work — edit the relevant source files to address
+    this"), do the work - edit the relevant source files to address
     the demon.
   - If the message is empty or ambiguous and looks like "just go",
     proceed to fix what the demon describes.
   - If it's genuinely unclear what they want, ask one short clarifying
     question instead of guessing.
 
-Do NOT investigate unrelated SEO issues, even if you notice them — the
+Do NOT investigate unrelated SEO issues, even if you notice them - the
 user will select those demons separately. Do NOT rewrite the entire
 project. Make surgical changes for THIS demon only.
 
@@ -764,7 +764,7 @@ function runClaude(prompt, onStream, cwd, requestId, model) {
               }
             }
           } else if (event.type === 'tool_result' || event.type === 'tool_output') {
-            // Stream tool results — show full output so user sees activity
+            // Stream tool results - show full output so user sees activity
             const content = event.content || event.output;
             if (typeof content === 'string' && content.trim()) {
               const preview = content.trim().split('\n')[0];
@@ -786,7 +786,7 @@ function runClaude(prompt, onStream, cwd, requestId, model) {
             onStream(event.message);
           }
         } catch (e) {
-          // Not valid JSON, might be partial — skip
+          // Not valid JSON, might be partial - skip
         }
       }
     });

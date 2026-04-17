@@ -52,7 +52,7 @@ async function screenshotSummoning() {
     await browser.close();
   }
 
-  console.log('Done — all characters screenshotted.');
+  console.log('Done - all characters screenshotted.');
 }
 
 screenshotSummoning().catch(err => {
