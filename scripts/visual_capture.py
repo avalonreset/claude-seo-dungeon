@@ -15,7 +15,7 @@ PAGES = [
     ("terms", "https://claude-github.com/terms"),
 ]
 
-OUT = "E:/hackathon/claude-seo-dungeon/screenshots"
+OUT = str(__import__("pathlib").Path(__file__).resolve().parent.parent / "screenshots")
 
 def main():
     with sync_playwright() as p:

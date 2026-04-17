@@ -17,7 +17,7 @@ metadata:
 **Scripts:** Located at the plugin root `scripts/` directory.
 
 Comprehensive SEO analysis across all industries (SaaS, local services,
-e-commerce, publishers, agencies). Orchestrates 20 specialized sub-skills and 15 subagents
+e-commerce, publishers, agencies). Orchestrates 20 specialized sub-skills and 17 subagents
 (+ 3 optional extension sub-skills: seo-dataforseo, seo-firecrawl, and seo-image-gen).
 
 ## Quick Reference

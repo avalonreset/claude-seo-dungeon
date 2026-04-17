@@ -3,7 +3,7 @@ import json
 import os
 from playwright.sync_api import sync_playwright
 
-SCREENSHOTS_DIR = "E:/hackathon/claude-seo-dungeon/screenshots"
+SCREENSHOTS_DIR = str(__import__("pathlib").Path(__file__).resolve().parent.parent / "screenshots")
 BASE_URL = "https://claude-github.com"
 
 PAGES = [

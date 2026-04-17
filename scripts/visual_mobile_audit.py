@@ -8,7 +8,7 @@ import sys
 from playwright.sync_api import sync_playwright
 
 URL = "https://claude-github.com"
-OUT_DIR = "E:/hackathon/claude-seo-dungeon/screenshots"
+OUT_DIR = str(__import__("pathlib").Path(__file__).resolve().parent.parent / "screenshots")
 
 VIEWPORTS = [
     {"name": "desktop-1920",  "width": 1920, "height": 1080},

@@ -123,7 +123,9 @@ export class BridgeClient {
       try { this._ensureOpen(); } catch (e) { return reject(e); }
       const id = ++this.requestId;
       this.handlers.set(id, { resolve, reject, onStream: opts.onStream });
-      this.ws.send(JSON.stringify({ id, command }));
+      // Route generic send() through the narrate handler so the server
+      // accepts it (unknown types are rejected by the allowlist).
+      this.ws.send(JSON.stringify({ id, type: opts.type || 'narrate', command, model: opts.model }));
     });
   }
 

@@ -82,6 +82,26 @@ function validateModel(model) {
 }
 
 /**
+ * Locate the Claude Code CLI entry point across platforms.
+ * Returns { execPath, args } where args should be prepended to CLI args.
+ * - Windows: resolves @anthropic-ai/claude-code/cli.js via APPDATA
+ * - macOS/Linux: uses the `claude` binary on PATH (installed globally by npm)
+ */
+function resolveClaudeCli() {
+  // Windows: the npm global prefix typically lives under %APPDATA%\npm
+  if (process.platform === 'win32' && process.env.APPDATA) {
+    const cliJs = path.join(process.env.APPDATA, 'npm', 'node_modules',
+      '@anthropic-ai', 'claude-code', 'cli.js');
+    if (fs.existsSync(cliJs)) {
+      return { execPath: process.execPath, args: [cliJs] };
+    }
+  }
+  // Fallback: rely on the `claude` command being on PATH.
+  // This works for npm global installs on macOS/Linux and for custom paths.
+  return { execPath: 'claude', args: [] };
+}
+
+/**
  * Build a minimal environment for child processes.
  */
 function safeEnv() {
@@ -112,6 +132,10 @@ wss.on('connection', (ws) => {
 
   // Per-connection rate limiting
   const messageTimestamps = [];
+
+  // Interactive session state (declared before message handler to avoid TDZ)
+  let interactiveProc = null;
+  let interactiveBuffer = '';
 
   // Keepalive ping every 15s so the connection doesn't drop during long audits
   const pingInterval = setInterval(() => {
@@ -268,17 +292,15 @@ wss.on('connection', (ws) => {
   });
 
   // ── Persistent Interactive Claude Session ──────────────
-  let interactiveProc = null;
-  let interactiveBuffer = '';
-
   function spawnInteractive(cwd, model) {
-    const cliJs = path.join(process.env.APPDATA, 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
+    const { execPath: cliExec, args: cliArgs } = resolveClaudeCli();
     const modelName = model || 'claude-sonnet-4-6';
     console.log(`  Spawning interactive session (model: ${modelName}, cwd: ${cwd})`);
-    const proc = spawn(process.execPath, [cliJs, '--model', modelName, '--output-format', 'stream-json', '--verbose'], {
+    const proc = spawn(cliExec, [...cliArgs, '--model', modelName, '--output-format', 'stream-json', '--verbose'], {
       cwd: cwd,
       env: safeEnv(),
-      stdio: ['pipe', 'pipe', 'pipe']
+      stdio: ['pipe', 'pipe', 'pipe'],
+      shell: cliExec === 'claude'
     });
 
     proc.stdout.on('data', (data) => {
@@ -362,8 +384,14 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     clearInterval(pingInterval);
     if (interactiveProc) {
-      interactiveProc.kill('SIGTERM');
+      try { interactiveProc.kill('SIGTERM'); } catch (e) {}
       interactiveProc = null;
+    }
+    // Kill any orphaned Claude processes for this connection
+    // (prevents API token drain when user closes the browser mid-audit)
+    for (const [procId, proc] of activeProcesses.entries()) {
+      try { proc.kill('SIGTERM'); } catch (e) {}
+      activeProcesses.delete(procId);
     }
     console.log('Game client disconnected');
   });
@@ -579,13 +607,14 @@ async function runCommit(message, projectCwd, onStream, requestId, model) {
 function runClaude(prompt, onStream, cwd, requestId, model) {
   const workDir = cwd || PROJECT_ROOT;
   return new Promise((resolve, reject) => {
-    const cliJs = path.join(process.env.APPDATA, 'npm', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
+    const { execPath: cliExec, args: cliArgs } = resolveClaudeCli();
     const modelName = model || 'claude-sonnet-4-6';
     console.log(`  Running with stream-json (model: ${modelName})`);
     console.log(`  CWD: ${workDir}`);
-    const proc = spawn(process.execPath, [cliJs, '-p', prompt, '--model', modelName, '--output-format', 'stream-json', '--verbose'], {
+    const proc = spawn(cliExec, [...cliArgs, '-p', prompt, '--model', modelName, '--output-format', 'stream-json', '--verbose'], {
       cwd: workDir,
-      env: safeEnv()
+      env: safeEnv(),
+      shell: cliExec === 'claude'
     });
 
     // Register for cancellation

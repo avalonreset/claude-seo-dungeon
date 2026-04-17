@@ -46,6 +46,10 @@ node_modules/
 # Vite cache
 .vite/
 
+# Playwright test results
+test-results/
+playwright-report/
+
 # Logs
 *.log
 

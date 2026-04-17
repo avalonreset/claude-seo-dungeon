@@ -10,7 +10,7 @@ main() {
     REPO_URL="https://github.com/avalonreset-pro/claude-seo-dungeon"
     # Pin to a specific release tag to prevent silent updates from main.
     # Override: CLAUDE_SEO_TAG=main bash install.sh
-    REPO_TAG="${CLAUDE_SEO_TAG:-v1.6.0}"
+    REPO_TAG="${CLAUDE_SEO_TAG:-v1.9.0}"
 
     echo "════════════════════════════════════════"
     echo "║   Claude SEO - Installer             ║"
@@ -21,6 +21,19 @@ main() {
     # Check prerequisites
     command -v python3 >/dev/null 2>&1 || { echo "✗ Python 3 is required but not installed."; exit 1; }
     command -v git >/dev/null 2>&1 || { echo "✗ Git is required but not installed."; exit 1; }
+    command -v node >/dev/null 2>&1 || { echo "✗ Node.js 18+ is required but not installed."; exit 1; }
+    NODE_MAJOR=$(node -p "process.versions.node.split('.')[0]" 2>/dev/null || echo "0")
+    if [ "${NODE_MAJOR}" -lt 18 ]; then
+        echo "✗ Node.js 18+ is required but ${NODE_MAJOR}.x was found."
+        exit 1
+    fi
+    if ! command -v claude >/dev/null 2>&1; then
+        echo "⚠  Claude Code CLI not found on PATH."
+        echo "   Install from: https://docs.anthropic.com/en/docs/claude-code"
+        echo "   The SEO skills will be installed, but the game will not be able"
+        echo "   to run audits until Claude Code is installed and authenticated."
+        echo ""
+    fi
 
     # Check Python version (3.10+ required)
     PYTHON_VERSION=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
@@ -42,9 +55,17 @@ main() {
     echo "↓ Downloading Claude SEO (${REPO_TAG})..."
     git clone --depth 1 --branch "${REPO_TAG}" "${REPO_URL}" "${TEMP_DIR}/claude-seo" 2>/dev/null
 
-    # Copy skill files
+    # Copy main orchestrator skill (located at skills/seo/)
     echo "→ Installing skill files..."
-    cp -r "${TEMP_DIR}/claude-seo/seo/"* "${SKILL_DIR}/"
+    if [ -d "${TEMP_DIR}/claude-seo/skills/seo" ]; then
+        cp -r "${TEMP_DIR}/claude-seo/skills/seo/"* "${SKILL_DIR}/"
+    elif [ -d "${TEMP_DIR}/claude-seo/seo" ]; then
+        # Legacy layout fallback
+        cp -r "${TEMP_DIR}/claude-seo/seo/"* "${SKILL_DIR}/"
+    else
+        echo "✗ Could not find main seo skill in downloaded archive"
+        exit 1
+    fi
 
     # Copy sub-skills
     if [ -d "${TEMP_DIR}/claude-seo/skills" ]; then

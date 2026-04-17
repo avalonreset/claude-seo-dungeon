@@ -1,6 +1,9 @@
 import json
+from pathlib import Path
 
-with open("E:/hackathon/claude-seo-dungeon/screenshots/audit-data.json") as f:
+SCREENSHOTS = Path(__file__).resolve().parent.parent / "screenshots"
+
+with open(SCREENSHOTS / "audit-data.json") as f:
     data = json.load(f)
 
 for vp_name in ["tablet-768", "mobile-375", "mobile-small-320"]:

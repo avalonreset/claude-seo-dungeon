@@ -29,7 +29,7 @@ irm https://raw.githubusercontent.com/avalonreset-pro/claude-seo-dungeon/main/in
 
 ```bash
 git clone https://github.com/avalonreset-pro/claude-seo-dungeon.git
-cd claude-seo
+cd claude-seo-dungeon
 ```
 
 2. **Run the installer**

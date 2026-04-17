@@ -87,7 +87,7 @@ $AgentDir = "$env:USERPROFILE\.claude\agents"
 $RepoUrl = "https://github.com/avalonreset-pro/claude-seo-dungeon"
 # Pin to a specific release tag to prevent silent updates from main.
 # Override: $env:CLAUDE_SEO_TAG = 'main'; .\install.ps1
-$RepoTag = if ($env:CLAUDE_SEO_TAG) { $env:CLAUDE_SEO_TAG } else { 'v1.6.0' }
+$RepoTag = if ($env:CLAUDE_SEO_TAG) { $env:CLAUDE_SEO_TAG } else { 'v1.9.0' }
 
 # Create directories
 New-Item -ItemType Directory -Force -Path $SkillDir | Out-Null

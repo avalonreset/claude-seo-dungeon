@@ -1,3 +1,12 @@
+# Line-ending rules (prevents shell scripts breaking on Windows checkouts)
+* text=auto
+*.sh text eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.ps1 text eol=crlf
+
 # Linguist overrides for accurate GitHub language bar
 *.md linguist-documentation
 *.json linguist-data
