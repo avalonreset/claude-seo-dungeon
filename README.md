@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.webp" alt="Claude SEO Dungeon - Gamified SEO Audit Tool for Claude Code" width="100%">
+  <a href="https://raw.githubusercontent.com/avalonreset/claude-seo-dungeon/main/assets/banner.webp"><img src="assets/banner.webp" alt="Claude SEO Dungeon - Gamified SEO Audit Tool for Claude Code" width="100%"></a>
 </p>
 
 # Claude SEO Dungeon - Gamified SEO Audit Tool for Claude Code
@@ -17,12 +17,12 @@ Most SEO audit tools hand you a spreadsheet and wish you luck. Claude SEO Dungeo
 
 <table>
 <tr>
-<td width="50%"><img src="screenshots/title-screen.webp" alt="Claude SEO Dungeon title screen with character selection"><br><em>Pick your warrior, enter a domain, seal your fate</em></td>
-<td width="50%"><img src="screenshots/gate-scene-full.webp" alt="Gate scene showing quest continuation options"><br><em>Continue a previous quest or begin a new one</em></td>
+<td width="50%"><a href="https://raw.githubusercontent.com/avalonreset/claude-seo-dungeon/main/screenshots/title-screen.png"><img src="screenshots/title-screen.png" alt="Claude SEO Dungeon title screen with character selection"></a><br><em>Pick your warrior, enter a domain, seal your fate</em></td>
+<td width="50%"><a href="https://raw.githubusercontent.com/avalonreset/claude-seo-dungeon/main/screenshots/gate-scene-full.png"><img src="screenshots/gate-scene-full.png" alt="Gate scene showing quest continuation options"></a><br><em>Continue a previous quest or begin a new one</em></td>
 </tr>
 <tr>
-<td width="50%"><img src="screenshots/dungeon-hall.webp" alt="Dungeon hall showing SEO issue demons sorted by severity"><br><em>Browse SEO demons sorted by severity</em></td>
-<td width="50%"><img src="screenshots/battle-scene.webp" alt="Turn-based battle scene with real-time Guild Ledger"><br><em>Battle demons with AI-powered code fixes</em></td>
+<td width="50%"><a href="https://raw.githubusercontent.com/avalonreset/claude-seo-dungeon/main/screenshots/dungeon-hall.png"><img src="screenshots/dungeon-hall.png" alt="Dungeon hall showing SEO issue demons sorted by severity"></a><br><em>Browse SEO demons sorted by severity</em></td>
+<td width="50%"><a href="https://raw.githubusercontent.com/avalonreset/claude-seo-dungeon/main/screenshots/battle-scene.png"><img src="screenshots/battle-scene.png" alt="Turn-based battle scene with real-time Guild Ledger"></a><br><em>Battle demons with AI-powered code fixes</em></td>
 </tr>
 </table>
 
