@@ -162,11 +162,147 @@ function typewriterLine(text, cls) {
         clearInterval(interval);
         line.classList.remove('typing');
         setTimeout(() => line.classList.remove('glow'), GLOW_DURATION);
+        linkify(content);
         markAsLatest(line);
         resolve();
       }
     }, speed);
   });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  LINKIFY - make URLs clickable and backticked content copy-to-clipboard
+// ═══════════════════════════════════════════════════════════════════════
+// After a line finishes typing, scan its text for URLs and backticked
+// content, then replace them with styled, clickable elements.
+//   - Bare URLs (http/https)       -> blue underlined, opens in new tab
+//   - Backticked URL               -> blue underlined, opens in new tab
+//   - Backticked path/command/code -> green highlight, copies to clipboard
+// Uses tokenization + DOM nodes (not innerHTML) so content stays safe.
+
+function linkify(contentSpan) {
+  const raw = contentSpan.textContent;
+  if (!raw) return;
+  const segments = tokenize(raw);
+  // Skip work if nothing linkable found
+  if (!segments.some((s) => s.type !== 'text')) return;
+  contentSpan.textContent = '';
+  for (const seg of segments) {
+    if (seg.type === 'text') {
+      contentSpan.appendChild(document.createTextNode(seg.value));
+    } else if (seg.type === 'url') {
+      contentSpan.appendChild(makeUrlAnchor(seg.value, seg.display || seg.value));
+    } else if (seg.type === 'code') {
+      contentSpan.appendChild(makeCopyable(seg.value));
+    }
+  }
+}
+
+/**
+ * Split a line into { type: 'text' | 'url' | 'code', value } segments.
+ * Backtick-wrapped content is tokenized first (explicit intent). Bare
+ * URLs outside backticks are picked up next. Everything else is text.
+ */
+function tokenize(text) {
+  const out = [];
+  let cursor = 0;
+  const pushText = (s) => {
+    if (!s) return;
+    if (out.length > 0 && out[out.length - 1].type === 'text') {
+      out[out.length - 1].value += s;
+    } else {
+      out.push({ type: 'text', value: s });
+    }
+  };
+
+  while (cursor < text.length) {
+    // Backtick code span
+    if (text[cursor] === '`') {
+      const end = text.indexOf('`', cursor + 1);
+      if (end > cursor) {
+        const inner = text.slice(cursor + 1, end);
+        if (/^https?:\/\/\S+$/.test(inner)) {
+          out.push({ type: 'url', value: inner.replace(/[.,;:!?)\]]+$/, ''), display: inner });
+        } else {
+          out.push({ type: 'code', value: inner });
+        }
+        cursor = end + 1;
+        continue;
+      }
+    }
+
+    // Bare URL
+    const tail = text.slice(cursor);
+    const m = tail.match(/^https?:\/\/[^\s`<>"']+/);
+    if (m) {
+      // Strip trailing punctuation that's probably sentence-terminal, not part of the URL
+      let url = m[0];
+      const trim = url.match(/[.,;:!?)\]]+$/);
+      let trailing = '';
+      if (trim) { trailing = trim[0]; url = url.slice(0, -trailing.length); }
+      out.push({ type: 'url', value: url, display: url });
+      cursor += url.length;
+      pushText(trailing);
+      continue;
+    }
+
+    pushText(text[cursor]);
+    cursor += 1;
+  }
+  return out;
+}
+
+function makeUrlAnchor(url, display) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  a.className = 'log-link log-link-url';
+  a.textContent = display;
+  a.title = 'Open in new tab';
+  return a;
+}
+
+function makeCopyable(text) {
+  const s = document.createElement('span');
+  s.className = 'log-link log-link-code';
+  s.textContent = text;
+  s.title = 'Click to copy';
+  s.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const doCopy = navigator.clipboard && navigator.clipboard.writeText
+      ? navigator.clipboard.writeText(text)
+      : Promise.reject(new Error('no clipboard api'));
+    doCopy
+      .then(() => showCopyToast('Copied'))
+      .catch(() => {
+        // Fallback: select the span so the user can Ctrl+C manually
+        const range = document.createRange();
+        range.selectNodeContents(s);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        showCopyToast('Selected, press Ctrl+C');
+      });
+  });
+  return s;
+}
+
+let _toastTimer = null;
+function showCopyToast(msg) {
+  let t = document.getElementById('log-copy-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'log-copy-toast';
+    t.className = 'log-copy-toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.remove('fade');
+  // Force reflow so re-adding the class re-triggers the transition
+  void t.offsetWidth;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.add('fade'), 1100);
 }
 
 // ── Process queue ──
@@ -810,6 +946,69 @@ export function initActivityLog() {
     .ledger-idle .log-dots {
       display: none !important;
     }
+
+    /* ═══════════════════════════════════════════════
+       CLICKABLE LINKS - URLs and backticked paths/code
+       ═══════════════════════════════════════════════ */
+    .log-link {
+      cursor: pointer;
+      transition: color 120ms ease, background-color 120ms ease,
+                  border-color 120ms ease, text-shadow 120ms ease;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .log-link-url {
+      color: #6bc4ff;
+      text-decoration: underline;
+      text-decoration-color: rgba(107, 196, 255, 0.45);
+      text-underline-offset: 2px;
+      font-weight: 500;
+    }
+    .log-link-url:hover {
+      color: #b4e2ff;
+      text-decoration-color: #b4e2ff;
+      text-shadow: 0 0 6px rgba(107, 196, 255, 0.5);
+    }
+    .log-link-code {
+      color: #9ae69a;
+      background: rgba(136, 238, 136, 0.08);
+      border: 1px solid rgba(136, 238, 136, 0.22);
+      border-radius: 3px;
+      padding: 0 4px;
+      margin: 0 1px;
+    }
+    .log-link-code:hover {
+      color: #c0ffc0;
+      background: rgba(136, 238, 136, 0.20);
+      border-color: rgba(136, 238, 136, 0.55);
+      text-shadow: 0 0 4px rgba(136, 238, 136, 0.5);
+    }
+    .log-link-code:active {
+      background: rgba(136, 238, 136, 0.35);
+      transform: translateY(1px);
+    }
+
+    /* Copy toast */
+    .log-copy-toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: rgba(10, 12, 20, 0.94);
+      color: #9ae69a;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      padding: 9px 16px;
+      border: 1px solid rgba(136, 238, 136, 0.55);
+      border-radius: 3px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5),
+                  0 0 20px rgba(136, 238, 136, 0.15);
+      z-index: 999999;
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 320ms ease;
+    }
+    .log-copy-toast.fade { opacity: 0; }
   `;
   document.head.appendChild(style);
 

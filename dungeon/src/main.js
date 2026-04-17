@@ -32,6 +32,10 @@ function returnToTitle() {
 // Expose for Phaser scenes
 window.returnToTitle = returnToTitle;
 
+// Dev hook - lets you push a log line from the browser console for
+// debugging or linkifier verification. Harmless in production.
+window.addLog = addLog;
+
 // ── Bridge Connection ──────────────────────────
 function _createDisconnectBanner() {
   if (document.getElementById('bridge-disconnect-banner')) return;
