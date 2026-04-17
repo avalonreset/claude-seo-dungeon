@@ -1,6 +1,6 @@
 import { COLORS, FONTS } from '../utils/colors.js';
 import { bridge } from '../utils/ws.js';
-import { DESCENT_MESSAGES } from '../utils/flavor-text.js';
+import { DESCENT_MESSAGES, TICKER_IDLE_MESSAGES, TICKER_FAILURE_MESSAGES, LEDGER_FAILURE_MESSAGES } from '../utils/flavor-text.js';
 import { SFX } from '../utils/sound-manager.js';
 
 /**
@@ -153,14 +153,38 @@ export class SummoningScene extends Phaser.Scene {
       resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(54).setAlpha(0.3).setBlendMode(Phaser.BlendModes.ADD);
 
-    // ── Stream / Activity Text ─────────────────────────────────
+    // ── Stream / Activity Ticker (single-line, typewriter, queued) ────
+    // Width is constrained; messages are truncated to fit one line.
+    // A queue processes messages sequentially with type-in / hold / type-out.
     this.streamText = this.add.text(cx, 495, '', {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '13px',
-      color: '#7766aa',
-      wordWrap: { width: 650 },
+      color: '#9a88cc',
       resolution: window.GAME_DPR
-    }).setOrigin(0.5).setDepth(55).setAlpha(0.8);
+    }).setOrigin(0.5).setDepth(55).setAlpha(0.95);
+
+    // Blinking cursor that follows the ticker text
+    this.streamCursor = this.add.text(cx, 495, '\u2583', {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '13px',
+      color: '#d4af37',
+      resolution: window.GAME_DPR
+    }).setOrigin(0, 0.5).setDepth(56).setAlpha(0);
+
+    // Ticker queue state
+    this._tickerQueue = [];
+    this._tickerBusy = false;
+    this._tickerCurrent = '';
+
+    // Blink the cursor always (low opacity when idle, full when typing)
+    this.tweens.add({
+      targets: this.streamCursor,
+      alpha: { from: 0.25, to: 0.9 },
+      duration: 520,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
 
     // ── Demon Counter ──────────────────────────────────────────
     this.demonCounter = this.add.text(cx, 516, '', {
@@ -180,44 +204,46 @@ export class SummoningScene extends Phaser.Scene {
     // ── Vignette Overlay ───────────────────────────────────────
     this._drawVignette(W, H);
 
-    // ── Atmospheric Messages ───────────────────────────────────
+    // ── Atmospheric Messages — shuffled bag, organic pacing, varied FX ──
     this.flavorMessages = DESCENT_MESSAGES;
-    this.messageIndex = 0;
-
-    this.time.addEvent({
-      delay: 3000,
-      callback: () => {
-        this.messageIndex = (this.messageIndex + 1) % this.flavorMessages.length;
-        const msg = this.flavorMessages[this.messageIndex];
-        this.messageText.setText(msg);
-        this.messageGlow.setText(msg);
-        this.messageText.setAlpha(0);
-        this.messageGlow.setAlpha(0);
-        SFX.play('textType');
-        this.tweens.add({
-          targets: this.messageText,
-          alpha: 1,
-          duration: 800,
-          ease: 'Sine.easeIn'
-        });
-        this.tweens.add({
-          targets: this.messageGlow,
-          alpha: 0.3,
-          duration: 800,
-          ease: 'Sine.easeIn'
-        });
-      },
-      loop: true
-    });
+    this._flavorBag = [];         // refilled & reshuffled when empty
+    this._flavorBaseX = cx;       // remember center for transitions
+    this._flavorBaseY = 470;
+    this._scheduleNextFlavorMessage(1800); // first transition in 1.8s
 
     // ── Abandon Scroll (cancel audit and return to title) ──────
     this._createAbandonScroll(W);
 
     // Track stream activity
     this.streamChunks = 0;
+    // Flag flips true when the first real stream chunk arrives, halting
+    // the idle gothic-phrase rotation below.
+    this._tickerStreamed = false;
+    // Start a gothic idle rotation until real stream data arrives
+    this._scheduleIdleTickerMessage(900);
 
     // Start audit
     this.runAudit();
+  }
+
+  _scheduleIdleTickerMessage(delay) {
+    this.time.delayedCall(delay, () => this._playIdleTickerMessage());
+  }
+
+  _playIdleTickerMessage() {
+    // Stop once real stream data takes over
+    if (this._tickerStreamed) return;
+    if (!this.streamText || !this.streamText.active) return;
+    // Don't trample any real message that might already be in flight
+    if (this._tickerBusy || this._tickerQueue.length > 0) {
+      this._scheduleIdleTickerMessage(1200);
+      return;
+    }
+    const pick = TICKER_IDLE_MESSAGES[Math.floor(Math.random() * TICKER_IDLE_MESSAGES.length)];
+    this._enqueueTickerMessage(pick);
+    // Vary the cadence organically
+    const next = 2400 + Math.floor(Math.random() * 1800);
+    this._scheduleIdleTickerMessage(next);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -726,6 +752,370 @@ export class SummoningScene extends Phaser.Scene {
   // AUDIT LOGIC (preserved from original)
   // ═══════════════════════════════════════════════════════════════
 
+  // ═══════════════════════════════════════════════════════════════
+  //  STREAM TICKER — single-line typewriter with queue
+  //  Keeps the middle-of-screen activity readout to one dynamic line
+  //  with type-in + hold + type-out animation. Full verbosity lives
+  //  in the Guild Ledger on the right; this is the cinematic readout.
+  // ═══════════════════════════════════════════════════════════════
+
+  // Cleaner message formatting: strip noisy prefixes and shorten paths.
+  _formatTickerMessage(raw) {
+    if (!raw) return '';
+    let m = String(raw).trim();
+    // Drop environment-var noise like "PYTHONIOENCODING=utf-8 python ..."
+    m = m.replace(/\b[A-Z_]+=[^\s]+\s+/g, '');
+    // Collapse runs of whitespace
+    m = m.replace(/\s+/g, ' ').trim();
+    // Shorten very long absolute paths to their filename
+    m = m.replace(/([/\\])[^\s]*[/\\]([^\s/\\]+\.[a-z]{1,6})/gi, '$1...$1$2');
+    // Final hard truncate to one visible line
+    const MAX = 72;
+    if (m.length > MAX) m = m.slice(0, MAX - 1) + '\u2026';
+    return m;
+  }
+
+  _enqueueTickerMessage(raw) {
+    const msg = this._formatTickerMessage(raw);
+    if (!msg) return;
+    // De-dupe identical back-to-back messages
+    if (this._tickerQueue.length && this._tickerQueue[this._tickerQueue.length - 1] === msg) return;
+    this._tickerQueue.push(msg);
+    // Cap queue to keep up with fast streams (drop oldest)
+    while (this._tickerQueue.length > 8) this._tickerQueue.shift();
+    if (!this._tickerBusy) this._runTickerLoop();
+  }
+
+  _runTickerLoop() {
+    if (!this.streamText || !this.streamText.active) { this._tickerBusy = false; return; }
+    if (this._tickerQueue.length === 0) {
+      this._tickerBusy = false;
+      this._positionTickerCursor('');
+      return;
+    }
+    this._tickerBusy = true;
+    const next = this._tickerQueue.shift();
+    this._tickerCurrent = next;
+    this._typeIn(next, () => {
+      // Dynamic hold time: shorter if queue is backed up
+      const q = this._tickerQueue.length;
+      const hold = q >= 4 ? 280 : q >= 2 ? 520 : 900;
+      this.time.delayedCall(hold, () => {
+        this._typeOut(() => {
+          this.time.delayedCall(60, () => this._runTickerLoop());
+        });
+      });
+    });
+  }
+
+  _typeIn(text, done) {
+    if (!this.streamText || !this.streamText.active) return;
+    this.streamText.setText('');
+    let i = 0;
+    const step = () => {
+      if (!this.streamText || !this.streamText.active) return;
+      i += 1;
+      this.streamText.setText(text.slice(0, i));
+      this._positionTickerCursor(this.streamText.text);
+      if (i >= text.length) {
+        if (done) done();
+        return;
+      }
+      // Slight jitter so it feels organic, not mechanical
+      const jitter = 2 + Math.random() * 4;
+      this.time.delayedCall(10 + jitter, step);
+    };
+    step();
+  }
+
+  _typeOut(done) {
+    if (!this.streamText || !this.streamText.active) return;
+    let current = this.streamText.text;
+    const step = () => {
+      if (!this.streamText || !this.streamText.active) return;
+      if (current.length <= 0) {
+        if (done) done();
+        return;
+      }
+      current = current.slice(0, -1);
+      this.streamText.setText(current);
+      this._positionTickerCursor(current);
+      this.time.delayedCall(8, step);
+    };
+    step();
+  }
+
+  _positionTickerCursor(text) {
+    if (!this.streamCursor || !this.streamCursor.active) return;
+    if (!this.streamText || !this.streamText.active) return;
+    // Place the cursor just after the last character of centered text
+    const halfWidth = this.streamText.width / 2;
+    this.streamCursor.setX(this.streamText.x + halfWidth + 2);
+  }
+
+  _setTickerFinalState(msg) {
+    // Used for terminal states ("no demons", "silent") — clear queue,
+    // set text directly, and hide the cursor so nothing blinks after.
+    this._tickerQueue.length = 0;
+    this._tickerBusy = false;
+    if (this.streamText && this.streamText.active) {
+      this.streamText.setText(this._formatTickerMessage(msg));
+    }
+    if (this.streamCursor && this.streamCursor.active) {
+      this.streamCursor.setAlpha(0);
+      this.tweens.killTweensOf(this.streamCursor);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  //  FLAVOR MESSAGES — shuffled bag, variable timing, varied FX
+  // ═══════════════════════════════════════════════════════════════
+
+  _nextFlavorMessage() {
+    if (!this._flavorBag || this._flavorBag.length === 0) {
+      // Refill from the master list and Fisher-Yates shuffle
+      this._flavorBag = this.flavorMessages.slice();
+      for (let i = this._flavorBag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = this._flavorBag[i];
+        this._flavorBag[i] = this._flavorBag[j];
+        this._flavorBag[j] = tmp;
+      }
+    }
+    return this._flavorBag.pop();
+  }
+
+  _scheduleNextFlavorMessage(delay) {
+    if (!this.messageText || !this.messageText.active) return;
+    this.time.delayedCall(delay, () => this._cycleFlavorMessage());
+  }
+
+  _cycleFlavorMessage() {
+    if (!this.messageText || !this.messageText.active) return;
+    const msg = this._nextFlavorMessage();
+    // Pick an exit effect for the OUTGOING message, then swap & pick an
+    // entry effect for the incoming one. Exit & entry are independent so
+    // we get combinations like fade-out / slide-in, drift-out / dissolve-in.
+    const effects = ['fade', 'slide-left', 'slide-right', 'rise', 'sink', 'glitch', 'dissolve', 'typewriter'];
+    const entry = effects[Math.floor(Math.random() * effects.length)];
+    const exit  = effects[Math.floor(Math.random() * effects.length)];
+    // Organic hold time: mostly 2200-4400ms, occasionally up to 5500ms.
+    const hold = 2200 + Math.floor(Math.random() * 2200)
+               + (Math.random() < 0.15 ? Math.floor(Math.random() * 1100) : 0);
+
+    this._exitFlavor(exit, () => {
+      this.messageText.setText(msg);
+      this.messageGlow.setText(msg);
+      // Reset position and alpha before entry effect places/reveals
+      this.messageText.setPosition(this._flavorBaseX, this._flavorBaseY).setAlpha(0);
+      this.messageGlow.setPosition(this._flavorBaseX, this._flavorBaseY).setAlpha(0);
+      // Restore default colors (terminal states override these)
+      this.messageText.setColor('#66cccc');
+      this.messageGlow.setColor('#44aaaa');
+      SFX.play('textType');
+      this._enterFlavor(entry, () => {
+        this._scheduleNextFlavorMessage(hold);
+      });
+    });
+  }
+
+  _exitFlavor(kind, done) {
+    if (!this.messageText || !this.messageText.active) { if (done) done(); return; }
+    // If current message is already invisible (first cycle), skip exit
+    if (this.messageText.alpha <= 0.02) { if (done) done(); return; }
+    const dur = 380 + Math.floor(Math.random() * 300);
+    const targets = [this.messageText, this.messageGlow];
+    this.tweens.killTweensOf(targets);
+    switch (kind) {
+      case 'slide-left':
+        this.tweens.add({ targets, x: this._flavorBaseX - 80, alpha: 0, duration: dur, ease: 'Sine.easeIn', onComplete: done });
+        return;
+      case 'slide-right':
+        this.tweens.add({ targets, x: this._flavorBaseX + 80, alpha: 0, duration: dur, ease: 'Sine.easeIn', onComplete: done });
+        return;
+      case 'rise':
+        this.tweens.add({ targets, y: this._flavorBaseY - 16, alpha: 0, duration: dur, ease: 'Sine.easeIn', onComplete: done });
+        return;
+      case 'sink':
+        this.tweens.add({ targets, y: this._flavorBaseY + 14, alpha: 0, duration: dur, ease: 'Sine.easeIn', onComplete: done });
+        return;
+      case 'glitch':
+        this._glitchOut(done, dur);
+        return;
+      case 'dissolve':
+        this._dissolveOut(done, dur);
+        return;
+      case 'typewriter':
+        this._typewriterOut(done);
+        return;
+      case 'fade':
+      default:
+        this.tweens.add({ targets, alpha: 0, duration: dur, ease: 'Sine.easeIn', onComplete: done });
+        return;
+    }
+  }
+
+  _enterFlavor(kind, done) {
+    if (!this.messageText || !this.messageText.active) { if (done) done(); return; }
+    const dur = 520 + Math.floor(Math.random() * 380);
+    const targets = [this.messageText, this.messageGlow];
+    switch (kind) {
+      case 'slide-left':
+        this.messageText.setX(this._flavorBaseX + 80);
+        this.messageGlow.setX(this._flavorBaseX + 80);
+        this.tweens.add({ targets: this.messageText, x: this._flavorBaseX, alpha: 1,   duration: dur, ease: 'Sine.easeOut' });
+        this.tweens.add({ targets: this.messageGlow, x: this._flavorBaseX, alpha: 0.3, duration: dur, ease: 'Sine.easeOut', onComplete: done });
+        return;
+      case 'slide-right':
+        this.messageText.setX(this._flavorBaseX - 80);
+        this.messageGlow.setX(this._flavorBaseX - 80);
+        this.tweens.add({ targets: this.messageText, x: this._flavorBaseX, alpha: 1,   duration: dur, ease: 'Sine.easeOut' });
+        this.tweens.add({ targets: this.messageGlow, x: this._flavorBaseX, alpha: 0.3, duration: dur, ease: 'Sine.easeOut', onComplete: done });
+        return;
+      case 'rise':
+        this.messageText.setY(this._flavorBaseY + 16);
+        this.messageGlow.setY(this._flavorBaseY + 16);
+        this.tweens.add({ targets: this.messageText, y: this._flavorBaseY, alpha: 1,   duration: dur, ease: 'Sine.easeOut' });
+        this.tweens.add({ targets: this.messageGlow, y: this._flavorBaseY, alpha: 0.3, duration: dur, ease: 'Sine.easeOut', onComplete: done });
+        return;
+      case 'sink':
+        this.messageText.setY(this._flavorBaseY - 14);
+        this.messageGlow.setY(this._flavorBaseY - 14);
+        this.tweens.add({ targets: this.messageText, y: this._flavorBaseY, alpha: 1,   duration: dur, ease: 'Sine.easeOut' });
+        this.tweens.add({ targets: this.messageGlow, y: this._flavorBaseY, alpha: 0.3, duration: dur, ease: 'Sine.easeOut', onComplete: done });
+        return;
+      case 'glitch':
+        this._glitchIn(done);
+        return;
+      case 'dissolve':
+        this._dissolveIn(done);
+        return;
+      case 'typewriter':
+        this._typewriterIn(done);
+        return;
+      case 'fade':
+      default:
+        this.tweens.add({ targets: this.messageText, alpha: 1,   duration: dur, ease: 'Sine.easeIn' });
+        this.tweens.add({ targets: this.messageGlow, alpha: 0.3, duration: dur, ease: 'Sine.easeIn', onComplete: done });
+        return;
+    }
+  }
+
+  // Glitch: rapid alpha flickers before settling
+  _glitchIn(done) {
+    if (!this.messageText || !this.messageText.active) { if (done) done(); return; }
+    const flickers = 5 + Math.floor(Math.random() * 3);
+    let i = 0;
+    const tick = () => {
+      if (!this.messageText || !this.messageText.active) return;
+      i += 1;
+      const on = i % 2 === 0;
+      this.messageText.setAlpha(on ? 0.2 + Math.random() * 0.8 : 0);
+      this.messageGlow.setAlpha(on ? 0.1 + Math.random() * 0.25 : 0);
+      if (i >= flickers) {
+        this.tweens.add({ targets: this.messageText, alpha: 1,   duration: 260, ease: 'Sine.easeOut' });
+        this.tweens.add({ targets: this.messageGlow, alpha: 0.3, duration: 260, ease: 'Sine.easeOut', onComplete: done });
+        return;
+      }
+      this.time.delayedCall(40 + Math.random() * 60, tick);
+    };
+    tick();
+  }
+
+  _glitchOut(done, dur) {
+    if (!this.messageText || !this.messageText.active) { if (done) done(); return; }
+    const flickers = 4 + Math.floor(Math.random() * 3);
+    let i = 0;
+    const tick = () => {
+      if (!this.messageText || !this.messageText.active) return;
+      i += 1;
+      this.messageText.setAlpha(Math.random() < 0.5 ? 0 : 0.6 + Math.random() * 0.3);
+      this.messageGlow.setAlpha(Math.random() < 0.5 ? 0 : 0.15 + Math.random() * 0.15);
+      if (i >= flickers) {
+        this.tweens.add({ targets: [this.messageText, this.messageGlow], alpha: 0, duration: Math.max(200, dur - 200), onComplete: done });
+        return;
+      }
+      this.time.delayedCall(35 + Math.random() * 60, tick);
+    };
+    tick();
+  }
+
+  // Dissolve: partial alpha via scaled particles (approximate by jittering alpha + position)
+  _dissolveIn(done) {
+    if (!this.messageText || !this.messageText.active) { if (done) done(); return; }
+    let a = 0;
+    const target = 1;
+    const tick = () => {
+      if (!this.messageText || !this.messageText.active) return;
+      a += 0.08 + Math.random() * 0.12;
+      if (a >= target) {
+        this.messageText.setAlpha(target);
+        this.messageGlow.setAlpha(0.3);
+        if (done) done();
+        return;
+      }
+      this.messageText.setAlpha(Math.min(a, target) * (0.6 + Math.random() * 0.4));
+      this.messageGlow.setAlpha(Math.min(a, target) * 0.3);
+      this.time.delayedCall(32 + Math.random() * 28, tick);
+    };
+    tick();
+  }
+
+  _dissolveOut(done, dur) {
+    if (!this.messageText || !this.messageText.active) { if (done) done(); return; }
+    let a = this.messageText.alpha;
+    const tick = () => {
+      if (!this.messageText || !this.messageText.active) return;
+      a -= 0.08 + Math.random() * 0.1;
+      if (a <= 0) {
+        this.messageText.setAlpha(0);
+        this.messageGlow.setAlpha(0);
+        if (done) done();
+        return;
+      }
+      this.messageText.setAlpha(a * (0.5 + Math.random() * 0.5));
+      this.messageGlow.setAlpha(Math.max(0, a * 0.3));
+      this.time.delayedCall(28 + Math.random() * 24, tick);
+    };
+    tick();
+  }
+
+  // Typewriter: character-by-character reveal/erase of the TEXT ONLY;
+  // the glow layer rides along on alpha so it doesn't compete.
+  _typewriterIn(done) {
+    if (!this.messageText || !this.messageText.active) { if (done) done(); return; }
+    const full = this.messageText.text;
+    this.messageText.setAlpha(1);
+    this.messageGlow.setAlpha(0);
+    this.messageText.setText('');
+    let i = 0;
+    const step = () => {
+      if (!this.messageText || !this.messageText.active) return;
+      i += 1;
+      this.messageText.setText(full.slice(0, i));
+      if (i >= full.length) {
+        this.tweens.add({ targets: this.messageGlow, alpha: 0.3, duration: 220, onComplete: done });
+        return;
+      }
+      this.time.delayedCall(18 + Math.random() * 18, step);
+    };
+    step();
+  }
+
+  _typewriterOut(done) {
+    if (!this.messageText || !this.messageText.active) { if (done) done(); return; }
+    let current = this.messageText.text;
+    this.messageGlow.setAlpha(0);
+    const step = () => {
+      if (!this.messageText || !this.messageText.active) return;
+      if (current.length === 0) { if (done) done(); return; }
+      current = current.slice(0, -1);
+      this.messageText.setText(current);
+      this.time.delayedCall(14 + Math.random() * 12, step);
+    };
+    step();
+  }
+
   addLog(msg) {
     this.logTexts.forEach(t => t.y -= 18);
     if (this.logTexts.length > 2) {
@@ -888,7 +1278,9 @@ export class SummoningScene extends Phaser.Scene {
         const clean = streamData.replace(/[\n\r]+/g, ' ').trim();
         if (clean.length > 0) {
           streamedText += clean + '\n';
-          this.streamText.setText(clean);
+          // Stop the gothic idle rotation once real data arrives
+          this._tickerStreamed = true;
+          this._enqueueTickerMessage(clean);
           if (this.game.addLog) this.game.addLog(clean);
 
           totalEvents++;
@@ -939,11 +1331,13 @@ export class SummoningScene extends Phaser.Scene {
         this.addLog(`Interrupted — ${partial.issues.length} demons found before failure`);
         this._handleAuditResult(partial, false);
       } else {
-        // Truly nothing came back
-        this.addLog('No data received');
+        // Truly nothing came back — gothic copy only, no tech-speak
+        const pickLedger = LEDGER_FAILURE_MESSAGES[Math.floor(Math.random() * LEDGER_FAILURE_MESSAGES.length)];
+        const pickTicker = TICKER_FAILURE_MESSAGES[Math.floor(Math.random() * TICKER_FAILURE_MESSAGES.length)];
+        this.addLog(pickLedger);
         this.messageText.setText('The dungeon is silent.');
         this.messageText.setColor('#cc4444');
-        this.streamText.setText('No issues could be retrieved.');
+        this._setTickerFinalState(pickTicker);
         this.demonCounter.setText('');
       }
     }
@@ -957,7 +1351,7 @@ export class SummoningScene extends Phaser.Scene {
       this.addLog('Audit completed but found no issues');
       this.messageText.setText('The dungeon is empty.');
       this.messageText.setColor('#60d060');
-      this.streamText.setText('No SEO issues detected.');
+      this._setTickerFinalState('No SEO issues detected.');
       this.demonCounter.setText('');
       // Show a "Return to Guild" button so the user isn't stranded
       this._showEmptyDungeonReturn();
@@ -984,7 +1378,7 @@ export class SummoningScene extends Phaser.Scene {
     this.messageText.setColor('#f0c040');
     this.messageGlow.setText(revealMsg);
     this.messageGlow.setColor('#cc8800');
-    this.streamText.setText('');
+    this._setTickerFinalState('');
     this.demonCounter.setText(`${auditData.issues.length} demons detected! Score: ${auditData.score}/100`);
     this.demonCounter.setColor('#f0c040');
 

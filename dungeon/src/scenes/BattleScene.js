@@ -291,27 +291,48 @@ export class BattleScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════
 
   createDemon() {
-    // 0x72 animated demons — scale so visual height reflects severity hierarchy
-    // Target heights: critical ~180px, high ~130px, medium ~100px, low ~75px, info ~55px
-    const demonSizes = { critical: 36, high: 23, medium: 23, low: 23, info: 16 };
-    const demonScales = { critical: 5, high: 5.5, medium: 4.3, low: 3.2, info: 3.2 };
-    const demonScale = demonScales[this.issue.severity] || 4;
+    // Target combat-scene heights per severity (larger than hall thumbnails)
+    const BATTLE_TARGET_H = { critical: 190, high: 160, medium: 130, low: 110, info: 90 };
+    const targetH = BATTLE_TARGET_H[this.issue.severity] || 130;
     const sevColor = this.getSeverityHexColor();
+    const demonKey = this.issue._demonKey;
 
-    // Ground line is y=300; place demon feet on it
-    const nativeH = demonSizes[this.issue.severity] || 32;
-    const spriteH = nativeH * demonScale;
-    const demonY = 320 - spriteH * 0.5;
-    this.demonGroundY = demonY;
-
-    // Demon sprite — animated idle, feet on ground line y=300
-    const animKey = `demon_${this.issue.severity}_idle`;
-    this.demon = this.add.sprite(620, demonY, `demon_${this.issue.severity}_f0`)
-      .setScale(demonScale)
-      .setFlipX(true)
-      .setAlpha(0); // for entrance anim
-    if (this.anims.exists(animKey)) {
-      this.demon.play(animKey);
+    const isLegacy = !demonKey || demonKey.startsWith('demon_');
+    if (isLegacy) {
+      // 0x72 4-frame animated idle — keep legacy scaling
+      const demonSizes = { critical: 36, high: 23, medium: 23, low: 23, info: 16 };
+      const demonScales = { critical: 5, high: 5.5, medium: 4.3, low: 3.2, info: 3.2 };
+      const demonScale = demonScales[this.issue.severity] || 4;
+      const nativeH = demonSizes[this.issue.severity] || 32;
+      const spriteH = nativeH * demonScale;
+      const demonY = 320 - spriteH * 0.5;
+      this.demonGroundY = demonY;
+      const animKey = `demon_${this.issue.severity}_idle`;
+      this.demon = this.add.sprite(620, demonY, `demon_${this.issue.severity}_f0`)
+        .setScale(demonScale)
+        .setFlipX(true)
+        .setAlpha(0);
+      if (this.anims.exists(animKey)) this.demon.play(animKey);
+    } else {
+      // New demon — single frame, tween-driven idle breath
+      this.demon = this.add.sprite(620, 300, demonKey).setFlipX(true).setAlpha(0);
+      const nativeH = this.demon.height || targetH;
+      const fitScale = Math.min(targetH / Math.max(nativeH, 1), 6.5);
+      this.demon.setScale(fitScale);
+      this.demon._baseScale = fitScale;
+      // Reposition so feet land on the floor line y=300
+      const displayedH = nativeH * fitScale;
+      const demonY = 320 - displayedH * 0.5;
+      this.demon.setY(demonY);
+      this.demonGroundY = demonY;
+      // Subtle idle breath — slower and more menacing than the hall bob
+      this.tweens.add({
+        targets: this.demon,
+        scaleX: fitScale * 1.03,
+        scaleY: fitScale * 0.97,
+        duration: 1800,
+        yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+      });
     }
   }
 

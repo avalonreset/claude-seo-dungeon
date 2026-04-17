@@ -338,11 +338,17 @@ claude-seo-dungeon/
 
 | Asset | Creator | License | Link |
 |-------|---------|---------|------|
-| Medieval Warrior Pack | LuizMelo | CC0 (Public Domain) | [itch.io](https://luizmelo.itch.io/medieval-warrior-pack) |
-| Medieval Warrior Pack 2 | LuizMelo | CC0 (Public Domain) | [itch.io](https://luizmelo.itch.io/medieval-warrior-pack-2) |
-| Samurai | LuizMelo | CC0 (Public Domain) | [itch.io](https://luizmelo.itch.io/samurai) |
-| 16x16 DungeonTileset II | 0x72 | CC0 (Public Domain) | [itch.io](https://0x72.itch.io/dungeontileset-ii) |
-| Dungeon Crawl Stone Soup tiles | DCSS contributors | CC0 (Public Domain) | [GitHub](https://github.com/crawl/crawl) |
+| Medieval Warrior Pack | LuizMelo | CC0 | [itch.io](https://luizmelo.itch.io/medieval-warrior-pack) |
+| Medieval Warrior Pack 2 | LuizMelo | CC0 | [itch.io](https://luizmelo.itch.io/medieval-warrior-pack-2) |
+| Samurai | LuizMelo | CC0 | [itch.io](https://luizmelo.itch.io/samurai) |
+| DungeonTileset II | 0x72 | CC0 | [itch.io](https://0x72.itch.io/dungeontileset-ii) |
+| Dungeon Crawl Stone Soup tiles (monsters, demons, dragons, liches, demon lords) | DCSS contributors | CC0 | [GitHub](https://github.com/crawl/crawl) |
+| Animated Monster Pack (Skeleton, Minotaur, Orcs, Goblins) | Calciumtrice | CC-BY 3.0 | [OpenGameArt](https://opengameart.org/users/calciumtrice) |
+| Zombie - Fully Animated | Cethiel | CC0 | [OpenGameArt](https://opengameart.org/content/zombie-fully-animated) |
+| Bosses and Monsters (Ars Notoria) | Balmer + Redshrike | CC-BY 3.0 | [OpenGameArt](https://opengameart.org/content/bosses-and-monsters-spritesheets-ars-notoria) |
+| Harlequin Epicycle three-form boss | Redshrike | CC-BY 3.0 | [OpenGameArt](https://opengameart.org/users/redshrike) |
+| Icy Tower Demon | surt | CC0 | [OpenGameArt](https://opengameart.org/content/icy-tower-demon) |
+| Floating Eye, Worm, Plant | Stephen Challener | CC0 | [OpenGameArt](https://opengameart.org/) |
 | RPG GUI Construction Kit | Lamoot | CC-BY 3.0 | [OpenGameArt](https://opengameart.org/content/rpg-gui-construction-kit-v10) |
 
 All assets used under their respective open licenses. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for full attribution including the Claude SEO engine (MIT).

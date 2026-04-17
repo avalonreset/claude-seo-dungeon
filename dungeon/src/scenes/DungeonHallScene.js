@@ -1,6 +1,7 @@
 import { COLORS } from '../utils/colors.js';
 import { HALL_MESSAGES } from '../utils/flavor-text.js';
 import { SFX } from '../utils/sound-manager.js';
+import { pickDemonForIssue, isLegacyDemon, assignAllDemons } from '../demons-manifest.js';
 
 const HEADER_FONT = '"JetBrains Mono", monospace';
 const BODY_FONT = 'monospace';
@@ -11,7 +12,7 @@ const LIST_TOP = 94;
 const LIST_BOTTOM = 518;
 const LIST_VISIBLE = LIST_BOTTOM - LIST_TOP; // 424px
 
-// Demon sprite scales per severity — bigger = scarier
+// Demon sprite scales per severity — bigger = scarier (used for legacy 0x72 demons)
 const SPRITE_SCALES = {
   critical: 2.4,  // 32x36 native → ~86px tall (biggest)
   high: 3.2,      // 16x23 native → ~74px tall
@@ -19,6 +20,20 @@ const SPRITE_SCALES = {
   low: 2.0,       // 16x23 native → ~46px tall
   info: 2.2       // 16x16 native → ~35px tall (smallest)
 };
+
+// Target pixel heights per severity tier for new variable-size sprites.
+// New demons come from many sources with wildly different native sizes
+// (32x32 tiles vs 120x110 mages), so we normalize to these targets.
+const TIER_DISPLAY_HEIGHTS = {
+  critical: 100,
+  high: 82,
+  medium: 68,
+  low: 58,
+  info: 46
+};
+function _tierDisplayHeight(sev) {
+  return TIER_DISPLAY_HEIGHTS[sev] || 60;
+}
 
 /**
  * Dungeon Hall -- RPG encounter screen.
@@ -73,6 +88,15 @@ export class DungeonHallScene extends Phaser.Scene {
     // ---------- Container for scrollable demon list ----------
     this.demonContainer = this.add.container(0, 0);
     this.demonContainer.setMask(geoMask);
+
+    // Batch-assign demons to every issue with anti-clumping:
+    //   - themed match first (prefer unused themed demon)
+    //   - rank walk next (preserves hierarchy, starts at issue's rank)
+    //   - overflow cycle only if the tier is genuinely exhausted
+    // This stamps _demonKey / _demonName on each issue. Both the hall and
+    // the Battle scene read those properties so the same demon shows in
+    // both places.
+    assignAllDemons(data.issues);
 
     // ---------- Reveal demons one by one ----------
     this.revealDemons(data.issues);
@@ -486,9 +510,15 @@ export class DungeonHallScene extends Phaser.Scene {
       ease: 'Sine.easeInOut'
     });
 
-    // Flavor text that cycles through HALL_MESSAGES
-    const randomHall = () => HALL_MESSAGES[Math.floor(Math.random() * HALL_MESSAGES.length)];
-    const instruction = this.add.text(460, 555, randomHall(), {
+    // Flavor text — shuffled bag, organic pacing, varied transitions.
+    // Matches the philosophy used in the Summoning scene: no repetitive
+    // rotation, no mechanical fade — a small motion-graphics system so
+    // players can sit and read the world without seeing the same line.
+    this._hallBag = [];
+    this._hallBaseX = 460;
+    this._hallBaseY = 555;
+    const firstMsg = this._nextHallMessage();
+    const instruction = this.add.text(this._hallBaseX, this._hallBaseY, firstMsg, {
       fontFamily: HEADER_FONT,
       fontSize: '10px',
       color: '#f0c040',
@@ -497,32 +527,9 @@ export class DungeonHallScene extends Phaser.Scene {
       },
       resolution: window.GAME_DPR
     }).setOrigin(0.5).setDepth(101);
-
-    // Cycle flavor text every 4 seconds with fade
-    this.time.addEvent({
-      delay: 4000,
-      loop: true,
-      callback: () => {
-        this.tweens.add({
-          targets: instruction,
-          alpha: 0,
-          duration: 400,
-          onComplete: () => {
-            instruction.setText(randomHall());
-            this.tweens.add({ targets: instruction, alpha: 1, duration: 400 });
-          }
-        });
-      }
-    });
-
-    this.tweens.add({
-      targets: instruction,
-      alpha: 0.35,
-      duration: 2200,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
-    });
+    this._hallInstruction = instruction;
+    // Schedule next cycle with organic delay
+    this._scheduleNextHallMessage(3200 + Math.floor(Math.random() * 1400));
 
     // Scroll hint
     this.add.text(460, 576, '\u25B2 SCROLL TO EXPLORE \u25BC', {
@@ -658,13 +665,41 @@ export class DungeonHallScene extends Phaser.Scene {
     // =========================
     // LAYER 2: DEMON SPRITE
     // =========================
-    const spriteScale = SPRITE_SCALES[issue.severity] || 1.0;
-    const demonAnimKey = `demon_${issue.severity}_idle`;
-    const demon = this.add.sprite(spriteX, centerY, `demon_${issue.severity}_f0`)
-      .setScale(spriteScale).setAlpha(1);
-    if (this.anims.exists(demonAnimKey)) {
-      demon.play(demonAnimKey);
+    // Pick a sprite from the tier pool using the three-pass algorithm:
+    // thematic matching (schema → order demons, performance → elementals,
+    // etc.), tier-rank hierarchy (worst issue = top demon), and
+    // deterministic cycling for overflow.
+    const picked = pickDemonForIssue(issue.severity, issue.id, issue);
+    issue._demonKey = picked.key;          // remember so BattleScene can reuse
+    issue._demonName = picked.name;
+    const baseScale = SPRITE_SCALES[issue.severity] || 1.0;
+    let demon;
+    if (isLegacyDemon(picked)) {
+      // 0x72 4-frame animated spritesheet
+      const demonAnimKey = `demon_${issue.severity}_idle`;
+      demon = this.add.sprite(spriteX, centerY, `demon_${issue.severity}_f0`)
+        .setScale(baseScale).setAlpha(1);
+      if (this.anims.exists(demonAnimKey)) demon.play(demonAnimKey);
+    } else {
+      // New single-frame sprite — add as sprite and apply a subtle
+      // breath/bob for idle animation. Scale to fit a reasonable dungeon
+      // row height regardless of native sprite size.
+      demon = this.add.sprite(spriteX, centerY, picked.key).setAlpha(1);
+      const targetHeight = _tierDisplayHeight(issue.severity);
+      const h = demon.height || targetHeight;
+      const fitScale = Math.min(targetHeight / Math.max(h, 1), 4.5);
+      demon.setScale(fitScale);
+      demon._baseScale = fitScale;
+      // Subtle scale-breath so it doesn't feel static
+      this.tweens.add({
+        targets: demon,
+        scaleX: fitScale * 1.04,
+        scaleY: fitScale * 0.96,
+        duration: 1600 + index * 40,
+        yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+      });
     }
+    // Vertical bob (applies to both legacy and new)
     this.tweens.add({
       targets: demon, y: centerY - 3,
       duration: 1200 + index * 80, yoyo: true, repeat: -1,
@@ -677,6 +712,20 @@ export class DungeonHallScene extends Phaser.Scene {
       duration: 1200 + index * 80, yoyo: true, repeat: -1,
       ease: 'Sine.easeInOut', delay: 600
     });
+
+    // =========================
+    // LAYER 2b: SILHOUETTE + POWER-LEVEL EFFECTS
+    // Undefeated demons are blacked out until the user fights them.
+    // The effect tier escalates with severity: info is pure silhouette,
+    // low/medium add a subtle aura, high adds rising embers, and
+    // critical adds a full intense aura + multi-particle swirl.
+    // =========================
+    const silhouetteLayers = [];
+    const isUndefeated = !issue.defeated && !issue.fixed;
+    if (isUndefeated) {
+      demon.setTint(0x000000);
+      this._applySilhouetteEffects(demon, issue, spriteX, centerY, silhouetteLayers);
+    }
 
     // =========================
     // LAYER 3: SEVERITY BADGE (own line above title)
@@ -854,31 +903,438 @@ export class DungeonHallScene extends Phaser.Scene {
       });
     }
 
-    // Defeated overlay — instant, no delay
+    // =========================
+    // DEFEATED STATE — cinematic, painterly, deterministic-per-demon
+    // =========================
+    // No source art has a death pose, so we compose one: blood-red
+    // drain of the idle sprite, slump-rotation, blood pool seeping
+    // under the body, two or three crimson slash marks forming an X,
+    // a ring of blood spatter, and a small "DEFEATED" stamp in the
+    // corner. For legacy 0x72 4-frame demons we freeze the animation
+    // on a deterministically-picked random frame so every kill shows
+    // the demon in a slightly different pose. All randomness is
+    // seeded from the issue id — stable across renders, varied across
+    // demons. Dimmed row chrome sells "inactive."
+    // =========================
+    let defeatedLayers = null;
     if (issue.defeated) {
-      const defeatOverlay = this.add.graphics();
-      defeatOverlay.fillStyle(0x000000, 0.7);
-      defeatOverlay.fillRoundedRect(rowX, y, rowW, rowH, 6);
-      const defeatText = this.add.text(400, centerY, 'DEFEATED', {
-        fontFamily: HEADER_FONT, fontSize: '14px', color: COLORS.green,
-        shadow: { offsetX: 0, offsetY: 0, color: '#40c040', blur: 14, fill: true, stroke: true },
+      hitArea.disableInteractive();
+
+      // Stop idle motion — dead demons don't breathe or bob
+      this.tweens.killTweensOf(demon);
+      this.tweens.killTweensOf(shadow);
+      demon.setPosition(spriteX, centerY);
+      if (demon._baseScale) demon.setScale(demon._baseScale);
+
+      // Freeze legacy 0x72 animation on a deterministic random frame so
+      // every corpse looks slightly different. DCSS singles have only
+      // one frame; the slump rotation + blood treatment carries the
+      // variety there.
+      const seed = this._defeatedSeed(issue);
+      const H = (salt) => ((Math.abs(Math.floor((seed + salt) * 2654435761)) % 10000) / 10000);
+      if (demon.anims && demon.anims.currentAnim) {
+        const frames = demon.anims.currentAnim.frames;
+        const idx = Math.floor(H(7) * frames.length) % frames.length;
+        demon.anims.stop();
+        const pick = frames[idx] && frames[idx].frame && frames[idx].frame.name;
+        if (pick) demon.setTexture(pick);
+      }
+
+      // Blood drain: deep arterial tint + translucency + slump angle
+      demon.setTint(0x6a0a1a);
+      demon.setAlpha(0.72);
+      const slumpDeg = (H(11) * 10) - 5;           // -5° to +5°
+      demon.setRotation(slumpDeg * Math.PI / 180);
+      shadow.setAlpha(0.12);                        // pool replaces it visually
+
+      // --- Blood pool beneath the body (layered for painterly depth) ---
+      const tierPoolScale = {
+        info: 0.70, low: 0.85, medium: 1.00, high: 1.18, critical: 1.38
+      }[issue.severity] || 1.0;
+      const poolCx = spriteX + (H(17) - 0.5) * 4;
+      const poolCy = centerY + 18;
+      const poolW  = (46 + H(3) * 16) * tierPoolScale;
+      const poolH  = (7 + H(5) * 3)  * tierPoolScale;
+      const bloodPool = this.add.graphics();
+      // Soft outer halo
+      bloodPool.fillStyle(0x3a0510, 0.25);
+      bloodPool.fillEllipse(poolCx, poolCy, poolW + 14, poolH + 4);
+      // Mid pool body
+      bloodPool.fillStyle(0x5a0a15, 0.42);
+      bloodPool.fillEllipse(poolCx + (H(19) - 0.5) * 3, poolCy, poolW, poolH);
+      // Dense inner pool
+      bloodPool.fillStyle(0x2a0208, 0.62);
+      bloodPool.fillEllipse(poolCx + (H(21) - 0.5) * 3, poolCy - 1, poolW * 0.58, poolH * 0.65);
+      // Runoff smear to one side (asymmetric, more organic)
+      const runoffDir = H(22) > 0.5 ? 1 : -1;
+      bloodPool.fillStyle(0x1a0004, 0.72);
+      bloodPool.fillEllipse(poolCx + runoffDir * (4 + H(23) * 12), poolCy + 1, poolW * 0.34, poolH * 0.42);
+      // A few drip droplets extending outward
+      const dripCount = 2 + Math.floor(H(24) * 3);
+      for (let d = 0; d < dripCount; d++) {
+        const dAng = (H(25 + d * 3) * Math.PI) + Math.PI; // below the sprite
+        const dR = poolW * 0.45 + H(26 + d * 3) * poolW * 0.25;
+        const dx = poolCx + Math.cos(dAng) * dR;
+        const dy = poolCy + Math.sin(dAng) * dR * 0.4 + 2;
+        bloodPool.fillStyle(0x3a0510, 0.55);
+        bloodPool.fillCircle(dx, dy, 1.2 + H(27 + d * 3) * 1.8);
+      }
+
+      // --- Slash marks across the body (the killing blows) ---
+      const slashes = this.add.graphics();
+      const sC = spriteX;
+      const sR = centerY;
+      const slashReach = ({
+        info: 20, low: 24, medium: 28, high: 32, critical: 36
+      }[issue.severity] || 28);
+      const drawSlash = (angleDeg, thickness, coreAlpha, core, glow) => {
+        const rad = angleDeg * Math.PI / 180;
+        const dx = Math.cos(rad) * slashReach;
+        const dy = Math.sin(rad) * slashReach;
+        // Wide glow (painterly halo)
+        slashes.lineStyle(thickness + 5, glow, coreAlpha * 0.16);
+        slashes.lineBetween(sC - dx, sR - dy, sC + dx, sR + dy);
+        // Mid
+        slashes.lineStyle(thickness + 2, core, coreAlpha * 0.42);
+        slashes.lineBetween(sC - dx * 0.95, sR - dy * 0.95, sC + dx * 0.95, sR + dy * 0.95);
+        // Core bright stroke — slightly shorter to fake taper at tips
+        slashes.lineStyle(thickness, core, coreAlpha);
+        slashes.lineBetween(sC - dx * 0.86, sR - dy * 0.86, sC + dx * 0.86, sR + dy * 0.86);
+        // Tiny bright hit point at impact center
+        slashes.fillStyle(0xf8283a, coreAlpha * 0.85);
+        slashes.fillCircle(sC + (H(91) - 0.5) * 6, sR + (H(93) - 0.5) * 4, 1.2);
+      };
+
+      // Primary X — two crossing diagonals with slight angle jitter
+      const a1 = -48 + (H(31) - 0.5) * 16;
+      drawSlash(a1, 2, 0.86, 0xd42030, 0xf04050);
+      const a2 =  48 + (H(37) - 0.5) * 16;
+      drawSlash(a2, 2, 0.78, 0xb81828, 0xd84050);
+
+      // Bigger tiers get more cuts (more aggressive death)
+      if (issue.severity === 'medium' || issue.severity === 'high' || issue.severity === 'critical') {
+        const a3 = (H(41) - 0.5) * 40 + (H(43) > 0.5 ? 20 : -20);
+        drawSlash(a3, 1.4, 0.55, 0xe02838, 0xf05060);
+      }
+      if (issue.severity === 'critical') {
+        const a4 = 90 + (H(45) - 0.5) * 20;   // near-vertical parting slash
+        drawSlash(a4, 1.3, 0.48, 0xc82030, 0xe85060);
+      }
+
+      // --- Blood spatter (ring of painterly droplets) ---
+      const spatter = this.add.graphics();
+      const spatterBase = ({ info: 5, low: 7, medium: 9, high: 12, critical: 16 }[issue.severity] || 8);
+      const spatterCount = spatterBase + Math.floor(H(47) * 4);
+      for (let i = 0; i < spatterCount; i++) {
+        const aa = H(51 + i * 7) * Math.PI * 2;
+        const rr = 14 + H(53 + i * 11) * 30;
+        const px = sC + Math.cos(aa) * rr;
+        const py = sR + Math.sin(aa) * rr * 0.72; // flatten vertically
+        const sizeBase = 0.7 + H(59 + i * 13) * 2.4;
+        const darkness = H(61 + i * 17);
+        const color = darkness < 0.3 ? 0x9a0a1c
+                    : darkness < 0.7 ? 0x5a0510
+                                     : 0x2a0208;
+        spatter.fillStyle(color, 0.65 + H(67 + i * 19) * 0.3);
+        spatter.fillCircle(px, py, sizeBase);
+        // Every few dots, add a tiny paired satellite drop for splatter feel
+        if ((i % 3) === 0) {
+          spatter.fillStyle(color, 0.55);
+          spatter.fillCircle(px + (H(69 + i) - 0.5) * 5, py + (H(71 + i) - 0.5) * 4, sizeBase * 0.55);
+        }
+      }
+      // A few elongated smears radiating outward
+      const smearCount = 2 + Math.floor(H(73) * 3);
+      for (let i = 0; i < smearCount; i++) {
+        const aa = H(75 + i * 11) * Math.PI * 2;
+        const rr = 16 + H(79 + i * 13) * 14;
+        const px = sC + Math.cos(aa) * rr;
+        const py = sR + Math.sin(aa) * rr * 0.72;
+        const len = 3 + H(83 + i * 17) * 5;
+        const wid = 1.1 + H(89 + i * 19);
+        spatter.fillStyle(0x6a0a15, 0.55);
+        spatter.fillEllipse(px, py, len, wid);
+      }
+
+      // --- Row chrome: dim to sell "inactive" ---
+      rowBg.clear();
+      rowBg.fillStyle(0x0a0308, 0.82);
+      rowBg.fillRoundedRect(rowX, y, rowW, rowH, 6);
+      rowBorder.clear();
+      rowBorder.lineStyle(1, 0x3a0a10, 0.55);
+      rowBorder.strokeRoundedRect(rowX, y, rowW, rowH, 6);
+
+      // --- Corner DEFEATED stamp ---
+      // Gothic, dim, off-white-red. Sits at bottom-left of the row,
+      // under the badge column — out of the way of category tag.
+      const stampW = 78, stampH = 15;
+      const stampX = textLeftX;                  // bottom-left corner
+      const stampY = y + rowH - stampH - 6;
+      const stampBg = this.add.graphics();
+      stampBg.fillStyle(0x180308, 0.72);
+      stampBg.fillRoundedRect(stampX, stampY, stampW, stampH, 2);
+      stampBg.lineStyle(1, 0x8a1020, 0.85);
+      stampBg.strokeRoundedRect(stampX, stampY, stampW, stampH, 2);
+      // Two tiny crossed hash marks as a stamp icon
+      const stampIcon = this.add.graphics();
+      stampIcon.lineStyle(1.2, 0xd02838, 0.95);
+      stampIcon.lineBetween(stampX + 4,  stampY + 4,  stampX + 10, stampY + 11);
+      stampIcon.lineBetween(stampX + 4,  stampY + 11, stampX + 10, stampY + 4);
+      const stampText = this.add.text(stampX + stampW * 0.5 + 7, stampY + stampH * 0.5, 'DEFEATED', {
+        fontFamily: HEADER_FONT, fontSize: '10px', color: '#e03040',
+        fontStyle: 'bold',
+        shadow: { offsetX: 0, offsetY: 0, color: '#600810', blur: 6, fill: true, stroke: true },
         resolution: window.GAME_DPR
       }).setOrigin(0.5);
-      const line = this.add.graphics();
-      line.lineStyle(1, 0x40c040, 0.4);
-      line.lineBetween(rowX + 20, centerY, rowX + rowW - 20, centerY);
-      this.demonContainer.add([defeatOverlay, defeatText, line]);
-      hitArea.disableInteractive();
+
+      defeatedLayers = { bloodPool, slashes, spatter, stampBg, stampIcon, stampText };
     }
 
     // Add to container — ORDER MATTERS for z-layering:
     // Background layers FIRST (bottom), then all visible content on TOP
-    const children = [rowBg, rowBorder, hitArea, shadow, demon, badgeBg, badge, title];
+    // Silhouette aura layers sit BEHIND the demon sprite so the
+    // blacked-out silhouette reads clearly against them. Silhouette
+    // particles (embers) sit IN FRONT so they rise past the demon.
+    // For defeated demons: blood pool under the demon, slashes and
+    // spatter on top, corner stamp above everything.
+    const auraLayers     = silhouetteLayers.filter(l => l._silhouette === 'aura');
+    const particleLayers = silhouetteLayers.filter(l => l._silhouette === 'particle');
+
+    const children = [rowBg, rowBorder, hitArea, shadow];
+    if (defeatedLayers) {
+      children.push(defeatedLayers.bloodPool);
+      children.push(demon);
+      children.push(defeatedLayers.slashes, defeatedLayers.spatter);
+    } else {
+      children.push(...auraLayers, demon, ...particleLayers);
+    }
+    children.push(badgeBg, badge, title);
     if (desc) children.push(desc);
     children.push(threat);
     if (catBg) children.push(catBg);
     if (cat) children.push(cat);
+    if (defeatedLayers) {
+      children.push(defeatedLayers.stampBg, defeatedLayers.stampIcon, defeatedLayers.stampText);
+    }
     this.demonContainer.add(children);
+  }
+
+  // Deterministic 32-bit seed for per-demon defeated-state variance.
+  // Accepts numeric or string issue ids (or falls back to the title).
+  _defeatedSeed(issue) {
+    if (typeof issue.id === 'number' && Number.isFinite(issue.id)) return Math.abs(issue.id);
+    const s = String(issue.id || issue.title || issue._demonKey || '');
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+    return Math.abs(h);
+  }
+
+  // =====================================================================
+  // HALL FLAVOR TEXT — shuffled bag, variable timing, varied FX
+  // =====================================================================
+  _nextHallMessage() {
+    if (!this._hallBag || this._hallBag.length === 0) {
+      this._hallBag = HALL_MESSAGES.slice();
+      for (let i = this._hallBag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = this._hallBag[i];
+        this._hallBag[i] = this._hallBag[j];
+        this._hallBag[j] = tmp;
+      }
+    }
+    return this._hallBag.pop();
+  }
+
+  _scheduleNextHallMessage(delay) {
+    if (!this._hallInstruction || !this._hallInstruction.active) return;
+    this.time.delayedCall(delay, () => this._cycleHallMessage());
+  }
+
+  _cycleHallMessage() {
+    const t = this._hallInstruction;
+    if (!t || !t.active) return;
+    const effects = ['fade', 'slide-left', 'slide-right', 'rise', 'sink', 'glitch', 'dissolve', 'typewriter'];
+    const entry = effects[Math.floor(Math.random() * effects.length)];
+    const exit  = effects[Math.floor(Math.random() * effects.length)];
+    // Organic hold: mostly 3000-5000ms, occasionally up to 6500ms
+    const hold = 3000 + Math.floor(Math.random() * 2000)
+               + (Math.random() < 0.15 ? Math.floor(Math.random() * 1500) : 0);
+
+    this._hallExit(exit, () => {
+      if (!t.active) return;
+      t.setText(this._nextHallMessage());
+      t.setPosition(this._hallBaseX, this._hallBaseY).setAlpha(0);
+      this._hallEnter(entry, () => {
+        this._scheduleNextHallMessage(hold);
+      });
+    });
+  }
+
+  _hallExit(kind, done) {
+    const t = this._hallInstruction;
+    if (!t || !t.active) { if (done) done(); return; }
+    if (t.alpha <= 0.02) { if (done) done(); return; }
+    const dur = 380 + Math.floor(Math.random() * 300);
+    this.tweens.killTweensOf(t);
+    switch (kind) {
+      case 'slide-left':
+        this.tweens.add({ targets: t, x: this._hallBaseX - 90, alpha: 0, duration: dur, ease: 'Sine.easeIn', onComplete: done });
+        return;
+      case 'slide-right':
+        this.tweens.add({ targets: t, x: this._hallBaseX + 90, alpha: 0, duration: dur, ease: 'Sine.easeIn', onComplete: done });
+        return;
+      case 'rise':
+        this.tweens.add({ targets: t, y: this._hallBaseY - 12, alpha: 0, duration: dur, ease: 'Sine.easeIn', onComplete: done });
+        return;
+      case 'sink':
+        this.tweens.add({ targets: t, y: this._hallBaseY + 10, alpha: 0, duration: dur, ease: 'Sine.easeIn', onComplete: done });
+        return;
+      case 'glitch':
+        this._hallGlitchOut(done);
+        return;
+      case 'dissolve':
+        this._hallDissolveOut(done);
+        return;
+      case 'typewriter':
+        this._hallTypewriterOut(done);
+        return;
+      case 'fade':
+      default:
+        this.tweens.add({ targets: t, alpha: 0, duration: dur, ease: 'Sine.easeIn', onComplete: done });
+        return;
+    }
+  }
+
+  _hallEnter(kind, done) {
+    const t = this._hallInstruction;
+    if (!t || !t.active) { if (done) done(); return; }
+    const dur = 520 + Math.floor(Math.random() * 380);
+    switch (kind) {
+      case 'slide-left':
+        t.setX(this._hallBaseX + 90);
+        this.tweens.add({ targets: t, x: this._hallBaseX, alpha: 1, duration: dur, ease: 'Sine.easeOut', onComplete: done });
+        return;
+      case 'slide-right':
+        t.setX(this._hallBaseX - 90);
+        this.tweens.add({ targets: t, x: this._hallBaseX, alpha: 1, duration: dur, ease: 'Sine.easeOut', onComplete: done });
+        return;
+      case 'rise':
+        t.setY(this._hallBaseY + 12);
+        this.tweens.add({ targets: t, y: this._hallBaseY, alpha: 1, duration: dur, ease: 'Sine.easeOut', onComplete: done });
+        return;
+      case 'sink':
+        t.setY(this._hallBaseY - 10);
+        this.tweens.add({ targets: t, y: this._hallBaseY, alpha: 1, duration: dur, ease: 'Sine.easeOut', onComplete: done });
+        return;
+      case 'glitch':
+        this._hallGlitchIn(done);
+        return;
+      case 'dissolve':
+        this._hallDissolveIn(done);
+        return;
+      case 'typewriter':
+        this._hallTypewriterIn(done);
+        return;
+      case 'fade':
+      default:
+        this.tweens.add({ targets: t, alpha: 1, duration: dur, ease: 'Sine.easeIn', onComplete: done });
+        return;
+    }
+  }
+
+  _hallGlitchIn(done) {
+    const t = this._hallInstruction;
+    if (!t || !t.active) { if (done) done(); return; }
+    const flickers = 5 + Math.floor(Math.random() * 3);
+    let i = 0;
+    const tick = () => {
+      if (!t.active) return;
+      i += 1;
+      t.setAlpha(i % 2 === 0 ? 0.2 + Math.random() * 0.8 : 0);
+      if (i >= flickers) {
+        this.tweens.add({ targets: t, alpha: 1, duration: 260, onComplete: done });
+        return;
+      }
+      this.time.delayedCall(40 + Math.random() * 60, tick);
+    };
+    tick();
+  }
+
+  _hallGlitchOut(done) {
+    const t = this._hallInstruction;
+    if (!t || !t.active) { if (done) done(); return; }
+    const flickers = 4 + Math.floor(Math.random() * 3);
+    let i = 0;
+    const tick = () => {
+      if (!t.active) return;
+      i += 1;
+      t.setAlpha(Math.random() < 0.5 ? 0 : 0.6 + Math.random() * 0.3);
+      if (i >= flickers) {
+        this.tweens.add({ targets: t, alpha: 0, duration: 220, onComplete: done });
+        return;
+      }
+      this.time.delayedCall(35 + Math.random() * 60, tick);
+    };
+    tick();
+  }
+
+  _hallDissolveIn(done) {
+    const t = this._hallInstruction;
+    if (!t || !t.active) { if (done) done(); return; }
+    let a = 0;
+    const tick = () => {
+      if (!t.active) return;
+      a += 0.08 + Math.random() * 0.12;
+      if (a >= 1) { t.setAlpha(1); if (done) done(); return; }
+      t.setAlpha(Math.min(a, 1) * (0.6 + Math.random() * 0.4));
+      this.time.delayedCall(32 + Math.random() * 28, tick);
+    };
+    tick();
+  }
+
+  _hallDissolveOut(done) {
+    const t = this._hallInstruction;
+    if (!t || !t.active) { if (done) done(); return; }
+    let a = t.alpha;
+    const tick = () => {
+      if (!t.active) return;
+      a -= 0.08 + Math.random() * 0.1;
+      if (a <= 0) { t.setAlpha(0); if (done) done(); return; }
+      t.setAlpha(a * (0.5 + Math.random() * 0.5));
+      this.time.delayedCall(28 + Math.random() * 24, tick);
+    };
+    tick();
+  }
+
+  _hallTypewriterIn(done) {
+    const t = this._hallInstruction;
+    if (!t || !t.active) { if (done) done(); return; }
+    const full = t.text;
+    t.setAlpha(1);
+    t.setText('');
+    let i = 0;
+    const step = () => {
+      if (!t.active) return;
+      i += 1;
+      t.setText(full.slice(0, i));
+      if (i >= full.length) { if (done) done(); return; }
+      this.time.delayedCall(16 + Math.random() * 16, step);
+    };
+    step();
+  }
+
+  _hallTypewriterOut(done) {
+    const t = this._hallInstruction;
+    if (!t || !t.active) { if (done) done(); return; }
+    let cur = t.text;
+    const step = () => {
+      if (!t.active) return;
+      if (cur.length === 0) { if (done) done(); return; }
+      cur = cur.slice(0, -1);
+      t.setText(cur);
+      this.time.delayedCall(12 + Math.random() * 12, step);
+    };
+    step();
   }
 
   // =====================================================================
@@ -952,6 +1408,112 @@ export class DungeonHallScene extends Phaser.Scene {
     };
     btnBg.on('pointerdown', doReturn);
     btnText.on('pointerdown', doReturn);
+  }
+
+  // =====================================================================
+  // SILHOUETTE + POWER-LEVEL EFFECTS
+  // Undefeated demons are blacked out. Each severity tier gets an
+  // escalating treatment: nothing for info, a faint aura for low, a
+  // pulsing aura for medium, rising embers + aura for high, and a full
+  // swirling aura + embers for critical. Each tier has 3 variants keyed
+  // off the issue id so the same demon always looks the same on refresh
+  // but different demons in the same tier differ.
+  // =====================================================================
+  _applySilhouetteEffects(demon, issue, x, y, layerSink) {
+    const tier = issue.severity || 'medium';
+    const variant = this._silhouetteVariant(issue);
+
+    // Color palettes per tier × variant (tasteful, not candy)
+    const palette = {
+      info:     [0x1a0a20, 0x200a1a, 0x101020],                        // barely there
+      low:      [0x3a1a40, 0x40202a, 0x2a1a3a],                        // dim purple-red
+      medium:   [0x5a1a20, 0x3a1a4a, 0x4a2a1a],                        // red / purple / ember
+      high:     [0x7a1a20, 0x5a2060, 0x7a4020],                        // strong red / violet / amber
+      critical: [0xa01a20, 0x7a20a0, 0xb04020],                        // crimson / royal / volcanic
+    }[tier];
+    const auraColor = palette[variant];
+
+    // Aura strength per tier
+    const auraSize   = { info: 0,    low: 30, medium: 40, high: 52, critical: 68 }[tier];
+    const auraAlpha  = { info: 0,    low: 0.14, medium: 0.20, high: 0.26, critical: 0.34 }[tier];
+    const emberCount = { info: 0,    low: 0,    medium: 1,   high: 2,    critical: 4    }[tier];
+    const pulseDur   = { info: 1600, low: 1400, medium: 1200, high: 1000, critical: 900 }[tier];
+
+    // Aura layer (goes behind the demon). Skip entirely for info — pure
+    // black silhouette is enough at that tier.
+    if (auraSize > 0) {
+      const aura = this.add.circle(x, y, auraSize, auraColor, auraAlpha);
+      aura.setBlendMode(Phaser.BlendModes.ADD);
+      aura._silhouette = 'aura';
+      this.tweens.add({
+        targets: aura,
+        scale: { from: 0.85, to: 1.15 },
+        alpha: { from: auraAlpha * 0.55, to: auraAlpha },
+        duration: pulseDur + variant * 140,
+        yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+        delay: variant * 200,
+      });
+      layerSink.push(aura);
+
+      // Critical gets a second, larger, slower aura halo for extra presence
+      if (tier === 'critical') {
+        const halo = this.add.circle(x, y, auraSize + 24, auraColor, auraAlpha * 0.45);
+        halo.setBlendMode(Phaser.BlendModes.ADD);
+        halo._silhouette = 'aura';
+        this.tweens.add({
+          targets: halo,
+          scale: { from: 0.9, to: 1.25 },
+          alpha: { from: auraAlpha * 0.2, to: auraAlpha * 0.5 },
+          duration: 1600,
+          yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+          delay: 400,
+        });
+        layerSink.push(halo);
+      }
+    }
+
+    // Rising ember particles (sits in front of the demon, drifts upward)
+    for (let i = 0; i < emberCount; i++) {
+      this._spawnSilhouetteEmber(x, y, auraColor, i, emberCount, layerSink);
+    }
+  }
+
+  _silhouetteVariant(issue) {
+    const id = Number(issue.id) || 0;
+    return Math.abs(id * 2654435761) % 3;
+  }
+
+  _spawnSilhouetteEmber(x, y, color, index, total, layerSink) {
+    const spread = 18;
+    const startX = x + (Math.random() - 0.5) * spread;
+    const startY = y + 14 + (Math.random() - 0.5) * 4;
+    const size = 1.2 + Math.random() * 0.9;
+    const ember = this.add.circle(startX, startY, size, color, 0.85);
+    ember.setBlendMode(Phaser.BlendModes.ADD);
+    ember._silhouette = 'particle';
+    layerSink.push(ember);
+
+    const rise = () => {
+      if (!ember.active) return;
+      const driftX = startX + (Math.random() - 0.5) * 14;
+      const riseY  = startY - (24 + Math.random() * 22);
+      const dur    = 1800 + Math.random() * 900;
+      ember.setPosition(startX, startY);
+      ember.setAlpha(0.85);
+      ember.setScale(1);
+      this.tweens.add({
+        targets: ember,
+        x: driftX,
+        y: riseY,
+        alpha: 0,
+        scale: 0.5,
+        duration: dur,
+        delay: (index / Math.max(total, 1)) * 400 + Math.random() * 200,
+        ease: 'Sine.easeOut',
+        onComplete: rise,
+      });
+    };
+    rise();
   }
 
   // =====================================================================

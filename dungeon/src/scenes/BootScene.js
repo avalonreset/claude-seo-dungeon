@@ -1,4 +1,5 @@
 import { PixelArt } from '../sprites/PixelArt.js';
+import { getAllNewDemons } from '../demons-manifest.js';
 
 /**
  * Boot scene — generates pixel art, then goes straight to Summoning.
@@ -37,6 +38,12 @@ export class BootScene extends Phaser.Scene {
       }
     }
     this.game._demonAnimConfig = demonTypes;
+
+    // Load every new demon sprite (single-frame, idle animation is
+    // provided at render time via Phaser tween — see DungeonHall / Battle).
+    for (const demon of getAllNewDemons()) {
+      this.load.image(demon.key, demon.path);
+    }
 
     // Remove old character textures if this is a re-entry (character swap from Gate).
     // Phaser caches textures by key — without removal, load() silently skips the new files

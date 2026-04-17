@@ -115,3 +115,6 @@ indexnow-submit.sh
 
 # Generated site builds
 site/
+
+# Internal asset research / demon sourcing staging (v1.9.0 roster work)
+preview-candidates/

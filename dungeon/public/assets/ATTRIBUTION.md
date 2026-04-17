@@ -33,6 +33,14 @@ This project uses open-source game assets. All assets are used in compliance wit
 - **Author**: luizmelo
 - **Usage**: Knight character sprite animations
 
+## Expanded Demon Roster (v1.9.0)
+
+### Dungeon Crawl Stone Soup — individual demon, undead, dragon, and unique tiles
+- **Source**: https://github.com/crawl/crawl/tree/master/crawl-ref/source/rltiles/mon
+- **License**: CC0 / Public Domain
+- **Usage**: 24 individual character sprites spanning all severity tiers. Idle animation provided at render time via engine-driven tween (breath pulse + bob) so each demon appears alive.
+- **Specific tiles in use**: crimson_imp, shadow_imp, lemure, red_devil, wyvern, ghoul, curse_skull, curse_toe, executioner, shadow_demon, bone_dragon, reaper, lich, hell_sentinel, ice_fiend, balrug, brimstone_fiend, ancient_lich, fire_dragon, shadow_dragon, Asmodeus, Cerebov, Dispater, Ereshkigal.
+
 ---
 
 *Note: Verify all licenses at their source URLs before redistribution. CC0 assets require no attribution but are credited here as a courtesy. CC-BY assets require attribution as shown above.*

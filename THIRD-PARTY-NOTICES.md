@@ -28,14 +28,26 @@ Original copyright: Copyright (c) 2026 AgriciDaniel.
 | Vite | MIT | https://github.com/vitejs/vite |
 | Playwright | Apache-2.0 | https://github.com/microsoft/playwright |
 
-## Art Assets
+## Art Assets — Hero Sprites
 
 | Asset | License | Author |
 |-------|---------|--------|
 | Medieval Warrior Pack | Free for personal and commercial use | [LuizMelo](https://luizmelo.itch.io/) |
 | Martial Hero Pack (Samurai) | Free for personal and commercial use | [LuizMelo](https://luizmelo.itch.io/) |
 | Warrior Pack 2 (Knight) | Free for personal and commercial use | [LuizMelo](https://luizmelo.itch.io/) |
+
+## Art Assets — UI
+
+| Asset | License | Author |
+|-------|---------|--------|
 | RPG GUI Construction Kit | CC-BY 3.0 | [Lamoot](https://opengameart.org/users/lamoot) |
-| Dungeon Crawl Stone Soup tiles | CC0 1.0 | [DCSS contributors](https://github.com/crawl/crawl) |
+| Golden UI | CC0 | [Buch](https://opengameart.org/users/buch) |
+
+## Art Assets — Demons and Monsters
+
+| Asset | License | Source |
+|-------|---------|--------|
+| DungeonTileset II (0x72 characters — goblin, chort, orc_warrior, orc_shaman, big_demon, and more) | CC0 | [0x72 on itch.io](https://0x72.itch.io/dungeontileset-ii) |
+| Dungeon Crawl Stone Soup individual monster tiles (imps: crimson_imp, shadow_imp, lemure; devils: red_devil; demons: executioner, shadow_demon; fiends: balrug, brimstone_fiend, ice_fiend, hell_sentinel; reapers and liches: reaper, lich, ancient_lich; undead: ghoul, curse_skull, curse_toe, bone_dragon; dragons: wyvern, fire_dragon, shadow_dragon; demon lords: Asmodeus, Cerebov, Dispater, Ereshkigal) | CC0 | [DCSS on GitHub](https://github.com/crawl/crawl) |
 
 See [dungeon/public/assets/ATTRIBUTION.md](dungeon/public/assets/ATTRIBUTION.md) for full asset attribution details.
