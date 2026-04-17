@@ -902,12 +902,10 @@ export class DungeonHallScene extends Phaser.Scene {
       this.tweens.killTweensOf(demon);
       this.tweens.killTweensOf(shadow);
       demon.setPosition(spriteX, centerY);
-      if (demon._baseScale) demon.setScale(demon._baseScale);
 
-      // Freeze legacy 0x72 animation on a deterministic random frame so
-      // every corpse looks slightly different. DCSS singles have only
-      // one frame; the slump rotation + blood treatment carries the
-      // variety there.
+      // Freeze the 0x72 idle animation on a deterministic random frame
+      // so every corpse looks slightly different. The slump rotation +
+      // blood treatment carries the rest of the variety.
       const seed = this._defeatedSeed(issue);
       const H = (salt) => ((Math.abs(Math.floor((seed + salt) * 2654435761)) % 10000) / 10000);
       if (demon.anims && demon.anims.currentAnim) {

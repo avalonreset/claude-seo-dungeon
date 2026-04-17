@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-04-17
+
+### Game experience — second pass (April 17)
+
+- **13-demon animated roster** (replacing the 24-demon DCSS static experiment). Every demon is a 0x72 DungeonTileset II character with a real 4-frame idle animation, tier-ranked:
+  - *Critical:* The Archdemon, The Ogre
+  - *High:* Orc Warrior, Risen Colossus, Skeleton Warrior
+  - *Medium:* Chort, Masked Orc, Pumpkin Fiend
+  - *Low:* Orc Shaman, Imp, Wogol
+  - *Info:* Goblin, Tiny Zombie
+- **NEAREST pixel filter** applied to every demon frame (previously only the original 5 severities were crisp; new-tier demons were falling back to LINEAR and rendering soft).
+- **Themed assignment engine**: SEO category → demon archetype mapping (schema → enforcers, broken links → skeletons, performance → imps, stale content → zombies, etc.) plus tier-rank hierarchy so the worst issue always faces the top demon.
+- **Cinematic silhouette state** for undefeated demons: blacked-out silhouette with tier-escalating aura (critical gets full aura + embers + halo).
+- **Cinematic defeated state**: blood-red drain tint, slump rotation, layered blood pool with drip droplets, 2–4 painterly killing-blow slashes, blood spatter ring, corner `DEFEATED` stamp. Corpses freeze on a deterministic random idle frame so every one looks slightly different.
+- **Final victory sequence — "The Hall Is Still"**: 4-phase Dark-Souls-inspired finale when every demon is defeated. Veil dimming, title type-in, parchment-style stat ledger (demon counts per tier + XP + active quest time), name awarded by total XP (*Trespasser / Warden / Cleanser / Undying*), and two choices: `SEEK ANOTHER` (back to splash for a new audit) or `REMAIN` (walk among the dead).
+- **Visibility-aware quest timer**: `TIME IN THE DARK` only counts time the tab was visible. Alt-Tab, minimize, lid-close — none of it pads the total.
+- **Battle prompts anchored to the selected demon**: server builds a structured `DEMON FILE` focus header with every available field (severity, category, URL, file, selector, line, id, description). Claude reads user intent naturally — polite directives ("can you fix this?") work as fixes, questions get answered without triggering edits, ambiguous messages get a clarifying question instead of a guess.
+- **Neutral out-of-battle chat**: `bridge.chat()` / server `chat` type for when you're not fighting a demon — pure pass-through to `claude -p` with your selected model and project dir, zero framing.
+- **Expanded gothic flavor text**: ~700 descent lines, ~260 hall lines, single-line hacker ticker with chunked type-in (5–6× faster) and three width-preserving exit variants (fade-drift, dissolve, wipe) instead of reverse-typing oscillation.
+- **Internal QA harness** (`dungeon/tests/run-tests.mjs`): 232 assertions covering manifest logic, battle prompt shape, asset reachability, bridge routing, and Playwright headless smoke.
+
 ## [1.9.0] - 2026-04-16
 
 ### Added
