@@ -122,27 +122,38 @@ export class GateScene extends Phaser.Scene {
       }
     }
 
-    // Animation cycle: idle → (maybe flip) → idle hold → flourish → idle → repeat
+    // Animation cycle: idle -> (maybe flip) -> idle hold -> flourish -> idle -> repeat.
+    // When _idleCyclePaused is true (user is engaging a card), the cycle
+    // stops touching facing/flourishes so it can't override a deliberate
+    // user-directed turn toward Continue Quest (left) or New Quest (right).
     let lastAnim = '';
-    let busy = false;
+    this._idleCyclePaused = false;
 
     const runCycle = () => {
       if (!this.knight || !this.knight.active) return;
+      if (this._idleCyclePaused) {
+        // User is hovering or clicking something - don't touch facing.
+        // Re-check periodically in case they lose interest.
+        this.time.delayedCall(500, runCycle);
+        return;
+      }
       if (Math.random() > 0.5) {
         this.knight.setFlipX(!this.knight.flipX);
       }
       const idleHold = 1000 + Math.random() * 1000;
       this.time.delayedCall(idleHold, () => {
         if (!this.knight || !this.knight.active) return;
+        if (this._idleCyclePaused) {
+          this.time.delayedCall(500, runCycle);
+          return;
+        }
         let pick;
         do {
           pick = flourishAnims[Math.floor(Math.random() * flourishAnims.length)];
         } while (pick === lastAnim && flourishAnims.length > 1);
         lastAnim = pick;
-        busy = true;
         this.knight.play(pick);
         this.knight.once('animationcomplete', () => {
-          busy = false;
           if (!this.knight || !this.knight.active) return;
           this.knight.play('char_idle_anim');
           const restDelay = 3000 + Math.random() * 3000;
@@ -407,15 +418,28 @@ export class GateScene extends Phaser.Scene {
 
     // ── Click handlers ──
 
-    // Hover sounds on all interactive cards
+    // Hover sounds on all interactive cards, plus character-facing preview:
+    // when the user hovers left card -> knight faces left, right card ->
+    // right. Pauses the random idle flip so the preview sticks. Works for
+    // warrior/samurai/knight identically - all LuizMelo sprites face right
+    // natively, so setFlipX(true) = face left regardless of class.
     overlay.querySelectorAll('.gate-card').forEach(card => {
       card.addEventListener('mouseenter', () => SFX.play('menuHover'));
     });
+    overlay.querySelectorAll('[data-action="resume"]').forEach(card => {
+      card.addEventListener('mouseenter', () => this._faceKnight('left'));
+      card.addEventListener('mouseleave', () => { this._idleCyclePaused = false; });
+    });
+    overlay.querySelectorAll('[data-action="rerun"]').forEach(card => {
+      card.addEventListener('mouseenter', () => this._faceKnight('right'));
+      card.addEventListener('mouseleave', () => { this._idleCyclePaused = false; });
+    });
 
-    // Resume (continue cached quest)
+    // Resume (continue cached quest) - knight faces LEFT toward the card
     overlay.querySelectorAll('[data-action="resume"]').forEach(card => {
       card.addEventListener('click', () => {
         SFX.play('menuConfirm');
+        this._faceKnight('left');
         this.game.auditData = this.cachedRun.auditData;
         SFX.play('doorOpen');
         SFX.play('sceneTransition');
@@ -428,10 +452,11 @@ export class GateScene extends Phaser.Scene {
       });
     });
 
-    // Re-run (wipe cache, run fresh)
+    // Re-run (wipe cache, run fresh) - knight faces RIGHT toward the card
     overlay.querySelectorAll('[data-action="rerun"]').forEach(card => {
       card.addEventListener('click', () => {
         SFX.play('menuConfirm');
+        this._faceKnight('right');
         try { localStorage.removeItem(`seo_dungeon_audit_${this.domain}_${this.selectedModel.key}`); } catch (_) {}
         SFX.play('sceneTransition');
         this._transitionOut(() => {
@@ -503,8 +528,27 @@ export class GateScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Point the knight sprite at a given direction. Pauses the random
+   * idle-flip cycle so the deliberate turn stays put until the cycle
+   * is resumed (mouseleave) or the scene transitions away. Works for
+   * warrior / samurai / knight - every LuizMelo class ships facing
+   * right natively, so setFlipX(true) is always "face left."
+   *
+   * @param {'left' | 'right'} direction
+   */
+  _faceKnight(direction) {
+    if (!this.knight || !this.knight.active) return;
+    this._idleCyclePaused = true;
+    if (direction === 'left') this.knight.setFlipX(true);
+    else if (direction === 'right') this.knight.setFlipX(false);
+  }
+
   _transitionOut(callback) {
     if (!this._overlayEl) { callback(); return; }
+    // Make sure the random idle cycle can't override the deliberate
+    // facing set by the card click during the slash animation.
+    this._idleCyclePaused = true;
 
     // Stagger-fade all cards and interactive elements
     const cards = this._overlayEl.querySelectorAll('.gate-card, .gate-return, .gate-title, .gate-domain, .gate-center-spacer');
