@@ -112,7 +112,7 @@ export class TitleScene extends Phaser.Scene {
     // Domain input
     const domainInput = document.createElement('input');
     domainInput.type = 'text';
-    domainInput.value = 'claude-github.com';
+    domainInput.value = 'seodungeon.com';
     domainInput.placeholder = 'example.com';
     domainInput.autocomplete = 'off';
     Object.assign(domainInput.style, {
@@ -132,7 +132,7 @@ export class TitleScene extends Phaser.Scene {
     // Path input
     const pathInput = document.createElement('input');
     pathInput.type = 'text';
-    pathInput.value = '';
+    pathInput.value = 'E:\\SEO-Dungeon';
     pathInput.placeholder = '/path/to/your/project';
     pathInput.autocomplete = 'off';
     Object.assign(pathInput.style, {

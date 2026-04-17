@@ -111,7 +111,7 @@ export class BridgeClient {
 
   _ensureOpen() {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error('Bridge server is not connected. Start it with: npm run server');
+      throw new Error('Bridge server is not connected. Start it with: npm start');
     }
   }
 
