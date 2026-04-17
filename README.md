@@ -50,10 +50,10 @@ Most SEO audit tools hand you a spreadsheet and wish you luck. Claude SEO Dungeo
 3. **Descend into the dungeon.** Claude SEO runs a full audit with up to 17 parallel subagents, discovering issues as dungeon demons.
 4. **Explore the Dungeon Hall.** Browse discovered SEO issues sorted by severity. Critical issues are deadly bosses. Info-level issues are goblins.
 5. **Battle demons.** Turn-based combat with four actions:
-   - **Attack** - Deal damage based on the issue's fixability
-   - **Vanquish** - Channel Claude to generate and commit a real code fix to your project
-   - **Defend** - Reduce incoming damage for a turn
-   - **Flee** - Skip this demon and move to the next
+   - **Attack** - Prompt Claude directly with what you want it to do about this issue. Claude streams its work into the Guild Ledger on the right and can edit your project files.
+   - **Vanquish** - Declare the demon slain. You decide when the issue has been handled enough to mark it defeated in your catalog.
+   - **Defend** - Strike a defensive stance. Mostly for flavor.
+   - **Flee** - Skip this demon and return to the dungeon. You can come back and fight it later.
 6. **Collect loot.** Earn XP and rewards for every demon slain.
 
 When you choose **Vanquish**, Claude reads your actual project files, generates a fix, and commits it to git. The Guild Ledger on the right side of the screen shows everything Claude is doing in real time, including which tools it's calling, which files it's reading, and what changes it's making.

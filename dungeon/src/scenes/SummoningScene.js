@@ -959,6 +959,8 @@ export class SummoningScene extends Phaser.Scene {
       this.messageText.setColor('#60d060');
       this.streamText.setText('No SEO issues detected.');
       this.demonCounter.setText('');
+      // Show a "Return to Guild" button so the user isn't stranded
+      this._showEmptyDungeonReturn();
       return;
     }
 
@@ -996,6 +998,30 @@ export class SummoningScene extends Phaser.Scene {
         this.scene.start('DungeonHall');
       });
     });
+  }
+
+  /**
+   * Show a Return-to-Guild button when the audit finds zero issues,
+   * so the user isn't stuck on the Summoning screen.
+   */
+  _showEmptyDungeonReturn() {
+    const W = 800, H = 600;
+    const btnY = H - 120;
+    const btnBg = this.add.rectangle(W / 2, btnY, 260, 44, 0x1a1a2e, 0.95).setDepth(200);
+    btnBg.setStrokeStyle(2, 0xd4af37);
+    const btnText = this.add.text(W / 2, btnY, 'Return to Guild', {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '13px',
+      color: '#d4af37',
+      resolution: window.GAME_DPR
+    }).setOrigin(0.5).setDepth(201);
+    btnBg.setInteractive({ useHandCursor: true });
+    btnText.setInteractive({ useHandCursor: true });
+    const goBack = () => {
+      if (typeof window.returnToTitle === 'function') window.returnToTitle();
+    };
+    btnBg.on('pointerdown', goBack);
+    btnText.on('pointerdown', goBack);
   }
 
   /**

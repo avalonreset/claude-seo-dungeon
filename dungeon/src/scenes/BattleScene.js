@@ -15,8 +15,11 @@ export class BattleScene extends Phaser.Scene {
 
   init(data) {
     this.issue = data.issue;
-    this.demonHp = data.issue.hp;
-    this.demonMaxHp = data.issue.hp;
+    // Defensive: guard against zero/missing HP so HP-bar math doesn't NaN.
+    const hp = Number(data.issue && data.issue.hp);
+    const safeHp = Number.isFinite(hp) && hp > 0 ? hp : 50;
+    this.demonHp = safeHp;
+    this.demonMaxHp = safeHp;
     this.knightHp = 100;
     this.isPlayerTurn = true;
     this.battleOver = false;

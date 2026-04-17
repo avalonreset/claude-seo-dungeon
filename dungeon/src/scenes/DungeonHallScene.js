@@ -80,6 +80,13 @@ export class DungeonHallScene extends Phaser.Scene {
     // ---------- FOOTER AREA (fixed) ----------
     this.drawFooter();
 
+    // ---------- DUNGEON CLEARED overlay (all demons defeated) ----------
+    const issues = Array.isArray(data.issues) ? data.issues : [];
+    const remaining = issues.filter(i => !i.defeated && !i.fixed).length;
+    if (issues.length > 0 && remaining === 0) {
+      this.time.delayedCall(400, () => this._showDungeonClearedOverlay());
+    }
+
     // ---------- MOMENTUM SCROLLING ----------
     this.scrollOffset = 0;
     this.targetScrollOffset = 0;
@@ -424,7 +431,10 @@ export class DungeonHallScene extends Phaser.Scene {
       fontFamily: HEADER_FONT, fontSize: '10px', color: '#606080', resolution: window.GAME_DPR
     }).setOrigin(0.5, 0).setDepth(101);
 
-    this.add.text(640, 68, `${data.totalIssues} AWAIT`, {
+    const awaitCount = Array.isArray(data.issues)
+      ? data.issues.filter(i => !i.defeated && !i.fixed).length
+      : (data.totalIssues || 0);
+    this.add.text(640, 68, `${awaitCount} AWAIT`, {
       fontFamily: HEADER_FONT,
       fontSize: '14px',
       color: '#e04040',
@@ -869,6 +879,79 @@ export class DungeonHallScene extends Phaser.Scene {
     if (catBg) children.push(catBg);
     if (cat) children.push(cat);
     this.demonContainer.add(children);
+  }
+
+  // =====================================================================
+  // DUNGEON CLEARED OVERLAY (shown when all demons defeated)
+  // =====================================================================
+  _showDungeonClearedOverlay() {
+    const W = 800, H = 600;
+    const cx = W / 2;
+
+    // Darken backdrop
+    const backdrop = this.add.rectangle(cx, H / 2, W, H, 0x000000, 0).setDepth(500);
+    this.tweens.add({ targets: backdrop, alpha: 0.7, duration: 500 });
+
+    // Hero text: DUNGEON CLEARED
+    const heroShadow = this.add.text(cx + 2, 200, '\u2605  DUNGEON CLEARED  \u2605', {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '24px',
+      color: '#000000', resolution: window.GAME_DPR
+    }).setOrigin(0.5).setAlpha(0).setDepth(501).setScale(2);
+    const hero = this.add.text(cx, 198, '\u2605  DUNGEON CLEARED  \u2605', {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '24px',
+      color: '#d4af37', resolution: window.GAME_DPR
+    }).setOrigin(0.5).setAlpha(0).setDepth(502).setScale(2);
+
+    this.tweens.add({
+      targets: [heroShadow, hero], alpha: 1, scale: 1,
+      duration: 700, delay: 200, ease: 'Back.easeOut'
+    });
+
+    // Subtitle
+    const sub = this.add.text(cx, 240, 'Every demon has been vanquished.', {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '13px',
+      color: '#e0c080', resolution: window.GAME_DPR
+    }).setOrigin(0.5).setAlpha(0).setDepth(502);
+    this.tweens.add({ targets: sub, alpha: 1, duration: 500, delay: 900 });
+
+    const sub2 = this.add.text(cx, 262, 'Your codebase is cleansed.', {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '13px',
+      color: '#e0c080', resolution: window.GAME_DPR
+    }).setOrigin(0.5).setAlpha(0).setDepth(502);
+    this.tweens.add({ targets: sub2, alpha: 1, duration: 500, delay: 1200 });
+
+    // Return button
+    const btnY = 360;
+    const btnGlow = this.add.rectangle(cx, btnY, 310, 48, 0xd4af37, 0.15).setDepth(503).setAlpha(0);
+    const btnBg = this.add.rectangle(cx, btnY, 300, 44, 0x1a1a2e, 0.95).setDepth(504).setAlpha(0);
+    btnBg.setStrokeStyle(2, 0xd4af37);
+    const btnText = this.add.text(cx, btnY, 'Return to the Surface', {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '13px',
+      color: '#d4af37', resolution: window.GAME_DPR
+    }).setOrigin(0.5).setAlpha(0).setDepth(505);
+
+    this.tweens.add({
+      targets: [btnGlow, btnBg, btnText], alpha: 1,
+      duration: 500, delay: 1600
+    });
+
+    // Gentle pulse
+    this.tweens.add({
+      targets: [btnBg, btnGlow], scaleX: 1.04, scaleY: 1.08,
+      duration: 900, delay: 2100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+    });
+
+    btnBg.setInteractive({ useHandCursor: true });
+    btnText.setInteractive({ useHandCursor: true });
+    const doReturn = () => {
+      SFX.play('menuConfirm');
+      this.cameras.main.fadeOut(800, 0, 0, 0);
+      this.time.delayedCall(800, () => {
+        if (typeof window.returnToTitle === 'function') window.returnToTitle();
+      });
+    };
+    btnBg.on('pointerdown', doReturn);
+    btnText.on('pointerdown', doReturn);
   }
 
   // =====================================================================

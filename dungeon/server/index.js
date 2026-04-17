@@ -723,10 +723,18 @@ function runClaude(prompt, onStream, cwd, requestId, model) {
     });
 
     proc.on('error', (err) => {
-      reject(new Error(`Failed to spawn claude: ${err.message}`));
+      reject(new Error(`Failed to spawn claude: ${err.message}. Is Claude Code installed? See https://docs.anthropic.com/en/docs/claude-code`));
     });
 
-    // No timeout — user can cancel manually via the abandon scroll
+    // Wall-clock safety timeout (15 minutes) to prevent infinite hangs
+    // if Claude CLI stalls silently. User can still cancel sooner via the
+    // abandon scroll. 15 min is generous for the longest full-site audit.
+    const MAX_RUNTIME_MS = 15 * 60 * 1000;
+    const timeoutHandle = setTimeout(() => {
+      try { proc.kill('SIGTERM'); } catch (e) {}
+      reject(new Error('Operation timed out after 15 minutes. Try again or use a faster model (Knight/Haiku).'));
+    }, MAX_RUNTIME_MS);
+    proc.on('close', () => clearTimeout(timeoutHandle));
   });
 }
 
