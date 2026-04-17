@@ -434,7 +434,7 @@ export class BattleScene extends Phaser.Scene {
     kPanel.lineStyle(2, 0x40c0c0, 0.6);
     kPanel.strokeRoundedRect(kp.x, kp.y, kp.w, kp.h, 5);
 
-    const charNames = { 'claude-opus-4-6': 'SEO WARRIOR', 'claude-sonnet-4-6': 'SEO SAMURAI', 'claude-haiku-4-5-20251001': 'SEO KNIGHT' };
+    const charNames = { 'opus': 'SEO WARRIOR', 'sonnet': 'SEO SAMURAI', 'haiku': 'SEO KNIGHT' };
     const charName = charNames[this.game.characterConfig?.model] || 'SEO WARRIOR';
     this.charName = charName;
     this.add.text(kp.x + 10, kp.y + 6, charName, {

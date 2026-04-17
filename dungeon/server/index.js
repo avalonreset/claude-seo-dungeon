@@ -12,7 +12,11 @@ const PORT = 3001;
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 
 // ── Security: Allowed models, message types, and rate limits ──
-const ALLOWED_MODELS = ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001', 'claude-opus-4-6'];
+// Short aliases let Claude Code resolve to whatever version the user's CLI
+// supports. If Anthropic ships a new Opus/Sonnet/Haiku, users automatically
+// get it when they update Claude Code. Users with older CLIs get the best
+// version their CLI knows about instead of a hard "unknown model" error.
+const ALLOWED_MODELS = ['opus', 'sonnet', 'haiku'];
 const ALLOWED_TYPES = ['audit', 'fix', 'commit', 'narrate', 'cancel', 'interactive_start', 'interactive_send', 'interactive_stop'];
 const MAX_CONCURRENT_PROCESSES = 5;
 const MAX_MESSAGES_PER_MINUTE = 30;
@@ -77,8 +81,8 @@ function sanitizeDomain(input) {
  * Validate model name against allowlist.
  */
 function validateModel(model) {
-  if (!model) return 'claude-sonnet-4-6';
-  return ALLOWED_MODELS.includes(model) ? model : 'claude-sonnet-4-6';
+  if (!model) return 'sonnet';
+  return ALLOWED_MODELS.includes(model) ? model : 'sonnet';
 }
 
 /**
@@ -194,7 +198,7 @@ wss.on('connection', (ws) => {
     const fixCwd = validatedPath;
 
     console.log(`Command #${id} [${type}]: ${command || '(no command)'}`);
-    if (validModel !== 'claude-sonnet-4-6') console.log(`  Model: ${validModel}`);
+    if (validModel !== 'sonnet') console.log(`  Model: ${validModel}`);
     if (validatedPath !== PROJECT_ROOT) console.log(`  Project: ${validatedPath}`);
 
     // Interactive session — persistent CLI
@@ -280,7 +284,7 @@ wss.on('connection', (ws) => {
       } else if (type === 'narrate') {
         const result = await runClaude(command, (chunk) => {
           safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
-        }, undefined, id, 'claude-haiku-4-5-20251001');
+        }, undefined, id, 'haiku');
         activeProcesses.delete(id);
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
         console.log(`Narration done`);
@@ -294,7 +298,7 @@ wss.on('connection', (ws) => {
   // ── Persistent Interactive Claude Session ──────────────
   function spawnInteractive(cwd, model) {
     const { execPath: cliExec, args: cliArgs } = resolveClaudeCli();
-    const modelName = model || 'claude-sonnet-4-6';
+    const modelName = model || 'sonnet';
     console.log(`  Spawning interactive session (model: ${modelName}, cwd: ${cwd})`);
     const proc = spawn(cliExec, [...cliArgs, '--model', modelName, '--output-format', 'stream-json', '--verbose'], {
       cwd: cwd,
@@ -608,7 +612,7 @@ function runClaude(prompt, onStream, cwd, requestId, model) {
   const workDir = cwd || PROJECT_ROOT;
   return new Promise((resolve, reject) => {
     const { execPath: cliExec, args: cliArgs } = resolveClaudeCli();
-    const modelName = model || 'claude-sonnet-4-6';
+    const modelName = model || 'sonnet';
     console.log(`  Running with stream-json (model: ${modelName})`);
     console.log(`  CWD: ${workDir}`);
     const proc = spawn(cliExec, [...cliArgs, '-p', prompt, '--model', modelName, '--output-format', 'stream-json', '--verbose'], {

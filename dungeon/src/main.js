@@ -510,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startWatchdog();
 
     const projectPath = document.getElementById('path-input')?.value?.trim() || '.';
-    const model = window.selectedCharacter?.model || 'claude-sonnet-4-6';
+    const model = window.selectedCharacter?.model || 'sonnet';
 
     (async () => {
       try {

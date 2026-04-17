@@ -7,7 +7,7 @@ import { SFX } from './utils/sound-manager.js';
 export const CHARACTERS = {
   warrior: {
     name: 'warrior',
-    model: 'claude-opus-4-6',
+    model: 'opus',
     idlePath: 'assets/luizmelo/warrior/sprites/Idle.png',
     runPath: 'assets/luizmelo/warrior/sprites/Run.png',
     attackPath: 'assets/luizmelo/warrior/sprites/Attack1.png',
@@ -27,7 +27,7 @@ export const CHARACTERS = {
   },
   samurai: {
     name: 'samurai',
-    model: 'claude-sonnet-4-6',
+    model: 'sonnet',
     idlePath: 'assets/luizmelo/samurai/sprites/Idle.png',
     runPath: 'assets/luizmelo/samurai/sprites/Run.png',
     attackPath: 'assets/luizmelo/samurai/sprites/Attack1.png',
@@ -45,7 +45,7 @@ export const CHARACTERS = {
   },
   knight: {
     name: 'knight',
-    model: 'claude-haiku-4-5-20251001',
+    model: 'haiku',
     idlePath: 'assets/luizmelo/warrior-pack-2/player1/Idle.png',
     runPath: 'assets/luizmelo/warrior-pack-2/player1/Run.png',
     attackPath: 'assets/luizmelo/warrior-pack-2/player1/Attack2.png',

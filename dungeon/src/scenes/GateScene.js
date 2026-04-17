@@ -44,13 +44,13 @@ export class GateScene extends Phaser.Scene {
     this.events.once('shutdown', () => { if (sfxEl) sfxEl.style.display = 'none'; });
 
     // Only check cache for the SELECTED character/model
-    const currentModel = this.game.characterConfig?.model || 'claude-sonnet-4-6';
+    const currentModel = this.game.characterConfig?.model || 'sonnet';
     const MODELS = {
-      'claude-opus-4-6':          { key: 'claude-opus-4-6', label: 'Opus', color: '#d4af37', charName: 'Warrior' },
-      'claude-sonnet-4-6':        { key: 'claude-sonnet-4-6', label: 'Sonnet', color: '#88bbff', charName: 'Samurai' },
-      'claude-haiku-4-5-20251001':{ key: 'claude-haiku-4-5-20251001', label: 'Haiku', color: '#66ddaa', charName: 'Knight' }
+      'opus':   { key: 'opus',   label: 'Opus',   color: '#d4af37', charName: 'Warrior' },
+      'sonnet': { key: 'sonnet', label: 'Sonnet', color: '#88bbff', charName: 'Samurai' },
+      'haiku':  { key: 'haiku',  label: 'Haiku',  color: '#66ddaa', charName: 'Knight' }
     };
-    this.selectedModel = MODELS[currentModel] || MODELS['claude-sonnet-4-6'];
+    this.selectedModel = MODELS[currentModel] || MODELS['sonnet'];
 
     // Check cache for selected model
     this.cachedRun = null;
