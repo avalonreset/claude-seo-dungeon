@@ -1625,12 +1625,42 @@ export class BattleScene extends Phaser.Scene {
 
       await this.slashAnimation();
 
-      // 4. Deal damage and show results (clamp so only VANQUISH can kill)
+      // 4. Deal damage. Rules:
+      //    - Every attack lands visible damage (min 1 HP). Fixes the bug
+      //      where Math.floor rounded small demons' damage to zero.
+      //    - Damage scales to max HP so a 100-HP boss and a 15-HP mook
+      //      both feel like they're taking real hits.
+      //    - HP has a HARD FLOOR at 15% of max (or 1, whichever is
+      //      higher). Only VANQUISH can actually kill the demon.
+      //    - If Claude actually edited files (fixData.fixed=true), the
+      //      hit is stronger than a diagnostic question.
+      //    - If the demon is at/near the floor, a flavor line prompts
+      //      the player to VANQUISH.
       const fixData = result.data || result;
-      const rawDamage = Math.floor(this.demonMaxHp * 0.05);
-      const maxAllowed = this.demonHp - 1;
-      const damage = Math.min(rawDamage, Math.max(0, maxAllowed));
-      if (damage > 0) this.dealDamage(damage);
+      const baseDamage = Math.max(1, Math.round(this.demonMaxHp * (0.12 + Math.random() * 0.06)));
+      const effectiveDamage = fixData?.fixed ? Math.ceil(baseDamage * 1.25) : baseDamage;
+      const floor = Math.max(1, Math.ceil(this.demonMaxHp * 0.15));
+      const damage = Math.min(effectiveDamage, Math.max(0, this.demonHp - floor));
+      if (damage > 0) {
+        this.dealDamage(damage);
+      } else if (this.demonHp <= floor) {
+        // Demon is at the floor; let the player know only VANQUISH finishes it
+        this.time.delayedCall(400, () => {
+          if (this.game.addLog) this.game.addLog('The wound will not kill. VANQUISH to end it.');
+        });
+      }
+
+      // Regeneration check: if the demon is bleeding out (<=30% HP), it
+      // has a chance to steel itself and claw back some HP. Keeps the
+      // fight tense without ever actually killing the player's progress.
+      const regenThreshold = Math.ceil(this.demonMaxHp * 0.30);
+      if (this.demonHp > 0 && this.demonHp <= regenThreshold && Math.random() < 0.40) {
+        const regenAmount = Math.max(1, Math.ceil(this.demonMaxHp * (0.12 + Math.random() * 0.08)));
+        const regen = Math.min(regenAmount, this.demonMaxHp - this.demonHp);
+        if (regen > 0) {
+          this.time.delayedCall(700, () => this.regenerateDemon(regen));
+        }
+      }
 
       const summary = (fixData && fixData.fixed)
         ? (fixData.summary || 'Claude made changes.')
@@ -1900,6 +1930,69 @@ Summary: ${fallbackSummary}`;
 
     // Hit particles
     this.createHitParticles(620, this.demon.y, 0xff4040);
+  }
+
+  /**
+   * Demon steels itself against its wounds and claws back HP. Fires
+   * probabilistically when the demon drops below 30% HP so the player
+   * feels the fight push back without ever being forced to kill it
+   * before they're ready.
+   */
+  regenerateDemon(amount) {
+    if (amount <= 0) return;
+    const before = this.demonHp;
+    this.demonHp = Math.min(this.demonMaxHp, this.demonHp + amount);
+    const actual = this.demonHp - before;
+    if (actual <= 0) return;
+    SFX.play('summoningPulse');
+    const pct = this.demonHp / this.demonMaxHp;
+
+    // Reverse bar animation - HP fills back up
+    this.tweens.addCounter({
+      from: before / this.demonMaxHp,
+      to: pct,
+      duration: 700,
+      ease: 'Power2',
+      onUpdate: (tween) => this.drawDemonHpBar(tween.getValue()),
+    });
+
+    // Green regen number float
+    const regenText = this.add.text(620, 200, `+${actual}`, {
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: '20px', color: '#60e060',
+      stroke: '#000000', strokeThickness: 4,
+      resolution: window.GAME_DPR,
+    }).setOrigin(0.5).setScale(0.3);
+    this.tweens.add({
+      targets: regenText, scaleX: 1.3, scaleY: 1.3, duration: 140, ease: 'Back.easeOut',
+      onComplete: () => this.tweens.add({
+        targets: regenText, y: 140, scaleX: 1.0, scaleY: 1.0, alpha: 0,
+        duration: 900, ease: 'Power1', onComplete: () => regenText.destroy(),
+      }),
+    });
+
+    // Brief green pulse on the demon sprite
+    this.demon.setTint(0x40c060);
+    this.time.delayedCall(220, () => {
+      this.demon.setTint(0x60d080);
+      this.time.delayedCall(160, () => this.demon.clearTint());
+    });
+
+    this.demonHpText.setText(`${this.demonHp}/${this.demonMaxHp}`);
+
+    // Gothic flavor line in the battle log so the player sees it
+    const demonName = this.issue._demonName || this.issue.title || 'demon';
+    const flavors = [
+      `The ${demonName} steels itself against the wound.`,
+      `The ${demonName} gathers its strength. The bleeding slows.`,
+      `The ${demonName} refuses to fall. Its wounds close.`,
+      `The ${demonName} draws breath from the dark. +${actual} HP.`,
+      `Something holds the ${demonName} upright. +${actual} HP.`,
+      `The ${demonName} is not yet ready to die.`,
+    ];
+    const line = flavors[Math.floor(Math.random() * flavors.length)];
+    this.appendLog(line);
+    if (this.game.addLog) this.game.addLog(`${demonName} regenerates ${actual} HP.`);
   }
 
   // ═══════════════════════════════════════════════════
