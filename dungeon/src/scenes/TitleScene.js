@@ -132,7 +132,7 @@ export class TitleScene extends Phaser.Scene {
     // Path input
     const pathInput = document.createElement('input');
     pathInput.type = 'text';
-    pathInput.value = 'E:\\SEO-Dungeon';
+    pathInput.value = 'D:\\seo dungeon';
     pathInput.placeholder = '/path/to/your/project';
     pathInput.autocomplete = 'off';
     Object.assign(pathInput.style, {
