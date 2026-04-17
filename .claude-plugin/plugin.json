@@ -3,12 +3,12 @@
   "version": "1.9.0",
   "description": "Comprehensive SEO analysis skill for Claude Code with gamified dungeon crawler UI. 20 core sub-skills covering technical SEO, content quality (E-E-A-T), schema markup, image optimization, sitemap architecture, AI search optimization (GEO), local SEO, maps intelligence, semantic topic clustering, search experience optimization (SXO), SEO drift monitoring, e-commerce SEO, international SEO with cultural profiles, and strategic planning across all industries.",
   "author": {
-    "name": "avalonreset-pro",
-    "url": "https://github.com/avalonreset-pro"
+    "name": "Avalon Reset",
+    "url": "https://github.com/avalonreset"
   },
-  "license": "Proprietary",
-  "homepage": "https://github.com/avalonreset-pro/claude-seo-dungeon",
-  "repository": "https://github.com/avalonreset-pro/claude-seo-dungeon",
+  "license": "MIT",
+  "homepage": "https://github.com/avalonreset/claude-seo-dungeon",
+  "repository": "https://github.com/avalonreset/claude-seo-dungeon",
   "keywords": [
     "seo",
     "technical-seo",

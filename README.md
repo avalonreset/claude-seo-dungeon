@@ -6,8 +6,8 @@
 
 Most SEO audit tools hand you a spreadsheet and wish you luck. Claude SEO Dungeon turns every issue into a demon you can fight, and every fix into a real commit to your codebase. Built on **Claude SEO v1.9.0** with 23 AI-powered skills, 17 parallel subagents, and a 16-bit dungeon crawler interface that makes SEO audits something you actually want to do.
 
-[![CI](https://github.com/avalonreset-pro/claude-seo-dungeon/actions/workflows/ci.yml/badge.svg)](https://github.com/avalonreset-pro/claude-seo-dungeon/actions/workflows/ci.yml)
-[![License: Proprietary](https://img.shields.io/badge/license-proprietary-red)](LICENSE)
+[![CI](https://github.com/avalonreset/claude-seo-dungeon/actions/workflows/ci.yml/badge.svg)](https://github.com/avalonreset/claude-seo-dungeon/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.9.0-blue)](CHANGELOG.md)
 [![Claude SEO](https://img.shields.io/badge/Claude%20SEO-v1.9.0-green)](skills/seo/SKILL.md)
 [![Built with Phaser](https://img.shields.io/badge/built%20with-Phaser%203-orange)](https://phaser.io/)
@@ -164,7 +164,7 @@ The full [Claude SEO v1.9.0](https://github.com/AgriciDaniel/claude-seo) engine 
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/avalonreset-pro/claude-seo-dungeon.git
+git clone https://github.com/avalonreset/claude-seo-dungeon.git
 cd claude-seo-dungeon
 ```
 
@@ -364,6 +364,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
 ## License
 
-[Proprietary](LICENSE) - Copyright (c) 2026 Avalon Reset. All rights reserved.
+[MIT](LICENSE) — Copyright (c) 2026 Avalon Reset
 
 SEO engine based on [Claude SEO](https://github.com/AgriciDaniel/claude-seo) by Daniel Agrici (MIT).

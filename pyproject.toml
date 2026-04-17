@@ -3,9 +3,9 @@ name = "claude-seo-dungeon"
 version = "1.9.0"
 description = "Gamified 16-bit dungeon crawler that turns SEO audits into boss battles (SEO engine v1.9.0)"
 requires-python = ">=3.10"
-license = "Proprietary"
+license = "MIT"
 readme = "README.md"
 
 [project.urls]
-Homepage = "https://github.com/avalonreset-pro/claude-seo-dungeon"
-Repository = "https://github.com/avalonreset-pro/claude-seo-dungeon"
+Homepage = "https://github.com/avalonreset/claude-seo-dungeon"
+Repository = "https://github.com/avalonreset/claude-seo-dungeon"

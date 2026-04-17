@@ -172,9 +172,9 @@ Based on [Claude SEO v1.9.0](https://github.com/AgriciDaniel/claude-seo) by Dani
 
 ## Ecosystem
 
-Part of the avalonreset-pro tool suite:
-- [Claude SEO Dungeon](https://github.com/avalonreset-pro/claude-seo-dungeon) - this project
-- [Claude GitHub](https://github.com/avalonreset-pro/claude-github) - GitHub repo optimization
-- [Codex SEO](https://github.com/avalonreset-pro/codex-seo) - SEO tools for Codex CLI
+Part of the avalonreset tool suite:
+- [Claude SEO Dungeon](https://github.com/avalonreset/claude-seo-dungeon) - this project
+- [Claude GitHub](https://github.com/avalonreset/claude-github) - GitHub repo optimization
+- [Gemini SEO](https://github.com/avalonreset/gemini-seo) - SEO tools for Gemini CLI
 
 Upstream SEO engine: [Claude SEO](https://github.com/AgriciDaniel/claude-seo) by Daniel Agrici

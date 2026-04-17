@@ -4,7 +4,7 @@ Thanks for your interest in contributing! Here's how to get involved.
 
 ## Reporting Bugs
 
-Open a [GitHub Issue](https://github.com/avalonreset-pro/claude-seo-dungeon/issues) with:
+Open a [GitHub Issue](https://github.com/avalonreset/claude-seo-dungeon/issues) with:
 
 - Your OS and Node.js version
 - The full error output (copy from terminal)
@@ -13,7 +13,7 @@ Open a [GitHub Issue](https://github.com/avalonreset-pro/claude-seo-dungeon/issu
 
 ## Suggesting Features
 
-Use [GitHub Discussions](https://github.com/avalonreset-pro/claude-seo-dungeon/discussions) for feature ideas and questions.
+Use [GitHub Discussions](https://github.com/avalonreset/claude-seo-dungeon/discussions) for feature ideas and questions.
 
 ## Pull Requests
 
