@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.9.0] - 2026-04-17
 
+### Game experience - late-day polish (April 17)
+
+- **Gate scene: knight turns toward the selected card.** Hovering Continue Quest (left) or New Quest (right) now swings the knight to face that direction; clicking locks the facing and the slash animation fires in that direction. Fixes the old random-cycle bug where the slash often pointed away from the card just picked. Works for all three character classes.
+- **Linkify the Guild Ledger.** URLs become clickable blue anchors (open in new tab). Backticked paths/commands become green copy-to-clipboard spans with a toast confirmation. Tokenizer uses DOM nodes (no innerHTML/XSS surface). `window.addLog` exposed for console-based debugging.
+- **Demon damage actually lands.** Old bug: `Math.floor(demonMaxHP * 0.05)` rounded to 0 for any demon under 20 HP. New formula: 12-18% of max HP with minimum 1, stronger hit when Claude actually edited files (fixData.fixed = true), hard floor at 15% so only VANQUISH kills. When HP drops below 30%, 40% chance of regen per attack with gothic flavor line ("The Archdemon steels itself against the wound.").
+- **Palette refresh: black content surfaces, blue interactive surfaces.** Narrator box, top issue description, Guild Ledger, Dungeon Hall rows, Victory panel, Gate cards, Title shell all moved from navy-tinted (`#08081a / 0x0a0a24`) to near-black (`#060608`). ATTACK / VANQUISH / DEFEND / FLEE menu + both HP panels + form inputs stay blue as interactive chrome. Gold borders on content, blue borders on interactive.
+- **Remember last domain + project path.** On successful descend, `seo_dungeon_last_domain` + `seo_dungeon_last_path` are written to localStorage. Next launch restores them. First-time users still see the HTML defaults (`seodungeon.com` / `D:\seodungeon`).
+- **PWA metadata** (icon.svg, manifest.webmanifest, apple-touch-icon, theme-color) so the game can be installed as a web app.
+
+### Incidents resolved
+
+- **Binary corruption from em-dash cleanup.** A `sed` run over `git ls-files` matched the UTF-8 em-dash byte sequence (`E2 80 94`) inside compressed image data in 471 binary files, deleting 1-6 bytes from each and corrupting every PNG/WebP. Restored all 418 still-tracked binaries from the pre-corruption commit. Added explicit `binary` rules to `.gitattributes` for every image/font/archive/media extension so it can't happen again. Pruned 6083 unused asset files (14 MB DCSS tileset + unused LuizMelo packs + DCSS fallback monsters).
+
 ### Game experience - second pass (April 17)
 
 - **13-demon animated roster** (replacing the 24-demon DCSS static experiment). Every demon is a 0x72 DungeonTileset II character with a real 4-frame idle animation, tier-ranked:
