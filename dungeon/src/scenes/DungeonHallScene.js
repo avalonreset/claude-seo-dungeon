@@ -93,9 +93,14 @@ export class DungeonHallScene extends Phaser.Scene {
 
     // ---------- Quest timer ----------
     // First entry into the hall stamps the start. Persists on this.game
-    // so re-entries after battles don't reset it. A new audit (via the
-    // title screen) clears it in SummoningScene.
-    if (!this.game._questStartMs) this.game._questStartMs = Date.now();
+    // so re-entries after battles don't reset it. A new audit clears it
+    // in SummoningScene. Timer is visibility-aware: it pauses when the
+    // tab is hidden and resumes on focus (wired in main.js).
+    if (!this.game._questStartMs) {
+      this.game._questStartMs = Date.now();
+      this.game._questActiveMs = 0;
+      this.game._questVisibleSince = document.visibilityState === 'visible' ? Date.now() : null;
+    }
 
     // ---------- DUNGEON CLEARED overlay (all demons defeated) ----------
     const issues = Array.isArray(data.issues) ? data.issues : [];
@@ -1339,9 +1344,13 @@ export class DungeonHallScene extends Phaser.Scene {
     }
     const total = defeated.length;
 
-    // Quest time in mm:ss. Empty if timer never stamped.
-    const startMs = this.game._questStartMs || Date.now();
-    const elapsed = Math.max(0, Date.now() - startMs);
+    // Quest time in mm:ss — visibility-aware accumulation. Excludes any
+    // wall-clock time where the tab was hidden (Alt-Tab, minimize, etc.).
+    let activeMs = this.game._questActiveMs || 0;
+    if (this.game._questVisibleSince) {
+      activeMs += Math.max(0, Date.now() - this.game._questVisibleSince);
+    }
+    const elapsed = activeMs;
     const mm = Math.floor(elapsed / 60000);
     const ss = Math.floor((elapsed % 60000) / 1000);
     const timeStr = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
@@ -1494,6 +1503,8 @@ export class DungeonHallScene extends Phaser.Scene {
       SFX.play('menuConfirm');
       // Clear quest persistence so the new audit starts fresh
       this.game._questStartMs = null;
+      this.game._questActiveMs = 0;
+      this.game._questVisibleSince = null;
       this.cameras.main.fadeOut(900, 0, 0, 0);
       this.time.delayedCall(900, () => {
         if (typeof window.returnToTitle === 'function') window.returnToTitle();
@@ -1571,6 +1582,8 @@ export class DungeonHallScene extends Phaser.Scene {
     link.on('pointerdown', () => {
       SFX.play('menuConfirm');
       this.game._questStartMs = null;
+      this.game._questActiveMs = 0;
+      this.game._questVisibleSince = null;
       this.cameras.main.fadeOut(700, 0, 0, 0);
       this.time.delayedCall(700, () => {
         if (typeof window.returnToTitle === 'function') window.returnToTitle();

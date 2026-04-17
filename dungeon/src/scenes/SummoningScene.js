@@ -1358,9 +1358,12 @@ export class SummoningScene extends Phaser.Scene {
     this.auditRunning = true;
     this.aborted = false;
 
-    // Fresh quest — reset the end-of-quest timer. DungeonHall stamps
-    // the real start when the player first enters the hall.
+    // Fresh quest — wipe the end-of-quest timer state. DungeonHall
+    // stamps the real start when the player first enters the hall;
+    // main.js's visibilitychange listener handles pause/resume.
     this.game._questStartMs = null;
+    this.game._questActiveMs = 0;
+    this.game._questVisibleSince = null;
 
     // Three-phase progress model calibrated from real audits:
     //

@@ -233,6 +233,26 @@ function launchGame(domain, projectPath) {
   game.hideLoading = hideLoadingIndicator;
 }
 
+// ── Quest timer: visibility-aware pause/resume ─────────────
+// When the user Alt-Tabs, minimizes, closes the lid, or switches tabs,
+// we stop counting toward "TIME IN THE DARK" on the final ledger.
+// Resumes as soon as the tab is visible again. One listener, lives as
+// long as the page. DungeonHall stamps the start; Summoning resets on
+// a new audit; the final victory sequence reads the accumulated total.
+document.addEventListener('visibilitychange', () => {
+  if (!game || game._questStartMs == null) return;
+  if (document.visibilityState === 'hidden') {
+    // Bank the visible session so far
+    if (game._questVisibleSince) {
+      game._questActiveMs = (game._questActiveMs || 0) + (Date.now() - game._questVisibleSince);
+      game._questVisibleSince = null;
+    }
+  } else if (document.visibilityState === 'visible') {
+    // Start a new visible session
+    game._questVisibleSince = Date.now();
+  }
+});
+
 // ── Title Screen Events ────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // Init animated systems
