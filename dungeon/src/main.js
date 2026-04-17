@@ -313,6 +313,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('descend-btn');
   const errorArea = document.getElementById('validation-errors');
 
+  // Remember the last domain + project folder the user descended with,
+  // so they don't have to retype them every launch. Keys are namespaced
+  // so they don't collide with the audit cache.
+  const LS_DOMAIN_KEY = 'seo_dungeon_last_domain';
+  const LS_PATH_KEY = 'seo_dungeon_last_path';
+  try {
+    const savedDomain = localStorage.getItem(LS_DOMAIN_KEY);
+    const savedPath = localStorage.getItem(LS_PATH_KEY);
+    if (savedDomain && savedDomain.trim()) domainInput.value = savedDomain;
+    if (savedPath && savedPath.trim()) pathInput.value = savedPath;
+  } catch (_) { /* localStorage blocked or unavailable - use HTML defaults */ }
+
   // ── Validation helpers ──────────────────────
   function cleanDomain(raw) {
     let d = raw.trim();
@@ -410,6 +422,11 @@ document.addEventListener('DOMContentLoaded', () => {
     SFX.play('menuConfirm');
     const domain = cleanDomain(domainInput.value);
     const path = pathInput.value.trim();
+    // Persist the successful inputs so next launch restores them.
+    try {
+      localStorage.setItem(LS_DOMAIN_KEY, domain);
+      localStorage.setItem(LS_PATH_KEY, path);
+    } catch (_) { /* ignore quota or disabled storage */ }
     _sealTransition(() => launchGame(domain, path));
   };
 
