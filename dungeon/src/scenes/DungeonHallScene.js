@@ -91,11 +91,17 @@ export class DungeonHallScene extends Phaser.Scene {
     // ---------- FOOTER AREA (fixed) ----------
     this.drawFooter();
 
+    // ---------- Quest timer ----------
+    // First entry into the hall stamps the start. Persists on this.game
+    // so re-entries after battles don't reset it. A new audit (via the
+    // title screen) clears it in SummoningScene.
+    if (!this.game._questStartMs) this.game._questStartMs = Date.now();
+
     // ---------- DUNGEON CLEARED overlay (all demons defeated) ----------
     const issues = Array.isArray(data.issues) ? data.issues : [];
     const remaining = issues.filter(i => !i.defeated && !i.fixed).length;
     if (issues.length > 0 && remaining === 0) {
-      this.time.delayedCall(400, () => this._showDungeonClearedOverlay());
+      this.time.delayedCall(400, () => this._showDungeonClearedOverlay(issues));
     }
 
     // ---------- MOMENTUM SCROLLING ----------
@@ -1307,74 +1313,269 @@ export class DungeonHallScene extends Phaser.Scene {
   // =====================================================================
   // DUNGEON CLEARED OVERLAY (shown when all demons defeated)
   // =====================================================================
-  _showDungeonClearedOverlay() {
+  // =====================================================================
+  //  THE HALL GROWS STILL — final victory sequence
+  //  Four phases: dim, reckon, tally, choose. Dark, restrained, terse.
+  //  No gold confetti, no "YOU WIN", no triumph. You endured, and the
+  //  thirteen are still.
+  // =====================================================================
+  _showDungeonClearedOverlay(allIssues) {
     const W = 800, H = 600;
     const cx = W / 2;
 
-    // Darken backdrop
+    // Freeze scroll so nothing moves while the sequence plays
+    this.scrollVelocity = 0;
+    this.targetScrollOffset = this.scrollOffset;
+
+    // ------------------------------------------------------------------
+    // Gather the spoils of the quest
+    // ------------------------------------------------------------------
+    const defeated = allIssues.filter(i => i.defeated || i.fixed);
+    const tierCount = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
+    let totalXP = 0;
+    for (const iss of defeated) {
+      tierCount[iss.severity] = (tierCount[iss.severity] || 0) + 1;
+      totalXP += (Number(iss.hp) || 0) * 10;
+    }
+    const total = defeated.length;
+
+    // Quest time in mm:ss. Empty if timer never stamped.
+    const startMs = this.game._questStartMs || Date.now();
+    const elapsed = Math.max(0, Date.now() - startMs);
+    const mm = Math.floor(elapsed / 60000);
+    const ss = Math.floor((elapsed % 60000) / 1000);
+    const timeStr = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+
+    // Name awarded — terse, gothic, scaled by total XP (not demon count)
+    const name = totalXP >= 3000 ? 'THE UNDYING'
+               : totalXP >= 1500 ? 'THE CLEANSER'
+               : totalXP >=  500 ? 'THE WARDEN'
+                                 : 'THE TRESPASSER';
+
+    // ------------------------------------------------------------------
+    // PHASE 1 — the hall grows still (1.5s)
+    // A slow veil drops over the hall. The corpses remain visible beneath
+    // but washed of colour. No text yet.
+    // ------------------------------------------------------------------
     const backdrop = this.add.rectangle(cx, H / 2, W, H, 0x000000, 0).setDepth(500);
-    this.tweens.add({ targets: backdrop, alpha: 0.7, duration: 500 });
+    this.tweens.add({ targets: backdrop, alpha: 0.78, duration: 1400, ease: 'Sine.easeIn' });
+    SFX.play('doorOpen');
 
-    // Hero text: DUNGEON CLEARED
-    const heroShadow = this.add.text(cx + 2, 200, '\u2605  DUNGEON CLEARED  \u2605', {
-      fontFamily: '"JetBrains Mono", monospace', fontSize: '24px',
-      color: '#000000', resolution: window.GAME_DPR
-    }).setOrigin(0.5).setAlpha(0).setDepth(501).setScale(2);
-    const hero = this.add.text(cx, 198, '\u2605  DUNGEON CLEARED  \u2605', {
-      fontFamily: '"JetBrains Mono", monospace', fontSize: '24px',
-      color: '#d4af37', resolution: window.GAME_DPR
-    }).setOrigin(0.5).setAlpha(0).setDepth(502).setScale(2);
+    // A single long drone beat — use summoningPulse to fake a bell
+    this.time.delayedCall(400, () => SFX.play('summoningPulse'));
+    this.time.delayedCall(1400, () => SFX.play('summoningPulse'));
 
-    this.tweens.add({
-      targets: [heroShadow, hero], alpha: 1, scale: 1,
-      duration: 700, delay: 200, ease: 'Back.easeOut'
-    });
+    // Golden dust motes drifting up from the base of the screen — very
+    // sparse, very slow. Not celebration — aftermath.
+    for (let i = 0; i < 22; i++) {
+      this.time.delayedCall(200 + i * 80, () => {
+        const mx = 60 + Math.random() * (W - 120);
+        const my = H - 20 + Math.random() * 10;
+        const mote = this.add.circle(mx, my, 1 + Math.random() * 1.5, 0xc8a050, 0.55).setDepth(501);
+        this.tweens.add({
+          targets: mote,
+          y: my - (80 + Math.random() * 260),
+          x: mx + (Math.random() - 0.5) * 30,
+          alpha: 0,
+          duration: 4200 + Math.random() * 2000,
+          ease: 'Sine.easeOut',
+          onComplete: () => mote.destroy(),
+        });
+      });
+    }
 
-    // Subtitle
-    const sub = this.add.text(cx, 240, 'Every demon has been vanquished.', {
-      fontFamily: '"JetBrains Mono", monospace', fontSize: '13px',
-      color: '#e0c080', resolution: window.GAME_DPR
+    // ------------------------------------------------------------------
+    // PHASE 2 — the reckoning (title + subtitle, 2.5s window)
+    // Type-in title, no Back.easeOut scale-punch. Just fades, held.
+    // ------------------------------------------------------------------
+    const titleY = 150;
+    const titleText = 'THE HALL IS STILL';
+    const title = this.add.text(cx, titleY, '', {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '22px',
+      color: '#d4c8b8', letterSpacing: 4,
+      shadow: { offsetX: 0, offsetY: 0, color: '#3a1a10', blur: 14, fill: true },
+      resolution: window.GAME_DPR,
     }).setOrigin(0.5).setAlpha(0).setDepth(502);
-    this.tweens.add({ targets: sub, alpha: 1, duration: 500, delay: 900 });
 
-    const sub2 = this.add.text(cx, 262, 'Your codebase is cleansed.', {
-      fontFamily: '"JetBrains Mono", monospace', fontSize: '13px',
-      color: '#e0c080', resolution: window.GAME_DPR
+    this.time.delayedCall(1200, () => {
+      title.setAlpha(1);
+      let i = 0;
+      const step = () => {
+        if (!title.active) return;
+        i += 1;
+        title.setText(titleText.slice(0, i));
+        if (i < titleText.length) this.time.delayedCall(55, step);
+      };
+      step();
+    });
+
+    const sub = this.add.text(cx, titleY + 34, '', {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '12px',
+      color: '#8a7060', letterSpacing: 2,
+      resolution: window.GAME_DPR,
     }).setOrigin(0.5).setAlpha(0).setDepth(502);
-    this.tweens.add({ targets: sub2, alpha: 1, duration: 500, delay: 1200 });
-
-    // Return button
-    const btnY = 360;
-    const btnGlow = this.add.rectangle(cx, btnY, 310, 48, 0xd4af37, 0.15).setDepth(503).setAlpha(0);
-    const btnBg = this.add.rectangle(cx, btnY, 300, 44, 0x1a1a2e, 0.95).setDepth(504).setAlpha(0);
-    btnBg.setStrokeStyle(2, 0xd4af37);
-    const btnText = this.add.text(cx, btnY, 'Return to the Surface', {
-      fontFamily: '"JetBrains Mono", monospace', fontSize: '13px',
-      color: '#d4af37', resolution: window.GAME_DPR
-    }).setOrigin(0.5).setAlpha(0).setDepth(505);
-
-    this.tweens.add({
-      targets: [btnGlow, btnBg, btnText], alpha: 1,
-      duration: 500, delay: 1600
+    this.time.delayedCall(2600, () => {
+      sub.setText(`Thirteen shapes undone.   Breath, ended.`);
+      this.tweens.add({ targets: sub, alpha: 1, duration: 700 });
     });
 
-    // Gentle pulse
-    this.tweens.add({
-      targets: [btnBg, btnGlow], scaleX: 1.04, scaleY: 1.08,
-      duration: 900, delay: 2100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+    // ------------------------------------------------------------------
+    // PHASE 3 — the chronicle (stat tally, ~4s in)
+    // Parchment-style ledger. Right-aligned values with dot leaders.
+    // ------------------------------------------------------------------
+    const ledgerY = 240;
+    const ledgerLines = [
+      ['DEMONS PUT DOWN',   String(total)],
+      ['  CRITICAL',        String(tierCount.critical || 0)],
+      ['  HIGH',            String(tierCount.high || 0)],
+      ['  MEDIUM',          String(tierCount.medium || 0)],
+      ['  LOW',             String(tierCount.low || 0)],
+      ['  INFO',            String(tierCount.info || 0)],
+      ['',                  ''],  // spacer
+      ['EXPERIENCE',        String(totalXP)],
+      ['TIME IN THE DARK',  timeStr],
+    ];
+    const makeLedgerLine = (label, value, y, delay) => {
+      if (!label && !value) return null;
+      const dots = '.'.repeat(Math.max(3, 44 - label.length - value.length));
+      const line = this.add.text(cx, y, `${label} ${dots} ${value}`, {
+        fontFamily: '"JetBrains Mono", monospace', fontSize: '12px',
+        color: '#b8a890', letterSpacing: 1,
+        resolution: window.GAME_DPR,
+      }).setOrigin(0.5).setAlpha(0).setDepth(502);
+      this.tweens.add({ targets: line, alpha: 1, duration: 420, delay });
+      return line;
+    };
+    const ledgerDelay = 3800;
+    ledgerLines.forEach((l, idx) => {
+      makeLedgerLine(l[0], l[1], ledgerY + idx * 18, ledgerDelay + idx * 120);
     });
 
-    btnBg.setInteractive({ useHandCursor: true });
-    btnText.setInteractive({ useHandCursor: true });
-    const doReturn = () => {
+    // The name awarded — separate, emphasized. Blood-red label, pale name.
+    const nameLabelY = ledgerY + ledgerLines.length * 18 + 24;
+    const nameLabel = this.add.text(cx, nameLabelY, 'WHAT YOU ARE CALLED NOW', {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '10px',
+      color: '#8a4050', letterSpacing: 3,
+      resolution: window.GAME_DPR,
+    }).setOrigin(0.5).setAlpha(0).setDepth(502);
+    const nameValue = this.add.text(cx, nameLabelY + 22, name, {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '18px',
+      color: '#d4c8b8', fontStyle: 'bold', letterSpacing: 4,
+      shadow: { offsetX: 0, offsetY: 0, color: '#5a1020', blur: 10, fill: true },
+      resolution: window.GAME_DPR,
+    }).setOrigin(0.5).setAlpha(0).setDepth(502);
+    const nameDelay = ledgerDelay + ledgerLines.length * 120 + 300;
+    this.tweens.add({ targets: nameLabel, alpha: 1, duration: 600, delay: nameDelay });
+    this.tweens.add({ targets: nameValue, alpha: 1, duration: 800, delay: nameDelay + 200 });
+    this.time.delayedCall(nameDelay + 200, () => SFX.play('xpGain'));
+
+    // ------------------------------------------------------------------
+    // PHASE 4 — the choice (two restrained cards at the bottom)
+    //   SEEK ANOTHER   |   REMAIN
+    // No pulse, no glow. Bone-white text on charcoal. They wait.
+    // ------------------------------------------------------------------
+    const choiceDelay = nameDelay + 1200;
+    const btnY = 510;
+
+    const leftCard  = this._buildFinalCard(cx - 130, btnY, 220, 44, 'SEEK ANOTHER',     'Begin a new hunt.');
+    const rightCard = this._buildFinalCard(cx + 130, btnY, 220, 44, 'REMAIN',           'Walk among the dead.');
+
+    [...leftCard.all, ...rightCard.all].forEach((el) => el.setAlpha(0).setDepth(504));
+    this.tweens.add({
+      targets: [...leftCard.all, ...rightCard.all],
+      alpha: 1,
+      duration: 900,
+      delay: choiceDelay,
+      ease: 'Sine.easeOut',
+    });
+
+    // Left — SEEK ANOTHER: wipe quest state, back to splash for new audit
+    const doSeek = () => {
       SFX.play('menuConfirm');
-      this.cameras.main.fadeOut(800, 0, 0, 0);
-      this.time.delayedCall(800, () => {
+      // Clear quest persistence so the new audit starts fresh
+      this.game._questStartMs = null;
+      this.cameras.main.fadeOut(900, 0, 0, 0);
+      this.time.delayedCall(900, () => {
         if (typeof window.returnToTitle === 'function') window.returnToTitle();
       });
     };
-    btnBg.on('pointerdown', doReturn);
-    btnText.on('pointerdown', doReturn);
+    leftCard.hit.on('pointerdown', doSeek);
+
+    // Right — REMAIN: fade out the overlay but leave a small
+    // "LEAVE THE HALL" escape in the top-right so they aren't trapped.
+    const doRemain = () => {
+      SFX.play('menuHover');
+      this.tweens.add({
+        targets: [backdrop, title, sub, nameLabel, nameValue,
+                  ...leftCard.all, ...rightCard.all,
+                  ...this.children.list.filter((c) => c.depth === 502 && c.type === 'Text')],
+        alpha: 0,
+        duration: 700,
+        onComplete: () => {
+          backdrop.destroy();
+          title.destroy();
+          sub.destroy();
+          nameLabel.destroy();
+          nameValue.destroy();
+          [...leftCard.all, ...rightCard.all].forEach((el) => el.destroy && el.destroy());
+          this._addLingerEscape();
+        },
+      });
+    };
+    rightCard.hit.on('pointerdown', doRemain);
+  }
+
+  /**
+   * Build one of the two final-choice cards. Returns the set of visual
+   * pieces plus the hit-rect so the caller can wire pointer events.
+   */
+  _buildFinalCard(cx, cy, w, h, label, hint) {
+    const bg = this.add.rectangle(cx, cy, w, h, 0x0a0a12, 0.92).setDepth(503);
+    bg.setStrokeStyle(1, 0x4a3a30, 0.9);
+    const text = this.add.text(cx, cy - 5, label, {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '13px',
+      color: '#c8b8a0', letterSpacing: 3, fontStyle: 'bold',
+      resolution: window.GAME_DPR,
+    }).setOrigin(0.5).setDepth(504);
+    const hintText = this.add.text(cx, cy + 11, hint, {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '9px',
+      color: '#6a5a50', letterSpacing: 1,
+      resolution: window.GAME_DPR,
+    }).setOrigin(0.5).setDepth(504);
+    const hit = this.add.rectangle(cx, cy, w, h, 0x000000, 0).setInteractive({ useHandCursor: true }).setDepth(505);
+    hit.on('pointerover', () => {
+      text.setColor('#e8d8c0');
+      bg.setStrokeStyle(1.5, 0x8a1020, 0.9);
+    });
+    hit.on('pointerout', () => {
+      text.setColor('#c8b8a0');
+      bg.setStrokeStyle(1, 0x4a3a30, 0.9);
+    });
+    return { bg, text, hintText, hit, all: [bg, text, hintText, hit] };
+  }
+
+  /**
+   * After REMAIN is clicked, drop a small "LEAVE THE HALL" link in the
+   * top-right. The user can walk among the corpses as long as they
+   * want, and take this out when they're ready.
+   */
+  _addLingerEscape() {
+    const link = this.add.text(780, 20, 'LEAVE THE HALL', {
+      fontFamily: '"JetBrains Mono", monospace', fontSize: '10px',
+      color: '#6a5a50', letterSpacing: 2,
+      resolution: window.GAME_DPR,
+    }).setOrigin(1, 0).setDepth(510).setAlpha(0).setInteractive({ useHandCursor: true });
+    this.tweens.add({ targets: link, alpha: 1, duration: 800, delay: 300 });
+    link.on('pointerover', () => link.setColor('#c8b8a0'));
+    link.on('pointerout',  () => link.setColor('#6a5a50'));
+    link.on('pointerdown', () => {
+      SFX.play('menuConfirm');
+      this.game._questStartMs = null;
+      this.cameras.main.fadeOut(700, 0, 0, 0);
+      this.time.delayedCall(700, () => {
+        if (typeof window.returnToTitle === 'function') window.returnToTitle();
+      });
+    });
   }
 
   // =====================================================================
