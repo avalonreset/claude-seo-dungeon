@@ -56,7 +56,7 @@ Most SEO audit tools hand you a spreadsheet and wish you luck. Claude SEO Dungeo
    - **Flee** - Skip this demon and return to the dungeon. You can come back and fight it later.
 6. **Collect loot.** Earn XP and rewards for every demon slain.
 
-When you choose **Vanquish**, Claude reads your actual project files, generates a fix, and commits it to git. The Guild Ledger on the right side of the screen shows everything Claude is doing in real time, including which tools it's calling, which files it's reading, and what changes it's making.
+The real work happens when you choose **Attack**. You type a prompt describing what you want done about this issue, Claude reads your actual project files, and streams its work into the Guild Ledger on the right - tools it's calling, files it's reading, changes it's making. You can Attack as many times as you want. Real SEO fixes often take multiple prompts, back-and-forth clarification, and a little patience. **Vanquish** is the button you press when you've looked at what Claude did and you're satisfied the issue is handled. It's your call, not the machine's.
 
 ## What's New in v1.9.0
 
@@ -85,8 +85,9 @@ This release brings the SEO engine from v1.6.1 to v1.9.0, adding 6 major new ski
 ## Game Features
 
 ### Combat and Gameplay
-- **Turn-based combat system** with HP bars, damage calculations, and status effects
-- **AI-powered Vanquish action** that generates real code fixes and commits them to git during battle
+- **Turn-based combat atmosphere** with HP bars, attack animations, and an RPG narrator
+- **Attack** prompts Claude directly. Claude can read and edit your project files. Iterate as many times as the issue needs.
+- **Vanquish** is your judgment call. You decide when the issue has been handled enough to mark it defeated.
 - **Quest caching** via localStorage so you can resume audits without re-running them
 - **Dynamic difficulty** where demon HP scales with issue severity (critical = boss fight, info = goblin)
 
