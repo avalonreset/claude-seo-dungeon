@@ -116,6 +116,28 @@ export class BridgeClient {
   }
 
   /**
+   * Neutral "talk to Claude" — used outside of battle (Demon Lodge /
+   * Dungeon Hall / between fights). No demon context, no framing. The
+   * message goes to `claude -p <text>` in the user's project directory
+   * under their selected character model. Functionally the same as
+   * invoking the CLI yourself.
+   */
+  chat(text, projectPath, model, onStream) {
+    return new Promise((resolve, reject) => {
+      try { this._ensureOpen(); } catch (e) { return reject(e); }
+      const id = ++this.requestId;
+      this.handlers.set(id, { resolve, reject, onStream });
+      this.ws.send(JSON.stringify({
+        id,
+        type: 'chat',
+        command: text,
+        projectPath,
+        model,
+      }));
+    });
+  }
+
+  /**
    * Send a command to Claude CLI via the bridge.
    */
   send(command, opts = {}) {
@@ -145,17 +167,31 @@ export class BridgeClient {
   /**
    * Fix a specific SEO issue in the project.
    */
-  fix(issue, projectPath, onStream, model) {
+  /**
+   * Send a fix/diagnose request scoped to ONE demon (SEO issue).
+   *
+   * @param {object} payload       { issue, userMessage }
+   * @param {object} payload.issue Full issue object — severity, category,
+   *                               title, description, plus any url/selector/
+   *                               file/line/hp fields present.
+   * @param {string} payload.userMessage  What the user typed this turn.
+   *                               Can be empty, a question, or a directive.
+   */
+  fix(payload, projectPath, onStream, model) {
     return new Promise((resolve, reject) => {
       try { this._ensureOpen(); } catch (e) { return reject(e); }
       const id = ++this.requestId;
       this.handlers.set(id, { resolve, reject, onStream });
+      const issue = payload && payload.issue ? payload.issue : {};
       this.ws.send(JSON.stringify({
         id,
         type: 'fix',
-        command: `${issue.title}: ${issue.description}`,
+        issue,
+        userMessage: (payload && payload.userMessage) || '',
+        // `command` retained as a one-line breadcrumb for server logs.
+        command: `${issue.title || '(no title)'}`,
         projectPath,
-        model
+        model,
       }));
     });
   }

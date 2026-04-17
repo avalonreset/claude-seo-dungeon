@@ -797,9 +797,11 @@ export class SummoningScene extends Phaser.Scene {
     const next = this._tickerQueue.shift();
     this._tickerCurrent = next;
     this._typeIn(next, () => {
-      // Dynamic hold time: shorter if queue is backed up
+      // Dynamic hold: longer when queue is calm so the user has time to
+      // actually read the line. Shorter when stream is backed up so we
+      // don't stall behind it.
       const q = this._tickerQueue.length;
-      const hold = q >= 4 ? 280 : q >= 2 ? 520 : 900;
+      const hold = q >= 4 ? 320 : q >= 2 ? 640 : 1100;
       this.time.delayedCall(hold, () => {
         this._typeOut(() => {
           this.time.delayedCall(60, () => this._runTickerLoop());
@@ -808,41 +810,173 @@ export class SummoningScene extends Phaser.Scene {
     });
   }
 
+  // Fast chunked type-in: reveal 3–5 chars per tick so a ~20-char line
+  // completes in roughly 4 frames (~65ms) instead of 20+ frames. Still
+  // reads as "typing" because the burst pattern is visible, but doesn't
+  // hog the hold window. ~5-6x faster than the single-char stepper.
   _typeIn(text, done) {
     if (!this.streamText || !this.streamText.active) return;
-    this.streamText.setText('');
+    const t = this.streamText;
+    this.tweens.killTweensOf(t);
+    t.setText('');
+    t.setAlpha(1);
+    if (this._streamTextBaseY != null) t.setY(this._streamTextBaseY);
+    this._restartCursorBlink();
     let i = 0;
     const step = () => {
-      if (!this.streamText || !this.streamText.active) return;
-      i += 1;
-      this.streamText.setText(text.slice(0, i));
-      this._positionTickerCursor(this.streamText.text);
+      if (!t || !t.active) return;
+      const chunk = 3 + Math.floor(Math.random() * 3); // 3–5 chars
+      i = Math.min(i + chunk, text.length);
+      t.setText(text.slice(0, i));
+      this._positionTickerCursor(t.text);
       if (i >= text.length) {
         if (done) done();
         return;
       }
-      // Slight jitter so it feels organic, not mechanical
-      const jitter = 2 + Math.random() * 4;
-      this.time.delayedCall(10 + jitter, step);
+      // ~4–10ms — effectively one frame at 60fps, maybe two
+      this.time.delayedCall(4 + Math.random() * 6, step);
     };
     step();
   }
 
+  // Varied exit animations — width-preserving so the line never visually
+  // contracts back into the center (which reads as disorienting
+  // expand/contract oscillation against the type-in). Picks one of three
+  // tasteful options per cycle:
+  //   • fade-drift (most common): text softens to 0 with 3px drop
+  //   • dissolve:   chars corrupt to glyphs then clear in shuffled order
+  //   • wipe:       solid block sweeps left→right eating the text
   _typeOut(done) {
-    if (!this.streamText || !this.streamText.active) return;
-    let current = this.streamText.text;
-    const step = () => {
-      if (!this.streamText || !this.streamText.active) return;
-      if (current.length <= 0) {
+    if (!this.streamText || !this.streamText.active) { if (done) done(); return; }
+    if (!this.streamText.text || this.streamText.text.length === 0) {
+      if (done) done();
+      return;
+    }
+    const roll = Math.random();
+    if (roll < 0.50) return this._exitFade(done);
+    if (roll < 0.82) return this._exitDissolve(done);
+    return this._exitWipe(done);
+  }
+
+  _exitFade(done) {
+    const t = this.streamText;
+    const c = this.streamCursor;
+    if (this._streamTextBaseY == null) this._streamTextBaseY = t.y;
+    const baseY = this._streamTextBaseY;
+    this.tweens.killTweensOf(t);
+    if (c && c.active) this.tweens.killTweensOf(c);
+    // Text: alpha to 0 with small downward drift and color desat at tail
+    this.tweens.add({
+      targets: t,
+      alpha: 0,
+      y: baseY + 3,
+      duration: 260,
+      ease: 'Sine.easeIn',
+      onUpdate: (tw) => {
+        if (tw.progress > 0.55) t.setColor('#7a6090');
+      },
+      onComplete: () => {
+        t.setText('');
+        t.setAlpha(1);
+        t.setColor('#b890d8');
+        t.setY(baseY);
+        this._positionTickerCursor('');
+        if (done) done();
+      }
+    });
+    // Cursor fades with it, then resumes blinking on next typeIn
+    if (c && c.active) {
+      this.tweens.add({
+        targets: c,
+        alpha: 0,
+        duration: 220,
+        ease: 'Sine.easeIn'
+      });
+    }
+  }
+
+  _exitDissolve(done) {
+    const t = this.streamText;
+    const original = t.text;
+    const len = original.length;
+    const chars = original.split('');
+    const order = [];
+    for (let i = 0; i < len; i++) order.push(i);
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = order[i]; order[i] = order[j]; order[j] = tmp;
+    }
+    const glyphs = ['·', '▪', '▫', '░', '▓', '∴', '‥'];
+    const stepDelay = Math.max(5, Math.min(14, 200 / Math.max(len, 1)));
+    const clearDelay = 50;
+    let toFinish = len;
+    if (len === 0) { if (done) done(); return; }
+    for (let step = 0; step < len; step++) {
+      const idx = order[step];
+      const tCorrupt = step * stepDelay;
+      const tClear   = tCorrupt + clearDelay;
+      this.time.delayedCall(tCorrupt, () => {
+        if (!t || !t.active) return;
+        if (chars[idx] === ' ') return;
+        chars[idx] = glyphs[Math.floor(Math.random() * glyphs.length)];
+        t.setText(chars.join(''));
+      });
+      this.time.delayedCall(tClear, () => {
+        if (!t || !t.active) return;
+        chars[idx] = ' ';
+        t.setText(chars.join(''));
+        toFinish -= 1;
+        if (toFinish <= 0) {
+          t.setText('');
+          this._positionTickerCursor('');
+          if (done) done();
+        }
+      });
+    }
+  }
+
+  _exitWipe(done) {
+    const t = this.streamText;
+    const original = t.text;
+    const len = original.length;
+    if (len === 0) { if (done) done(); return; }
+    const chars = original.split('');
+    const stepDelay = Math.max(8, Math.min(16, 200 / len));
+    let i = 0;
+    const tick = () => {
+      if (!t || !t.active) return;
+      if (i > len) {
+        t.setText('');
+        this._positionTickerCursor('');
         if (done) done();
         return;
       }
-      current = current.slice(0, -1);
-      this.streamText.setText(current);
-      this._positionTickerCursor(current);
-      this.time.delayedCall(8, step);
+      // Show a leading block head at position i; everything before it
+      // is cleared to spaces; everything after is the original text.
+      // When i reaches len, last step clears the block and we finish.
+      const prefix = ' '.repeat(Math.min(i, len));
+      const head = i < len ? '▓' : '';
+      const suffix = i < len ? original.slice(i + 1) : '';
+      t.setText(prefix + head + suffix);
+      i += 1;
+      this.time.delayedCall(stepDelay, tick);
     };
-    step();
+    tick();
+  }
+
+  _restartCursorBlink() {
+    const c = this.streamCursor;
+    if (!c || !c.active) return;
+    this.tweens.killTweensOf(c);
+    c.setAlpha(0.5);
+    this.tweens.add({
+      targets: c,
+      alpha: { from: 0.25, to: 0.9 },
+      duration: 520,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
   }
 
   _positionTickerCursor(text) {

@@ -17,7 +17,7 @@ const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 // get it when they update Claude Code. Users with older CLIs get the best
 // version their CLI knows about instead of a hard "unknown model" error.
 const ALLOWED_MODELS = ['opus', 'sonnet', 'haiku'];
-const ALLOWED_TYPES = ['audit', 'fix', 'commit', 'narrate', 'cancel', 'interactive_start', 'interactive_send', 'interactive_stop'];
+const ALLOWED_TYPES = ['audit', 'fix', 'commit', 'narrate', 'chat', 'cancel', 'interactive_start', 'interactive_send', 'interactive_stop'];
 const MAX_CONCURRENT_PROCESSES = 5;
 const MAX_MESSAGES_PER_MINUTE = 30;
 
@@ -174,7 +174,7 @@ wss.on('connection', (ws) => {
       safeSend(JSON.stringify({ id: 0, type: 'error', message: 'Invalid message format' }));
       return;
     }
-    const { id, command, type, projectPath, model } = msg;
+    const { id, command, type, projectPath, model, issue, userMessage } = msg;
 
     // Validate message type against allowlist
     if (type && !ALLOWED_TYPES.includes(type)) {
@@ -264,12 +264,12 @@ wss.on('connection', (ws) => {
         console.log(`Audit done: ${result.issues.length} issues, score ${result.score}`);
 
       } else if (type === 'fix') {
-        const result = await runFix(command, fixCwd, (chunk) => {
+        const result = await runFix(issue, userMessage, fixCwd, (chunk) => {
           safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
         }, id, validModel);
         activeProcesses.delete(id);
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
-        console.log(`Fix done: ${command}`);
+        console.log(`Fix done: ${(issue && issue.title) || command}`);
 
       } else if (type === 'commit') {
         // Sanitize commit message: limit length, strip control characters
@@ -288,6 +288,19 @@ wss.on('connection', (ws) => {
         activeProcesses.delete(id);
         safeSend(JSON.stringify({ id, type: 'result', data: result }));
         console.log(`Narration done`);
+
+      } else if (type === 'chat') {
+        // Neutral pass-through — used outside of battle (Hall, Lodge,
+        // between fights). Zero framing, zero demon context. Claude
+        // sees exactly what the user typed, runs in their project
+        // directory, under their selected character model. Functionally
+        // identical to `claude -p "<user text>"` from a terminal.
+        const result = await runClaude(command, (chunk) => {
+          safeSend(JSON.stringify({ id, type: 'stream', content: chunk }));
+        }, fixCwd, id, validModel);
+        activeProcesses.delete(id);
+        safeSend(JSON.stringify({ id, type: 'result', data: result }));
+        console.log(`Chat done`);
       }
     } catch (err) {
       console.error(`Error on #${id}:`, err.message);
@@ -565,14 +578,93 @@ function _normalizeAudit(parsed, domain) {
  * Fix a specific SEO issue via Claude CLI.
  * Runs inside the user's project directory so Claude can edit real files.
  */
-async function runFix(issueDescription, projectCwd, onStream, requestId, model) {
-  // No forced branch switching — user controls their own git workflow
+/**
+ * Build the demon-focus header that anchors every battle turn to the
+ * selected SEO issue. Every available field (severity, category, URL,
+ * selector, file, line, etc.) is included so Claude has full situational
+ * awareness — even when the user's message is vague or conversational.
+ */
+function buildDemonHeader(issue) {
+  const i = issue || {};
+  const lines = [
+    '════════════════════════════════════════════════════════',
+    '  YOU ARE FIGHTING ONE SPECIFIC DEMON.  FOCUS ON IT.',
+    '════════════════════════════════════════════════════════',
+    '',
+    'This is a gamified SEO tool. The user has selected an issue',
+    'from their audit list and is now engaging with ONLY that issue.',
+    'The demon below is the entire scope of this turn. Stay on it.',
+    '',
+    'DEMON FILE',
+    '----------',
+  ];
+  if (i.title)       lines.push(`  Name:       ${i.title}`);
+  if (i.severity)    lines.push(`  Severity:   ${String(i.severity).toUpperCase()}`);
+  if (i.category)    lines.push(`  Category:   ${i.category}`);
+  if (i.url)         lines.push(`  URL:        ${i.url}`);
+  if (i.page)        lines.push(`  Page:       ${i.page}`);
+  if (i.file)        lines.push(`  File:       ${i.file}`);
+  if (i.selector)    lines.push(`  Selector:   ${i.selector}`);
+  if (i.line)        lines.push(`  Line:       ${i.line}`);
+  if (i.id != null)  lines.push(`  Issue ID:   ${i.id}`);
+  if (i.description) {
+    lines.push('');
+    lines.push('DESCRIPTION');
+    lines.push('-----------');
+    lines.push(i.description.split('\n').map((ln) => '  ' + ln).join('\n'));
+  }
+  return lines.join('\n');
+}
 
-  const prompt = `You are working in a website project directory. Fix this SEO issue by editing the actual source files: ${issueDescription}
+/**
+ * Run a battle turn against one demon.
+ *
+ * The demon-focus header anchors the turn. The user's message is
+ * passed through verbatim — Claude reads their intent. No heuristic
+ * mode switching: if they ask a question, Claude answers; if they
+ * give a directive, Claude acts; if they're polite or ambiguous,
+ * Claude figures it out. This matches how Claude normally handles
+ * requests, just scoped to one SEO issue.
+ *
+ * @param {object} issue        Full issue object (title, description,
+ *                              severity, category, url, selector, etc.).
+ * @param {string} userMessage  What the user typed in the Attack input.
+ *                              May be empty, a question, or a directive.
+ */
+async function runFix(issue, userMessage, projectCwd, onStream, requestId, model) {
+  const header = buildDemonHeader(issue);
+  const msg = (userMessage || '').trim();
+  const userBlock = msg
+    ? `USER'S MESSAGE THIS TURN\n------------------------\n${msg}`
+    : `USER'S MESSAGE THIS TURN\n------------------------\n(empty — the user hit Attack without typing. Proceed with fixing what the demon above describes.)`;
 
-This issue may represent a group of related problems. Fix ALL aspects described — not just one. Look at the project files, identify everything that needs to change, and make the edits. Be thorough but precise — fix what's described, nothing more. After making changes, return a JSON summary: {"fixed":true,"summary":"<what was changed>","filesChanged":["<list of files>"]}
+  const prompt = `You are working in a website project directory.
 
-Return the JSON summary at the very end after making all changes.`;
+${header}
+
+${userBlock}
+
+HOW TO RESPOND
+--------------
+Stay focused on the ONE demon above. Read the user's message and react
+to it naturally:
+  - If they asked a question, answer it — grounded in this demon and
+    any project files you need to read to verify your answer.
+  - If they gave a directive (including a polite one like "can you fix
+    this"), do the work — edit the relevant source files to address
+    the demon.
+  - If the message is empty or ambiguous and looks like "just go",
+    proceed to fix what the demon describes.
+  - If it's genuinely unclear what they want, ask one short clarifying
+    question instead of guessing.
+
+Do NOT investigate unrelated SEO issues, even if you notice them — the
+user will select those demons separately. Do NOT rewrite the entire
+project. Make surgical changes for THIS demon only.
+
+End your response with a single-line JSON summary so the battle scene
+can score the turn:
+  {"fixed":<true if you edited files, false otherwise>,"summary":"<one short sentence>","filesChanged":["<list of files you changed, or []>"]}`;
 
   const raw = await runClaude(prompt, onStream, projectCwd, requestId, model);
 
@@ -580,9 +672,9 @@ Return the JSON summary at the very end after making all changes.`;
     const text = typeof raw === 'string' ? raw : (raw.raw || JSON.stringify(raw));
     const jsonMatch = text.match(/\{[\s\S]*"fixed"[\s\S]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
-  } catch (e) {}
+  } catch (e) { /* fall through */ }
 
-  return { fixed: true, summary: 'Changes applied by Claude', filesChanged: [] };
+  return { fixed: true, summary: 'Claude handled this turn.', filesChanged: [] };
 }
 
 /**

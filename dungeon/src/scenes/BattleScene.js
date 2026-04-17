@@ -291,49 +291,27 @@ export class BattleScene extends Phaser.Scene {
   // ═══════════════════════════════════════════════════
 
   createDemon() {
-    // Target combat-scene heights per severity (larger than hall thumbnails)
-    const BATTLE_TARGET_H = { critical: 190, high: 160, medium: 130, low: 110, info: 90 };
-    const targetH = BATTLE_TARGET_H[this.issue.severity] || 130;
-    const sevColor = this.getSeverityHexColor();
+    // Every demon is a 0x72 4-frame idle animation. Scale per severity,
+    // flip to face the player on the left. NO fake breath tweens — the
+    // real idle animation carries the "alive" feel.
+    const BATTLE_SCALES = { critical: 5, high: 5.5, medium: 4.3, low: 3.2, info: 3.2 };
+    const demonScale = BATTLE_SCALES[this.issue.severity] || 4;
     const demonKey = this.issue._demonKey;
+    const animKey = this.issue._demonAnimKey || `${demonKey}_idle`;
+    const frame0Key = this.issue._demonFrame0Key || `${demonKey}_f0`;
 
-    const isLegacy = !demonKey || demonKey.startsWith('demon_');
-    if (isLegacy) {
-      // 0x72 4-frame animated idle — keep legacy scaling
-      const demonSizes = { critical: 36, high: 23, medium: 23, low: 23, info: 16 };
-      const demonScales = { critical: 5, high: 5.5, medium: 4.3, low: 3.2, info: 3.2 };
-      const demonScale = demonScales[this.issue.severity] || 4;
-      const nativeH = demonSizes[this.issue.severity] || 32;
-      const spriteH = nativeH * demonScale;
-      const demonY = 320 - spriteH * 0.5;
-      this.demonGroundY = demonY;
-      const animKey = `demon_${this.issue.severity}_idle`;
-      this.demon = this.add.sprite(620, demonY, `demon_${this.issue.severity}_f0`)
-        .setScale(demonScale)
-        .setFlipX(true)
-        .setAlpha(0);
-      if (this.anims.exists(animKey)) this.demon.play(animKey);
-    } else {
-      // New demon — single frame, tween-driven idle breath
-      this.demon = this.add.sprite(620, 300, demonKey).setFlipX(true).setAlpha(0);
-      const nativeH = this.demon.height || targetH;
-      const fitScale = Math.min(targetH / Math.max(nativeH, 1), 6.5);
-      this.demon.setScale(fitScale);
-      this.demon._baseScale = fitScale;
-      // Reposition so feet land on the floor line y=300
-      const displayedH = nativeH * fitScale;
-      const demonY = 320 - displayedH * 0.5;
-      this.demon.setY(demonY);
-      this.demonGroundY = demonY;
-      // Subtle idle breath — slower and more menacing than the hall bob
-      this.tweens.add({
-        targets: this.demon,
-        scaleX: fitScale * 1.03,
-        scaleY: fitScale * 0.97,
-        duration: 1800,
-        yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
-      });
-    }
+    // Stage the sprite with placeholder y, then recompute after we know
+    // the native frame height so the feet land on the floor line y=320.
+    this.demon = this.add.sprite(620, 300, frame0Key)
+      .setScale(demonScale)
+      .setFlipX(true)
+      .setAlpha(0);
+    const nativeH = this.demon.height || 23;
+    const spriteH = nativeH * demonScale;
+    const demonY = 320 - spriteH * 0.5;
+    this.demon.setY(demonY);
+    this.demonGroundY = demonY;
+    if (this.anims.exists(animKey)) this.demon.play(animKey);
   }
 
   createKnight() {
@@ -1620,22 +1598,18 @@ export class BattleScene extends Phaser.Scene {
     this._disableMenu();
     this._startChanneling();
 
-    // Build the command from user prompt + issue context
-    const issueWithCommand = {
-      ...this.issue,
-      title: userPrompt || this.issue.title,
-      description: userPrompt
-        ? `${userPrompt}\n\nOriginal issue — ${this.issue.title}: ${this.issue.description}`
-        : this.issue.description
-    };
-
-    // 2. Send to Claude — stream raw output to guild ledger only
+    // 2. Send to Claude — pass the full demon (issue) object and the
+    //    user's turn message as separate fields. The server builds a
+    //    structured focus header so Claude always knows which demon we
+    //    are fighting, regardless of how vague the user's message is.
     try {
       const model = this.game.characterConfig?.model;
       const rawLines = [];
-      // Track request ID so Escape can cancel mid-attack
       this._activeRequestId = bridge.requestId + 1;
-      const result = await bridge.fix(issueWithCommand, this.game.projectPath, (stream) => {
+      const result = await bridge.fix({
+        issue: this.issue,
+        userMessage: userPrompt,
+      }, this.game.projectPath, (stream) => {
         const clean = stream.replace(/[\n\r]+/g, ' ').trim();
         if (clean.length > 0) {
           rawLines.push(clean);

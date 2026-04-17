@@ -35,11 +35,12 @@ This project uses open-source game assets. All assets are used in compliance wit
 
 ## Expanded Demon Roster (v1.9.0)
 
-### Dungeon Crawl Stone Soup — individual demon, undead, dragon, and unique tiles
-- **Source**: https://github.com/crawl/crawl/tree/master/crawl-ref/source/rltiles/mon
-- **License**: CC0 / Public Domain
-- **Usage**: 24 individual character sprites spanning all severity tiers. Idle animation provided at render time via engine-driven tween (breath pulse + bob) so each demon appears alive.
-- **Specific tiles in use**: crimson_imp, shadow_imp, lemure, red_devil, wyvern, ghoul, curse_skull, curse_toe, executioner, shadow_demon, bone_dragon, reaper, lich, hell_sentinel, ice_fiend, balrug, brimstone_fiend, ancient_lich, fire_dragon, shadow_dragon, Asmodeus, Cerebov, Dispater, Ereshkigal.
+All 13 demons in the active roster are 0x72 DungeonTileset II characters,
+each with a real 4-frame idle animation loaded from `assets/0x72/frames/`:
+big_demon, ogre, orc_warrior, big_zombie, skelet, chort, masked_orc,
+pumpkin_dude, orc_shaman, imp, wogol, goblin, tiny_zombie.
+
+No fake breath tweens — every demon has a proper idle loop.
 
 ---
 

@@ -1,5 +1,5 @@
 import { PixelArt } from '../sprites/PixelArt.js';
-import { getAllNewDemons } from '../demons-manifest.js';
+import { getAllDemons } from '../demons-manifest.js';
 
 /**
  * Boot scene — generates pixel art, then goes straight to Summoning.
@@ -24,25 +24,13 @@ export class BootScene extends Phaser.Scene {
     this.load.image('demon_low_real', 'assets/monsters/demon_low.png');
     this.load.image('demon_info_real', 'assets/monsters/demon_info.png');
 
-    // Load animated 0x72 demon idle frames (4 frames each)
-    const demonTypes = {
-      critical: { name: 'big_demon', w: 32, h: 36 },
-      high:     { name: 'orc_warrior', w: 16, h: 23 },
-      medium:   { name: 'chort', w: 16, h: 23 },
-      low:      { name: 'orc_shaman', w: 16, h: 23 },
-      info:     { name: 'goblin', w: 16, h: 16 }
-    };
-    for (const [sev, cfg] of Object.entries(demonTypes)) {
-      for (let f = 0; f < 4; f++) {
-        this.load.image(`demon_${sev}_f${f}`, `assets/0x72/frames/${cfg.name}_idle_anim_f${f}.png`);
+    // Load 4-frame idle animation for every demon in the roster.
+    // Every character is from 0x72 DungeonTileset II (CC0). All face
+    // right natively — scenes flip them horizontally to face the player.
+    for (const demon of getAllDemons()) {
+      for (let f = 0; f < demon.frames; f++) {
+        this.load.image(`${demon.framePrefix}${f}`, `assets/0x72/frames/${demon.name}_idle_anim_f${f}.png`);
       }
-    }
-    this.game._demonAnimConfig = demonTypes;
-
-    // Load every new demon sprite (single-frame, idle animation is
-    // provided at render time via Phaser tween — see DungeonHall / Battle).
-    for (const demon of getAllNewDemons()) {
-      this.load.image(demon.key, demon.path);
     }
 
     // Remove old character textures if this is a re-entry (character swap from Gate).
@@ -97,17 +85,16 @@ export class BootScene extends Phaser.Scene {
     const cfg = this.game.characterConfig;
 
     // Ensure all sprite textures use NEAREST filter for crisp pixel art
-    // (global pixelArt is off so text renders smoothly)
+    // (global pixelArt is off so text renders smoothly).
     const texKeys = [
       'knight_real', 'demon_critical_real', 'demon_high_real',
       'demon_medium_real', 'demon_low_real', 'demon_info_real',
       'char_idle', 'char_run', 'char_attack', 'char_hit', 'char_death'
     ];
-    // Add animated demon frame textures
-    for (const sev of ['critical', 'high', 'medium', 'low', 'info']) {
-      for (let f = 0; f < 4; f++) texKeys.push(`demon_${sev}_f${f}`);
+    // Add every demon frame texture — critical for crisp pixel rendering
+    for (const demon of getAllDemons()) {
+      for (let f = 0; f < demon.frames; f++) texKeys.push(`${demon.framePrefix}${f}`);
     }
-    // Add extra anim texture keys
     if (cfg.extraAnims) {
       for (const anim of cfg.extraAnims) texKeys.push(anim.key);
     }
@@ -134,20 +121,18 @@ export class BootScene extends Phaser.Scene {
     this.anims.create({ key: 'char_hit_anim', frames: this.anims.generateFrameNumbers('char_hit', { start: 0, end: cfg.hitFrames - 1 }), frameRate: 8, repeat: 0 });
     this.anims.create({ key: 'char_death_anim', frames: this.anims.generateFrameNumbers('char_death', { start: 0, end: cfg.deathFrames - 1 }), frameRate: 8, repeat: 0 });
 
-    // Create demon idle animations (4 frames per severity, using individual images)
-    for (const sev of ['critical', 'high', 'medium', 'low', 'info']) {
-      const animKey = `demon_${sev}_idle`;
-      if (this.anims.exists(animKey)) this.anims.remove(animKey);
+    // Create one 4-frame idle animation per demon character. Every
+    // demon in the roster has its own distinct idle loop — no fake
+    // scale-tween "breathing" anywhere.
+    for (const demon of getAllDemons()) {
+      if (this.anims.exists(demon.animKey)) this.anims.remove(demon.animKey);
+      const frames = [];
+      for (let f = 0; f < demon.frames; f++) frames.push({ key: `${demon.framePrefix}${f}` });
       this.anims.create({
-        key: animKey,
-        frames: [
-          { key: `demon_${sev}_f0` },
-          { key: `demon_${sev}_f1` },
-          { key: `demon_${sev}_f2` },
-          { key: `demon_${sev}_f3` }
-        ],
+        key: demon.animKey,
+        frames,
         frameRate: 6,
-        repeat: -1
+        repeat: -1,
       });
     }
 

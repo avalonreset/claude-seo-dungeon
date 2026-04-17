@@ -501,7 +501,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Outside battle — use bridge.send() which spawns claude -p (reliable)
+    // Outside battle — neutral chat. Pass-through to claude -p in the
+    // user's project dir with their selected model. No demon anchoring;
+    // the user can ask anything, just like a normal CLI session.
     logInputBar.classList.add('running');
     showLoadingIndicator();
     addLog('> ' + text);
@@ -514,12 +516,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     (async () => {
       try {
-        const result = await bridge.send(text, {
-          onStream: (chunk) => {
-            lastStreamTime = Date.now();
-            const clean = chunk.replace(/[\n\r]+/g, ' ').trim();
-            if (clean.length > 0) addLog(clean);
-          }
+        const result = await bridge.chat(text, projectPath, model, (chunk) => {
+          lastStreamTime = Date.now();
+          const clean = chunk.replace(/[\n\r]+/g, ' ').trim();
+          if (clean.length > 0) addLog(clean);
         });
         if (result?.data?.summary) addLog(result.data.summary);
       } catch (err) {

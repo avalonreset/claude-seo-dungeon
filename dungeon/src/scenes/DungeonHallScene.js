@@ -1,7 +1,7 @@
 import { COLORS } from '../utils/colors.js';
 import { HALL_MESSAGES } from '../utils/flavor-text.js';
 import { SFX } from '../utils/sound-manager.js';
-import { pickDemonForIssue, isLegacyDemon, assignAllDemons } from '../demons-manifest.js';
+import { pickDemonForIssue, assignAllDemons } from '../demons-manifest.js';
 
 const HEADER_FONT = '"JetBrains Mono", monospace';
 const BODY_FONT = 'monospace';
@@ -12,28 +12,15 @@ const LIST_TOP = 94;
 const LIST_BOTTOM = 518;
 const LIST_VISIBLE = LIST_BOTTOM - LIST_TOP; // 424px
 
-// Demon sprite scales per severity — bigger = scarier (used for legacy 0x72 demons)
+// Demon sprite scales per severity — bigger = scarier. All demons are
+// 0x72 4-frame idle animations at roughly 16x16 → 32x36 native px.
 const SPRITE_SCALES = {
   critical: 2.4,  // 32x36 native → ~86px tall (biggest)
   high: 3.2,      // 16x23 native → ~74px tall
   medium: 2.6,    // 16x23 native → ~60px tall
   low: 2.0,       // 16x23 native → ~46px tall
-  info: 2.2       // 16x16 native → ~35px tall (smallest)
+  info: 2.2,      // 16x16 native → ~35px tall (smallest)
 };
-
-// Target pixel heights per severity tier for new variable-size sprites.
-// New demons come from many sources with wildly different native sizes
-// (32x32 tiles vs 120x110 mages), so we normalize to these targets.
-const TIER_DISPLAY_HEIGHTS = {
-  critical: 100,
-  high: 82,
-  medium: 68,
-  low: 58,
-  info: 46
-};
-function _tierDisplayHeight(sev) {
-  return TIER_DISPLAY_HEIGHTS[sev] || 60;
-}
 
 /**
  * Dungeon Hall -- RPG encounter screen.
@@ -665,45 +652,25 @@ export class DungeonHallScene extends Phaser.Scene {
     // =========================
     // LAYER 2: DEMON SPRITE
     // =========================
-    // Pick a sprite from the tier pool using the three-pass algorithm:
-    // thematic matching (schema → order demons, performance → elementals,
-    // etc.), tier-rank hierarchy (worst issue = top demon), and
-    // deterministic cycling for overflow.
+    // Every demon in the roster is a 0x72 4-frame idle animation.
+    // assignAllDemons() already stamped _demonKey/_demonAnimKey on the
+    // issue — we just look up, scale to the tier target, and play the
+    // anim. No fake scale-breath tweens anywhere; real frame animation
+    // carries the "alive" feel.
     const picked = pickDemonForIssue(issue.severity, issue.id, issue);
-    issue._demonKey = picked.key;          // remember so BattleScene can reuse
-    issue._demonName = picked.name;
+    issue._demonKey = picked.key;
+    issue._demonName = picked.label;
     const baseScale = SPRITE_SCALES[issue.severity] || 1.0;
-    let demon;
-    if (isLegacyDemon(picked)) {
-      // 0x72 4-frame animated spritesheet
-      const demonAnimKey = `demon_${issue.severity}_idle`;
-      demon = this.add.sprite(spriteX, centerY, `demon_${issue.severity}_f0`)
-        .setScale(baseScale).setAlpha(1);
-      if (this.anims.exists(demonAnimKey)) demon.play(demonAnimKey);
-    } else {
-      // New single-frame sprite — add as sprite and apply a subtle
-      // breath/bob for idle animation. Scale to fit a reasonable dungeon
-      // row height regardless of native sprite size.
-      demon = this.add.sprite(spriteX, centerY, picked.key).setAlpha(1);
-      const targetHeight = _tierDisplayHeight(issue.severity);
-      const h = demon.height || targetHeight;
-      const fitScale = Math.min(targetHeight / Math.max(h, 1), 4.5);
-      demon.setScale(fitScale);
-      demon._baseScale = fitScale;
-      // Subtle scale-breath so it doesn't feel static
-      this.tweens.add({
-        targets: demon,
-        scaleX: fitScale * 1.04,
-        scaleY: fitScale * 0.96,
-        duration: 1600 + index * 40,
-        yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
-      });
-    }
-    // Vertical bob (applies to both legacy and new)
+    const demon = this.add.sprite(spriteX, centerY, picked.frame0Key)
+      .setScale(baseScale)
+      .setAlpha(1)
+      .setFlipX(true);                // face left, toward player perspective
+    if (this.anims.exists(picked.animKey)) demon.play(picked.animKey);
+    // Subtle vertical bob only — the 4-frame idle handles "breathing."
     this.tweens.add({
       targets: demon, y: centerY - 3,
       duration: 1200 + index * 80, yoyo: true, repeat: -1,
-      ease: 'Sine.easeInOut', delay: 600
+      ease: 'Sine.easeInOut', delay: 600,
     });
 
     const shadow = this.add.ellipse(spriteX, centerY + 18, 22, 6, 0x000000, 0.3);
