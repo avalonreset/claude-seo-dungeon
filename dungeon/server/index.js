@@ -112,16 +112,30 @@ function validateModel(model) {
  * - macOS/Linux: uses the `claude` binary on PATH (installed globally by npm)
  */
 function resolveClaudeCli() {
-  // Windows: the npm global prefix typically lives under %APPDATA%\npm
+  // Windows: find the real JS entrypoint in the npm global prefix and run
+  // it with node.exe directly. This is the critical path - the fallback
+  // (spawning 'claude' with shell:true) goes through cmd.exe, which
+  // interprets newlines in the -p prompt argument as command separators
+  // and silently mangles multi-line audit prompts. That's why the bridge
+  // was streaming ZERO events during /seo audit: claude was being invoked
+  // with a truncated prompt, hung producing nothing, and the Guild Ledger
+  // looked frozen. Running node.exe directly with shell:false passes the
+  // prompt verbatim and preserves newlines, so streaming works.
+  //
+  // Current npm installs ship 'cli-wrapper.cjs' as the real entrypoint
+  // (the older 'cli.js' filename is absent). Check both, newest first.
   if (process.platform === 'win32' && process.env.APPDATA) {
-    const cliJs = path.join(process.env.APPDATA, 'npm', 'node_modules',
-      '@anthropic-ai', 'claude-code', 'cli.js');
-    if (fs.existsSync(cliJs)) {
-      return { execPath: process.execPath, args: [cliJs] };
+    const candidates = ['cli-wrapper.cjs', 'cli.js'];
+    for (const name of candidates) {
+      const p = path.join(process.env.APPDATA, 'npm', 'node_modules',
+        '@anthropic-ai', 'claude-code', name);
+      if (fs.existsSync(p)) {
+        return { execPath: process.execPath, args: [p] };
+      }
     }
   }
-  // Fallback: rely on the `claude` command being on PATH.
-  // This works for npm global installs on macOS/Linux and for custom paths.
+  // macOS/Linux: the `claude` shim on PATH is a regular shell script that
+  // execs node on the same wrapper. Direct spawn works, newlines pass.
   return { execPath: 'claude', args: [] };
 }
 
@@ -337,7 +351,9 @@ wss.on('connection', (ws) => {
       cwd: cwd,
       env: safeEnv(),
       stdio: ['pipe', 'pipe', 'pipe'],
-      shell: cliExec === 'claude',
+      // shell:false prevents cmd.exe interposition that would mangle any
+      // multi-line input written to stdin during interactive sessions.
+      shell: false,
       windowsHide: true
     });
 
@@ -733,17 +749,18 @@ function runClaude(prompt, onStream, cwd, requestId, model) {
     const proc = spawn(cliExec, [...cliArgs, '-p', prompt, '--model', modelName, '--output-format', 'stream-json', '--verbose'], {
       cwd: workDir,
       env: safeEnv(),
-      shell: cliExec === 'claude',
+      // shell:false is required on Windows. When shell:true, Node spawns
+      // cmd.exe /d /s /c "claude -p <prompt>..." and cmd.exe interprets
+      // newlines in the prompt as command terminators, silently truncating
+      // the audit prompt and causing zero-output hangs. With shell:false,
+      // Node passes argv verbatim to the child. resolveClaudeCli() returns
+      // node.exe + cli-wrapper.cjs path on Windows so we bypass cmd.exe.
+      shell: false,
       // stdio[0]='ignore' closes stdin. Without this, claude CLI waits 3
-      // seconds for piped input, warns about it, then exits with Windows
-      // status 0xC000013A (STATUS_CONTROL_C_EXIT) and 0 chars of output.
-      // The prompt is passed as the -p flag, so we don't need stdin open.
-      // Default stdio was ['pipe','pipe','pipe'] which left stdin dangling.
+      // seconds for piped input and emits a warning (non-fatal but noisy).
       stdio: ['ignore', 'pipe', 'pipe'],
-      // Without windowsHide, every claude -p call pops a cmd.exe console
-      // window on Windows because shell:true spawns through cmd.exe. This
-      // fires on every audit, every battle turn, every narrate/commit call,
-      // which flashed a new window for each one during gameplay.
+      // Belt-and-suspenders: prevents any lingering console windows on
+      // Windows even though shell:false should already avoid them.
       windowsHide: true
     });
 
