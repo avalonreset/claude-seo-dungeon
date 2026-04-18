@@ -13,6 +13,27 @@ const fs = require('fs');
 
 const ROOT = __dirname;
 const DIST = path.join(ROOT, 'dist');
+const LOG_DIR = path.join(ROOT, '.logs');
+
+// Ensure log directory exists. Bridge stdout/stderr get piped here so we
+// can diagnose audit parse failures, disconnects, and Claude CLI errors
+// after the fact. Previously the bridge ran with stdio:'ignore' and
+// every console.log inside server/index.js went to /dev/null.
+if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
+
+// Rotate the active bridge log by timestamping old runs. Keep the most
+// recent 10 so the directory doesn't grow without bound.
+const bridgeLogPath = path.join(LOG_DIR, 'bridge.log');
+if (fs.existsSync(bridgeLogPath)) {
+  const rotated = path.join(LOG_DIR, `bridge-${Date.now()}.log`);
+  try { fs.renameSync(bridgeLogPath, rotated); } catch (_) {}
+  const archived = fs.readdirSync(LOG_DIR)
+    .filter(f => /^bridge-\d+\.log$/.test(f))
+    .sort();
+  while (archived.length > 10) {
+    try { fs.unlinkSync(path.join(LOG_DIR, archived.shift())); } catch (_) {}
+  }
+}
 
 console.log('');
 console.log('  ⚔  Claude SEO Dungeon  ⚔');
@@ -32,20 +53,31 @@ if (!fs.existsSync(path.join(DIST, 'index.html'))) {
   }
 }
 
-// Start bridge server in background
+// Start bridge server and tee its stdout/stderr into bridge.log. We pipe
+// instead of inherit because inherit would mix bridge output into the
+// serve process's terminal stream and make both unreadable. Writing to
+// a file keeps both readable and gives us a post-mortem for bugs that
+// only happen during long audits.
+const bridgeLog = fs.openSync(bridgeLogPath, 'a');
+fs.writeSync(bridgeLog, `\n=== Bridge started ${new Date().toISOString()} ===\n`);
 const bridge = spawn('node', [path.join(ROOT, 'server', 'index.js')], {
   cwd: ROOT,
-  stdio: 'ignore',
-  detached: true
+  stdio: ['ignore', bridgeLog, bridgeLog],
+  detached: true,
+  // Without windowsHide, Windows opens a blank console window for every
+  // detached child. We don't want two empty PowerShell windows littering
+  // the user's desktop; all bridge output goes to the log file anyway.
+  windowsHide: true
 });
 bridge.unref();
-console.log('  ✓ Bridge server started (port 3001)');
+console.log(`  ✓ Bridge server started (port 3001), logging to ${path.relative(ROOT, bridgeLogPath)}`);
 
 // Serve optimized production build
 const serve = spawn('npx', ['serve', 'dist', '-l', '3000', '-s'], {
   cwd: ROOT,
   shell: true,
-  stdio: 'inherit'
+  stdio: 'inherit',
+  windowsHide: true
 });
 
 console.log('  ✓ Game server starting (port 3000)');

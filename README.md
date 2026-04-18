@@ -188,6 +188,10 @@ npm run dev
 
 Open `http://localhost:3000`. The bridge server starts on port 3001 automatically.
 
+> **Windows users:** The first time the dungeon runs an audit, Windows Defender Firewall may prompt to allow `claude.exe` network access. Click **Allow**. Without this, audits will hang silently because Claude cannot reach Anthropic's API. This prompt only appears once per install.
+>
+> **First audit takes 5-10 minutes.** The `/seo audit` skill runs up to 15 subagents in parallel and fans out tool calls across many pages. The progress bar shows 0% during tool-call phases because nothing text-based is streaming yet. This is normal. Subsequent cached audits are near-instant.
+
 ### 3. Production build (recommended for recording)
 
 ```bash

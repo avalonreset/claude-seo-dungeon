@@ -11,6 +11,26 @@ const PORT = 3001;
 // Project root: server/ -> dungeon/ -> claude-seo-dungeon/
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
 
+// Evidence directory for failed audits. When _tryParseAudit gives up
+// and we fall back to the synthetic "Parse Error" demon, we write the
+// full raw Claude output here so the failure can be inspected after
+// the fact instead of lost. One file per failure, timestamped.
+const LOG_DIR = path.resolve(__dirname, '..', '.logs');
+try { fs.mkdirSync(LOG_DIR, { recursive: true }); } catch (_) {}
+
+function logFailedAudit(domain, raw, note) {
+  try {
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const safeDomain = (domain || 'unknown').replace(/[^a-z0-9.-]/gi, '_');
+    const file = path.join(LOG_DIR, `failed-audit-${safeDomain}-${stamp}.txt`);
+    const text = typeof raw === 'string' ? raw : (raw && raw.raw ? raw.raw : JSON.stringify(raw, null, 2));
+    fs.writeFileSync(file, `=== ${note || 'failed audit'} ===\ndomain: ${domain}\nwhen: ${new Date().toISOString()}\n\n----- RAW CLAUDE OUTPUT -----\n${text}\n`);
+    console.log(`  [evidence] wrote failed audit to ${path.relative(PROJECT_ROOT, file)}`);
+  } catch (e) {
+    console.error('  [evidence] could not write failure log:', e.message);
+  }
+}
+
 // ── Security: Allowed models, message types, and rate limits ──
 // Short aliases let Claude Code resolve to whatever version the user's CLI
 // supports. If Anthropic ships a new Opus/Sonnet/Haiku, users automatically
@@ -317,7 +337,8 @@ wss.on('connection', (ws) => {
       cwd: cwd,
       env: safeEnv(),
       stdio: ['pipe', 'pipe', 'pipe'],
-      shell: cliExec === 'claude'
+      shell: cliExec === 'claude',
+      windowsHide: true
     });
 
     proc.stdout.on('data', (data) => {
@@ -502,6 +523,7 @@ Quality over quantity. Each issue should be a real battle worth fighting, not bu
 
   // RETRY: Ask Claude to reformat the raw output as JSON
   console.log('  First parse failed - retrying with reformat prompt...');
+  logFailedAudit(domain, raw, 'first parse attempt failed');
   onStream('[Reformatting results...]');
   const rawText = typeof raw === 'string' ? raw : (raw.raw || JSON.stringify(raw));
   const retryPrompt = `The following is the raw output of an SEO audit on ${domain}. Convert it into a single valid JSON object with this exact structure (no markdown fences, no extra text - ONLY the JSON):
@@ -516,6 +538,7 @@ ${rawText.slice(-12000)}`;
 
   // Last resort: return a single issue so the game doesn't get stuck
   console.error('  Retry also failed - returning fallback issue');
+  logFailedAudit(domain, retryRaw, 'retry parse attempt failed');
   return {
     domain,
     score: 50,
@@ -710,7 +733,18 @@ function runClaude(prompt, onStream, cwd, requestId, model) {
     const proc = spawn(cliExec, [...cliArgs, '-p', prompt, '--model', modelName, '--output-format', 'stream-json', '--verbose'], {
       cwd: workDir,
       env: safeEnv(),
-      shell: cliExec === 'claude'
+      shell: cliExec === 'claude',
+      // stdio[0]='ignore' closes stdin. Without this, claude CLI waits 3
+      // seconds for piped input, warns about it, then exits with Windows
+      // status 0xC000013A (STATUS_CONTROL_C_EXIT) and 0 chars of output.
+      // The prompt is passed as the -p flag, so we don't need stdin open.
+      // Default stdio was ['pipe','pipe','pipe'] which left stdin dangling.
+      stdio: ['ignore', 'pipe', 'pipe'],
+      // Without windowsHide, every claude -p call pops a cmd.exe console
+      // window on Windows because shell:true spawns through cmd.exe. This
+      // fires on every audit, every battle turn, every narrate/commit call,
+      // which flashed a new window for each one during gameplay.
+      windowsHide: true
     });
 
     // Register for cancellation

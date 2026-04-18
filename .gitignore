@@ -28,6 +28,10 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+
+# Bridge and audit-failure logs (runtime-only)
+.logs/
+dungeon/.logs/
 .mypy_cache/
 *.egg-info/
 dist/
