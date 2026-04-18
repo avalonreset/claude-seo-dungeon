@@ -79,19 +79,15 @@ function getIcon(cls) {
 }
 
 // ── Mark a line as the "latest" (living/active) ──
+// The latest line is the ledger's cursor - the quill currently writing.
+// It gets a static gold left bar + soft trailing dots. No shimmer, no
+// pulse, no flicker. When a line loses .latest, it just drops those
+// affordances and becomes historical - ink already dried.
 function markAsLatest(line) {
   if (latestLine && latestLine !== line) {
     latestLine.classList.remove('latest');
     if (latestDots && latestDots.parentNode) {
       latestDots.remove();
-    }
-    // Reset text fill so old lines show normal color
-    const oldText = latestLine.querySelector('.log-text');
-    if (oldText) {
-      oldText.style.background = 'none';
-      oldText.style.webkitBackgroundClip = 'unset';
-      oldText.style.backgroundClip = 'unset';
-      oldText.style.webkitTextFillColor = 'unset';
     }
   }
 
@@ -407,285 +403,126 @@ export function initActivityLog() {
   const style = document.createElement('style');
   style.textContent = `
     /* ═══════════════════════════════════════════════
-       BASE LINE
+       GUILD LEDGER v2 - Inscription, not animation
+
+       Design philosophy:
+       - Motion is signal, not decoration. Only the quill currently
+         writing (the "latest" line) moves.
+       - Color is a semantic category, not a costume.
+         5 families: parchment (neutral), ink blue (system work),
+         forge green (execution/success), hearth gold (significance),
+         agent purple (summoned entities), blood red (alarm).
+       - Links are affordances. Static color + underline, hover shift
+         only. No glow, no shimmer, no flicker. Explicitly exempted
+         from any parent gradient-clip trickery.
+       - Respect prefers-reduced-motion. The typewriter + dot wave
+         are the only movements that survive; everything else freezes.
        ═══════════════════════════════════════════════ */
+
+    /* ── Base line ── */
     .log-line {
       opacity: 0;
-      animation: fadeInLine 0.35s ease forwards;
+      animation: fadeInLine 0.4s ease-out forwards;
       position: relative;
-      padding: 3px 0 3px 4px;
+      padding: 4px 0 4px 6px;
+      line-height: 1.55;
     }
-
     @keyframes fadeInLine {
-      from { opacity: 0; transform: translateX(-8px); }
+      from { opacity: 0; transform: translateX(-10px); }
       to   { opacity: 1; transform: translateX(0); }
     }
-
     .log-line.typing { opacity: 1; }
 
-    /* ═══════════════════════════════════════════════
-       ICON BASE - bigger, bolder, colored to match category
-       ═══════════════════════════════════════════════ */
+    /* Fresh-ink settle: new lines land slightly brighter, fade to normal
+       over 1.4s. This is the only "glow" effect in the system and it's
+       one-shot, not cyclic. Feels like wet ink drying into parchment. */
+    .log-line.glow {
+      animation: fadeInLine 0.4s ease-out forwards, inkWet 1.4s ease-out 1;
+    }
+    @keyframes inkWet {
+      0%   { filter: brightness(1.22); }
+      100% { filter: brightness(1); }
+    }
+
+    /* ── Icon base: single unified treatment. No per-category motion. ── */
     .log-icon {
       display: inline-block;
       width: 20px;
       text-align: center;
-      margin-right: 6px;
+      margin-right: 7px;
       font-size: 13px;
       vertical-align: middle;
-      /* Each category overrides color below */
+      opacity: 0.72;
     }
 
-    /* ── Per-category icon colors (match line colors but slightly brighter) ── */
-    .icon-tool    { color: #8ee0f0; }
-    .icon-agent   { color: #c9a8ff; }
-    .icon-fetch   { color: #78c4ff; }
-    .icon-search  { color: #b0d4ff; }
-    .icon-read    { color: #9ec8dd; }
-    .icon-write   { color: #ffc468; }
-    .icon-bash    { color: #88ee88; }
-    .icon-skill   { color: #e8c040; }
-    .icon-status  { color: #f0d860; }
-    .icon-system  { color: #9098a8; }
-    .icon-error   { color: #ff5050; }
-    .icon-complete{ color: #50ff50; }
-    .icon-fix     { color: #e8c040; }
-    .icon-demon   { color: #ff4040; }
-    .icon-domain  { color: #99ccff; }
-    .icon-score   { color: #f0d860; }
-    .icon-user    { color: #d4af37; }
-    .icon-text    { color: #808898; }
+    /* ═══════════════════════════════════════════════
+       COLOR FAMILIES
+       Each category maps to one of six semantic roles.
+       ═══════════════════════════════════════════════ */
 
-    /* User prompt lines - distinct gold color */
-    .log-line.user .log-text {
-      color: #d4af37;
-      font-weight: 600;
-    }
+    /* Parchment - default text, neutral chatter */
+    .log-line.text    { color: #c8bfa8; }
+    .log-line.system  { color: #8a8270; }
+
+    /* Ink blue - cool system work (reading, searching, fetching) */
+    .log-line.tool    { color: #8ab6d2; }
+    .log-line.fetch   { color: #8ab6d2; }
+    .log-line.search  { color: #8ab6d2; }
+    .log-line.read    { color: #8ab6d2; }
+    .log-line.domain  { color: #8ab6d2; }
+
+    /* Forge green - execution and success */
+    .log-line.bash    { color: #7fb890; }
+    .log-line.complete{ color: #9fd4a8; }
+
+    /* Hearth gold - significance (skills, user action, victories, writes) */
+    .log-line.skill   { color: #d4af37; }
+    .log-line.fix     { color: #d4af37; }
+    .log-line.user    { color: #d4af37; font-weight: 600; }
+    .log-line.score   { color: #d4af37; }
+    .log-line.write   { color: #c89a40; }
+    .log-line.status  { color: #b89230; }
+
+    /* Agent purple - summoned entities, spawned subagents */
+    .log-line.agent   { color: #a794d6; }
+
+    /* Blood red - alarm */
+    .log-line.error   { color: #c85050; font-weight: 500; }
+    .log-line.demon   { color: #c85050; }
+
+    /* Icon colors mirror line family (grouped, not 1:1 recopied) */
+    .icon-tool, .icon-fetch, .icon-search, .icon-read, .icon-domain { color: #8ab6d2; }
+    .icon-bash, .icon-complete { color: #7fb890; }
+    .icon-skill, .icon-fix, .icon-user, .icon-score { color: #d4af37; }
+    .icon-write, .icon-status { color: #c89a40; }
+    .icon-agent { color: #a794d6; }
+    .icon-error, .icon-demon { color: #c85050; }
+    .icon-text { color: #8a8270; }
+    .icon-system { color: #706a60; }
+
+    /* ═══════════════════════════════════════════════
+       STATIC LINE ACCENTS - thin left bars for meaningful types.
+       These reinforce category without adding motion. Applied only to
+       historical lines (the latest line has its own gold accent).
+       ═══════════════════════════════════════════════ */
     .log-line.user {
-      border-left: 2px solid rgba(212, 175, 55, 0.4);
-      padding-left: 8px;
+      border-left: 2px solid rgba(212, 175, 55, 0.38);
+      padding-left: 9px;
+      margin-left: -2px;
+    }
+    .log-line.agent:not(.latest) {
+      border-left: 2px solid rgba(167, 148, 214, 0.28);
+      padding-left: 9px;
+      margin-left: -2px;
+    }
+    .log-line.bash:not(.latest) {
+      border-left: 2px solid rgba(127, 184, 144, 0.22);
+      padding-left: 9px;
       margin-left: -2px;
     }
 
     /* ═══════════════════════════════════════════════
-       PER-CATEGORY ICON ANIMATIONS
-       Each icon type gets its own characteristic motion
-       ═══════════════════════════════════════════════ */
-
-    /* Agent - slow orbit/breathing, it's a summoned entity */
-    .icon-agent {
-      animation: iconOrbit 3s ease-in-out infinite;
-    }
-    @keyframes iconOrbit {
-      0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
-      50%      { transform: scale(1.2) rotate(15deg); opacity: 1; text-shadow: 0 0 8px #c9a8ff; }
-    }
-
-    /* Fetch - quick downward bounce, grabbing data */
-    .icon-fetch {
-      animation: iconBounce 1.8s ease-in-out infinite;
-    }
-    @keyframes iconBounce {
-      0%, 100% { transform: translateY(0); opacity: 0.7; }
-      30%      { transform: translateY(3px); opacity: 1; text-shadow: 0 0 6px #78c4ff; }
-      60%      { transform: translateY(-1px); opacity: 0.9; }
-    }
-
-    /* Search - slow rotation like a radar sweep */
-    .icon-search {
-      animation: iconRadar 4s linear infinite;
-    }
-    @keyframes iconRadar {
-      0%   { transform: rotate(0deg); opacity: 0.6; }
-      25%  { opacity: 1; text-shadow: 0 0 6px #b0d4ff; }
-      50%  { transform: rotate(180deg); opacity: 0.6; }
-      75%  { opacity: 1; text-shadow: 0 0 6px #b0d4ff; }
-      100% { transform: rotate(360deg); opacity: 0.6; }
-    }
-
-    /* Read - gentle page-flip pulse */
-    .icon-read {
-      animation: iconFlip 2.5s ease-in-out infinite;
-    }
-    @keyframes iconFlip {
-      0%, 100% { transform: scaleX(1); opacity: 0.6; }
-      50%      { transform: scaleX(-1); opacity: 1; text-shadow: 0 0 4px #9ec8dd; }
-    }
-
-    /* Write - quill writing motion */
-    .icon-write {
-      animation: iconScribe 2s ease-in-out infinite;
-    }
-    @keyframes iconScribe {
-      0%, 100% { transform: translate(0, 0) rotate(0deg); opacity: 0.7; }
-      25%      { transform: translate(2px, 1px) rotate(8deg); opacity: 1; text-shadow: 0 0 6px #ffc468; }
-      50%      { transform: translate(0, 0) rotate(0deg); opacity: 0.8; }
-      75%      { transform: translate(-1px, 1px) rotate(-5deg); opacity: 1; }
-    }
-
-    /* Bash - rapid blink like a terminal cursor */
-    .icon-bash {
-      animation: iconTerminal 1.2s step-end infinite;
-    }
-    @keyframes iconTerminal {
-      0%, 49%  { opacity: 1; text-shadow: 0 0 8px #88ee88; }
-      50%, 100% { opacity: 0.3; text-shadow: none; }
-    }
-
-    /* Skill - golden shimmer/sparkle */
-    .icon-skill {
-      animation: iconSparkle 2s ease-in-out infinite;
-    }
-    @keyframes iconSparkle {
-      0%, 100% { transform: scale(1); filter: brightness(1); opacity: 0.7; }
-      30%      { transform: scale(1.3); filter: brightness(1.8); opacity: 1; text-shadow: 0 0 12px #e8c040, 0 0 20px #d4af37; }
-      60%      { transform: scale(0.9); filter: brightness(0.8); opacity: 0.5; }
-    }
-
-    /* Error - alarming shake */
-    .icon-error {
-      animation: iconShake 0.6s ease-in-out infinite;
-    }
-    @keyframes iconShake {
-      0%, 100% { transform: translateX(0); }
-      20%      { transform: translateX(-2px) rotate(-5deg); }
-      40%      { transform: translateX(2px) rotate(5deg); }
-      60%      { transform: translateX(-1px) rotate(-3deg); }
-      80%      { transform: translateX(1px) rotate(2deg); }
-    }
-
-    /* Complete - triumphant scale pop */
-    .icon-complete {
-      animation: iconTriumph 1.5s ease-in-out infinite;
-    }
-    @keyframes iconTriumph {
-      0%, 100% { transform: scale(1); opacity: 0.8; }
-      15%      { transform: scale(1.5); opacity: 1; text-shadow: 0 0 14px #50ff50, 0 0 24px #30cc30; }
-      40%      { transform: scale(1); opacity: 0.9; }
-    }
-
-    /* Status - steady diamond pulse */
-    .icon-status {
-      animation: iconPulse 2s ease-in-out infinite;
-    }
-    @keyframes iconPulse {
-      0%, 100% { opacity: 0.5; transform: scale(1); }
-      50%      { opacity: 1; transform: scale(1.15); text-shadow: 0 0 6px #f0d860; }
-    }
-
-    /* System - slow fade breathing */
-    .icon-system {
-      animation: iconBreathe 3s ease-in-out infinite;
-    }
-    @keyframes iconBreathe {
-      0%, 100% { opacity: 0.3; }
-      50%      { opacity: 0.8; }
-    }
-
-    /* Domain - house glow */
-    .icon-domain {
-      animation: iconGlow 2.5s ease-in-out infinite;
-    }
-    @keyframes iconGlow {
-      0%, 100% { opacity: 0.6; text-shadow: none; }
-      50%      { opacity: 1; text-shadow: 0 0 8px #99ccff, 0 0 14px #6699cc; }
-    }
-
-    /* Demon - sinister red throb */
-    .icon-demon {
-      animation: iconThrob 1.5s ease-in-out infinite;
-    }
-    @keyframes iconThrob {
-      0%, 100% { opacity: 0.6; transform: scale(1); }
-      50%      { opacity: 1; transform: scale(1.2); text-shadow: 0 0 10px #ff4040, 0 0 18px #cc0000; }
-    }
-
-    /* Score - crossed swords clash */
-    .icon-score {
-      animation: iconClash 2s ease-in-out infinite;
-    }
-    @keyframes iconClash {
-      0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.7; }
-      25%      { transform: rotate(-10deg) scale(1.1); opacity: 1; }
-      50%      { transform: rotate(10deg) scale(1.2); opacity: 1; text-shadow: 0 0 8px #f0d860; }
-      75%      { transform: rotate(-5deg) scale(1.05); opacity: 0.9; }
-    }
-
-    /* Fix - victorious star burst */
-    .icon-fix {
-      animation: iconBurst 2s ease-in-out infinite;
-    }
-    @keyframes iconBurst {
-      0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
-      50%      { transform: scale(1.3) rotate(30deg); opacity: 1; text-shadow: 0 0 10px #e8c040; }
-    }
-
-    /* Tool - generic hammer swing */
-    .icon-tool {
-      animation: iconSwing 2s ease-in-out infinite;
-    }
-    @keyframes iconSwing {
-      0%, 100% { transform: rotate(0deg); opacity: 0.6; }
-      30%      { transform: rotate(-15deg); opacity: 1; text-shadow: 0 0 4px #8ee0f0; }
-      60%      { transform: rotate(5deg); opacity: 0.8; }
-    }
-
-    /* Text - subtle chevron pulse */
-    .icon-text {
-      animation: iconChevron 3s ease-in-out infinite;
-    }
-    @keyframes iconChevron {
-      0%, 100% { opacity: 0.3; transform: translateX(0); }
-      50%      { opacity: 0.6; transform: translateX(2px); }
-    }
-
-    /* ═══════════════════════════════════════════════
-       GLOW EFFECTS PER CLASS
-       ═══════════════════════════════════════════════ */
-    .log-line.glow {
-      text-shadow: 0 0 8px currentColor;
-      transition: text-shadow ${GLOW_DURATION}ms ease;
-    }
-    .log-line.glow.tool    { text-shadow: 0 0 14px rgba(125, 216, 232, 0.6); }
-    .log-line.glow.agent   { text-shadow: 0 0 16px rgba(180, 140, 255, 0.6); }
-    .log-line.glow.fetch   { text-shadow: 0 0 14px rgba(100, 180, 255, 0.5); }
-    .log-line.glow.search  { text-shadow: 0 0 12px rgba(160, 200, 255, 0.4); }
-    .log-line.glow.read    { text-shadow: 0 0 10px rgba(140, 180, 200, 0.4); }
-    .log-line.glow.write   { text-shadow: 0 0 14px rgba(255, 180, 80, 0.5); }
-    .log-line.glow.bash    { text-shadow: 0 0 12px rgba(120, 220, 120, 0.5); }
-    .log-line.glow.skill   { text-shadow: 0 0 18px rgba(212, 175, 55, 0.6); }
-    .log-line.glow.status  { text-shadow: 0 0 14px rgba(232, 200, 72, 0.5); }
-    .log-line.glow.error   { text-shadow: 0 0 16px rgba(240, 96, 96, 0.6); }
-    .log-line.glow.complete{ text-shadow: 0 0 18px rgba(96, 240, 96, 0.6); }
-    .log-line.glow.fix     { text-shadow: 0 0 16px rgba(212, 175, 55, 0.6); }
-    .log-line.glow.demon   { text-shadow: 0 0 14px rgba(240, 80, 80, 0.5); }
-    .log-line.glow.domain  { text-shadow: 0 0 12px rgba(136, 187, 255, 0.4); }
-
-    .log-line:not(.glow) { text-shadow: none; }
-
-    /* ═══════════════════════════════════════════════
-       LINE COLORS
-       ═══════════════════════════════════════════════ */
-    .log-line.tool    { color: #7dd8e8; }
-    .log-line.agent   { color: #b48cff; }
-    .log-line.fetch   { color: #64b4ff; }
-    .log-line.search  { color: #a0c8ff; }
-    .log-line.read    { color: #8cb4c8; }
-    .log-line.write   { color: #ffb450; }
-    .log-line.bash    { color: #78dc78; }
-    .log-line.skill   { color: #d4af37; }
-    .log-line.status  { color: #e8c848; }
-    .log-line.system  { color: #808898; }
-    .log-line.error   { color: #f06060; }
-    .log-line.complete{ color: #60e060; }
-    .log-line.fix     { color: #d4af37; }
-    .log-line.demon   { color: #e05050; }
-    .log-line.domain  { color: #88bbff; }
-    .log-line.score   { color: #e8c848; }
-    .log-line.text    { color: #b0b8c0; }
-
-    /* ═══════════════════════════════════════════════
-       TYPING CURSOR
+       TYPING CURSOR - the quill tip, visible only mid-stroke
        ═══════════════════════════════════════════════ */
     .log-line.typing::after {
       content: '\\2588';
@@ -693,59 +530,44 @@ export function initActivityLog() {
       color: #d4af37;
       font-weight: 300;
       font-size: 12px;
+      margin-left: 2px;
+      opacity: 0.85;
     }
-
     @keyframes cursorBlink {
-      0%, 50% { opacity: 1; }
-      51%, 100% { opacity: 0; }
+      0%, 50%    { opacity: 0.85; }
+      51%, 100%  { opacity: 0; }
     }
 
     /* ═══════════════════════════════════════════════
-       LATEST LINE - the living/active indicator
-       Shows the user that the system is still working
+       LATEST LINE - the current reading position
+
+       The current quill. Two motions only: a static gold left bar and
+       a soft trailing dot wave. No text-shimmer, no brightness pulse,
+       no border flare, no icon bounce. The left bar is gold regardless
+       of category because it identifies "this is now," not "this is
+       what kind of work."
        ═══════════════════════════════════════════════ */
     .log-line.latest {
       position: relative;
       padding-left: 14px;
-      animation: fadeInLine 0.35s ease forwards, latestPulse 2s ease-in-out infinite;
+    }
+    .log-line.latest::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 3px;
+      bottom: 3px;
+      width: 3px;
+      border-radius: 1px;
+      background: #d4af37;
+      opacity: 0.78;
+    }
+    .log-line.latest .log-icon {
+      opacity: 1;
+      filter: brightness(1.12);
     }
 
-    /* Flowing left-to-right shimmer across the text */
-    .log-line.latest .log-text {
-      position: relative;
-      background: linear-gradient(
-        90deg,
-        currentColor 0%,
-        currentColor 30%,
-        rgba(255, 255, 255, 0.95) 50%,
-        currentColor 70%,
-        currentColor 100%
-      );
-      background-size: 250% 100%;
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: glowSweep 2.5s ease-in-out infinite;
-    }
-
-    @keyframes glowSweep {
-      0%   { background-position: 250% center; }
-      100% { background-position: -250% center; }
-    }
-
-    /* Whole-line breathing brightness */
-    @keyframes latestPulse {
-      0%, 100% {
-        text-shadow: 0 0 6px currentColor;
-        filter: brightness(1);
-      }
-      50% {
-        text-shadow: 0 0 18px currentColor, 0 0 30px currentColor;
-        filter: brightness(1.3);
-      }
-    }
-
-    /* Animated trailing dots - bouncing wave */
+    /* Trailing dot wave - very soft, just enough to say "still writing" */
     .log-dots {
       display: inline-block;
       margin-left: 6px;
@@ -754,261 +576,218 @@ export function initActivityLog() {
     }
     .log-dots .dot {
       display: inline-block;
-      animation: dotWave 1.4s ease-in-out infinite;
+      animation: dotWave 2s ease-in-out infinite;
       opacity: 0.2;
       color: currentColor;
     }
     .log-dots .dot:nth-child(1) { animation-delay: 0s; }
-    .log-dots .dot:nth-child(2) { animation-delay: 0.2s; }
-    .log-dots .dot:nth-child(3) { animation-delay: 0.4s; }
-
+    .log-dots .dot:nth-child(2) { animation-delay: 0.3s; }
+    .log-dots .dot:nth-child(3) { animation-delay: 0.6s; }
     @keyframes dotWave {
-      0%, 100% { opacity: 0.15; transform: translateY(0) scale(0.8); }
-      35%      { opacity: 1; transform: translateY(-3px) scale(1.3); text-shadow: 0 0 8px currentColor; }
-      70%      { opacity: 0.3; transform: translateY(1px) scale(0.9); }
-    }
-
-    /* Left-border glow pulse */
-    .log-line.latest::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 2px;
-      bottom: 2px;
-      width: 3px;
-      border-radius: 2px;
-      background: currentColor;
-      animation: borderPulse 1.8s ease-in-out infinite;
-    }
-
-    @keyframes borderPulse {
-      0%, 100% { opacity: 0.15; box-shadow: 0 0 4px currentColor; }
-      50%      { opacity: 0.8; box-shadow: 0 0 10px currentColor, 0 0 18px currentColor; }
-    }
-
-    /* Icon on latest line overrides its category anim with a brighter pulse */
-    .log-line.latest .log-icon {
-      opacity: 1;
-      filter: brightness(1.4);
-      animation: iconLatestPulse 1.2s ease-in-out infinite;
-    }
-
-    @keyframes iconLatestPulse {
-      0%, 100% { filter: brightness(1.2); transform: scale(1); }
-      50%      { filter: brightness(2); transform: scale(1.3); text-shadow: 0 0 12px currentColor; }
+      0%, 100% { opacity: 0.18; transform: translateY(0); }
+      50%      { opacity: 0.55; transform: translateY(-2px); }
     }
 
     /* ═══════════════════════════════════════════════
-       SEPARATOR RUNES
+       ONE-SHOT EFFECTS - tied to meaningful outcomes only.
+       Fire when the line first appears, decay cleanly, never loop.
+       ═══════════════════════════════════════════════ */
+
+    /* Error: brief red-tinted background flush, decays to transparent */
+    .log-line.error:not(.latest) {
+      animation: fadeInLine 0.4s ease-out forwards, errorPulse 1.5s ease-out 1;
+    }
+    @keyframes errorPulse {
+      0%, 100% { background: transparent; }
+      20%      { background: rgba(200, 80, 80, 0.12); }
+      80%      { background: transparent; }
+    }
+
+    /* Complete: subtle scale pop, like a stamp pressing onto paper */
+    .log-line.complete:not(.latest) {
+      animation: fadeInLine 0.4s ease-out forwards, completePop 0.7s ease-out 1;
+    }
+    @keyframes completePop {
+      0%   { transform: scale(1); }
+      30%  { transform: scale(1.025); }
+      100% { transform: scale(1); }
+    }
+
+    /* ═══════════════════════════════════════════════
+       SEPARATOR RUNES - static. A rhythmic pause, not an animation.
        ═══════════════════════════════════════════════ */
     .log-separator {
       text-align: center;
-      padding: 6px 0;
+      padding: 8px 0;
       opacity: 0;
       animation: fadeInLine 0.5s ease forwards;
     }
     .sep-dot {
       display: inline-block;
-      color: #303050;
-      font-size: 11px;
-      margin: 0 8px;
-      animation: sepPulse 3s ease-in-out infinite;
+      color: #4a4438;
+      font-size: 10px;
+      margin: 0 10px;
+      opacity: 0.55;
     }
-    .sep-dot:nth-child(2) { animation-delay: 0.4s; color: #404060; }
-    .sep-dot:nth-child(3) { animation-delay: 0.8s; }
-
-    @keyframes sepPulse {
-      0%, 100% { opacity: 0.25; transform: scale(1); }
-      50%      { opacity: 0.7; transform: scale(1.2); color: #606088; text-shadow: 0 0 4px #404060; }
-    }
+    .sep-dot:nth-child(2) { color: #5a5340; opacity: 0.78; }
+    .sep-dot:nth-child(3) { color: #4a4438; opacity: 0.55; }
 
     /* ═══════════════════════════════════════════════
-       LOADING RUNE SPINNER
+       LOADING RUNE - meditative spinner, not frantic
        ═══════════════════════════════════════════════ */
-    .log-loading { opacity: 1; color: #606880; }
-
+    .log-loading {
+      opacity: 1;
+      color: #8a8270;
+      padding: 3px 0 3px 4px;
+    }
     .loading-rune {
       display: inline-block;
-      color: #d4af37;
-      animation: runeGlow 1.5s ease-in-out infinite, runeSpin 2s linear infinite;
+      color: #b89230;
+      animation: runeSpin 3s linear infinite;
       font-size: 14px;
+      opacity: 0.78;
     }
-
-    @keyframes runeGlow {
-      0%, 100% { opacity: 0.4; text-shadow: 0 0 4px rgba(212, 175, 55, 0.2); }
-      50%      { opacity: 1; text-shadow: 0 0 12px rgba(212, 175, 55, 0.6); }
-    }
-
     @keyframes runeSpin {
       0%   { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-
     .loading-text {
       display: inline-block;
       min-width: 100px;
-      animation: loadingPulse 2s ease-in-out infinite;
+      animation: loadingPulse 2.4s ease-in-out infinite;
       font-style: italic;
+      color: #8a8270;
     }
-
     @keyframes loadingPulse {
-      0%, 100% { opacity: 0.3; }
+      0%, 100% { opacity: 0.35; }
       50%      { opacity: 0.7; }
     }
 
     /* ═══════════════════════════════════════════════
-       SPECIAL LINE TYPES
+       IDLE STATE - total stillness when nothing is running
        ═══════════════════════════════════════════════ */
-
-    /* Agent lines - left accent bar (when not latest) */
-    .log-line.agent:not(.latest) {
-      border-left: 2px solid rgba(180, 140, 255, 0.3);
-      padding-left: 8px;
-      margin-left: -2px;
-    }
-
-    /* Error lines - red background pulse */
-    .log-line.error:not(.latest) {
-      animation: fadeInLine 0.35s ease forwards, errorPulse 2s ease-in-out 1;
-    }
-
-    @keyframes errorPulse {
-      0%, 100% { background: transparent; }
-      20%      { background: rgba(240, 60, 60, 0.1); }
-      80%      { background: transparent; }
-    }
-
-    /* Complete lines - pop scale */
-    .log-line.complete:not(.latest) {
-      animation: fadeInLine 0.35s ease forwards, completePop 0.6s ease 1;
-    }
-
-    @keyframes completePop {
-      0%  { transform: scale(1); }
-      30% { transform: scale(1.03); }
-      100%{ transform: scale(1); }
-    }
-
-    /* Skill lines - golden shimmer */
-    .log-line.skill:not(.latest) {
-      animation: fadeInLine 0.35s ease forwards, skillShimmer 3s ease-in-out 1;
-    }
-
-    @keyframes skillShimmer {
-      0%, 100% { filter: brightness(1); }
-      50%      { filter: brightness(1.4); }
-    }
-
-    /* Fetch lines - subtle slide-in from left */
-    .log-line.fetch:not(.latest) {
-      animation: fetchSlide 0.5s ease forwards;
-    }
-
-    @keyframes fetchSlide {
-      from { opacity: 0; transform: translateX(-12px); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
-
-    /* Bash lines - green left bar */
-    .log-line.bash:not(.latest) {
-      border-left: 2px solid rgba(120, 220, 120, 0.25);
-      padding-left: 8px;
-      margin-left: -2px;
-    }
-
-    /* ═══════════════════════════════════════════════
-       IDLE STATE - kill all animations when nothing is running
-       ═══════════════════════════════════════════════ */
-    .ledger-idle .log-line.latest {
-      animation: fadeInLine 0.35s ease forwards !important;
-    }
-    .ledger-idle .log-line.latest .log-text {
-      background: none !important;
-      -webkit-background-clip: unset !important;
-      background-clip: unset !important;
-      -webkit-text-fill-color: unset !important;
-      animation: none !important;
-    }
     .ledger-idle .log-line.latest::before {
-      animation: none !important;
-      opacity: 0.3 !important;
-      box-shadow: none !important;
+      display: none;
     }
     .ledger-idle .log-line.latest .log-icon {
-      animation: none !important;
-      filter: brightness(1) !important;
-    }
-    .ledger-idle .log-icon {
-      animation: none !important;
-      filter: none !important;
-      opacity: 0.6 !important;
+      filter: none;
+      opacity: 0.72;
     }
     .ledger-idle .log-dots {
-      display: none !important;
+      display: none;
+    }
+    .ledger-idle .log-icon {
+      opacity: 0.6;
     }
 
     /* ═══════════════════════════════════════════════
-       CLICKABLE LINKS - URLs and backticked paths/code
+       CLICKABLE LINKS - clean affordances, no motion.
+
+       Critical: links explicitly set -webkit-text-fill-color and
+       background-clip to 'initial'/'currentColor' so that if any parent
+       ever uses a gradient-clip trick, links stay solid and never
+       flicker. This is the fix for the "link flashing" bug the user
+       reported - the root cause was a shimmer on a parent span cascading
+       into anchors. We burn the exemption in at the element level so no
+       future regression can reintroduce it.
        ═══════════════════════════════════════════════ */
     .log-link {
       cursor: pointer;
-      transition: color 120ms ease, background-color 120ms ease,
-                  border-color 120ms ease, text-shadow 120ms ease;
+      transition: color 160ms ease,
+                  background-color 160ms ease,
+                  border-color 160ms ease,
+                  text-decoration-color 160ms ease;
       user-select: text;
       -webkit-user-select: text;
+      -webkit-text-fill-color: currentColor;
+      background-clip: initial;
+      -webkit-background-clip: initial;
     }
+
+    /* URL links - ink blue, subtle underline, clean hover */
     .log-link-url {
-      color: #6bc4ff;
+      color: #8ab6d2;
       text-decoration: underline;
-      text-decoration-color: rgba(107, 196, 255, 0.45);
+      text-decoration-color: rgba(138, 182, 210, 0.42);
       text-underline-offset: 2px;
       font-weight: 500;
     }
     .log-link-url:hover {
-      color: #b4e2ff;
-      text-decoration-color: #b4e2ff;
-      text-shadow: 0 0 6px rgba(107, 196, 255, 0.5);
-    }
-    .log-link-code {
-      color: #9ae69a;
-      background: rgba(136, 238, 136, 0.08);
-      border: 1px solid rgba(136, 238, 136, 0.22);
-      border-radius: 3px;
-      padding: 0 4px;
-      margin: 0 1px;
-    }
-    .log-link-code:hover {
-      color: #c0ffc0;
-      background: rgba(136, 238, 136, 0.20);
-      border-color: rgba(136, 238, 136, 0.55);
-      text-shadow: 0 0 4px rgba(136, 238, 136, 0.5);
-    }
-    .log-link-code:active {
-      background: rgba(136, 238, 136, 0.35);
-      transform: translateY(1px);
+      color: #b6d4ea;
+      text-decoration-color: #b6d4ea;
     }
 
-    /* Copy toast */
+    /* Code links (backticked paths/commands) - warm parchment pill */
+    .log-link-code {
+      color: #b8ac8a;
+      background: rgba(184, 172, 138, 0.08);
+      border: 1px solid rgba(184, 172, 138, 0.22);
+      border-radius: 3px;
+      padding: 0 5px;
+      margin: 0 1px;
+      font-weight: 500;
+    }
+    .log-link-code:hover {
+      color: #d8cca8;
+      background: rgba(184, 172, 138, 0.16);
+      border-color: rgba(184, 172, 138, 0.42);
+    }
+    .log-link-code:active {
+      background: rgba(184, 172, 138, 0.26);
+    }
+
+    /* ═══════════════════════════════════════════════
+       COPY TOAST - brief confirmation, gold on black
+       ═══════════════════════════════════════════════ */
     .log-copy-toast {
       position: fixed;
       bottom: 28px;
       right: 28px;
-      background: rgba(10, 12, 20, 0.94);
-      color: #9ae69a;
+      background: rgba(10, 12, 20, 0.95);
+      color: #d4af37;
       font-family: "JetBrains Mono", monospace;
       font-size: 11px;
       letter-spacing: 2px;
       padding: 9px 16px;
-      border: 1px solid rgba(136, 238, 136, 0.55);
+      border: 1px solid rgba(212, 175, 55, 0.42);
       border-radius: 3px;
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5),
-                  0 0 20px rgba(136, 238, 136, 0.15);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
       z-index: 999999;
       pointer-events: none;
       opacity: 1;
       transition: opacity 320ms ease;
     }
     .log-copy-toast.fade { opacity: 0; }
+
+    /* ═══════════════════════════════════════════════
+       REDUCED MOTION - respect the user's system preference.
+       Keeps the typewriter (it carries content) and freezes everything
+       decorative.
+       ═══════════════════════════════════════════════ */
+    @media (prefers-reduced-motion: reduce) {
+      .log-line {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        filter: none !important;
+      }
+      .log-line.error:not(.latest),
+      .log-line.complete:not(.latest) {
+        animation: none !important;
+      }
+      .log-dots .dot {
+        animation: none !important;
+        opacity: 0.45 !important;
+        transform: none !important;
+      }
+      .loading-rune {
+        animation: none !important;
+      }
+      .loading-text {
+        animation: none !important;
+        opacity: 0.6 !important;
+      }
+    }
   `;
   document.head.appendChild(style);
 
