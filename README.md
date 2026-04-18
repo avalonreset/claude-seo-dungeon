@@ -365,3 +365,21 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 [MIT](LICENSE) - Copyright (c) 2026 Avalon Reset
 
 SEO engine based on [Claude SEO](https://github.com/AgriciDaniel/claude-seo) by Daniel Agrici (MIT).
+
+## Cost expectations
+
+Every `Attack` in battle and every `/seo audit` run spawns a Claude Code process that calls the Anthropic API under your own credentials. **This consumes real tokens against your plan.** A full-site audit with 15 parallel subagents is not a cheap call.
+
+- **Warrior (Opus)** is the deepest and most expensive. Reserve for high-stakes audits. Expect several minutes per full audit and meaningful token usage.
+- **Samurai (Sonnet)** is the recommended default. Balanced cost and depth.
+- **Knight (Haiku)** is the fastest and cheapest. Good for regular use, iteration, and large backlogs of small issues.
+
+Users on Claude Pro may hit the 5-hour usage cap mid-audit if they run multiple Opus-class audits back-to-back. Not a bug; that is how the subscription plan works. If you are doing heavy audit work, consider Max or API credits.
+
+## Disclaimer
+
+**Claude SEO Dungeon is an independent, open-source project. It is not affiliated with, endorsed by, or sponsored by Anthropic.**
+
+"Claude," "Claude Code," "Opus," "Sonnet," and "Haiku" are trademarks of Anthropic and are referenced here descriptively to identify the underlying models the tool spawns. No endorsement or partnership is implied. Users provide their own Claude Code authentication (subscription or API credits) and are responsible for their own token usage under their agreement with Anthropic.
+
+Use of the Anthropic API through Claude Code is subject to Anthropic's [Usage Policies](https://www.anthropic.com/legal/aup) and any applicable terms of service. This project does not proxy, redistribute, or resell access to Anthropic services.
