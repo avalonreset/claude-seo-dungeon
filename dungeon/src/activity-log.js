@@ -403,20 +403,30 @@ export function initActivityLog() {
   const style = document.createElement('style');
   style.textContent = `
     /* ═══════════════════════════════════════════════
-       GUILD LEDGER v2 - Inscription, not animation
+       GUILD LEDGER v3 - Ceremony for the significant
 
        Design philosophy:
-       - Motion is signal, not decoration. Only the quill currently
-         writing (the "latest" line) moves.
-       - Color is a semantic category, not a costume.
-         5 families: parchment (neutral), ink blue (system work),
-         forge green (execution/success), hearth gold (significance),
-         agent purple (summoned entities), blood red (alarm).
-       - Links are affordances. Static color + underline, hover shift
-         only. No glow, no shimmer, no flicker. Explicitly exempted
-         from any parent gradient-clip trickery.
-       - Respect prefers-reduced-motion. The typewriter + dot wave
-         are the only movements that survive; everything else freezes.
+       - Routine work stays CALM: tool calls, reads, fetches, bash,
+         system chatter all arrive quietly, settle into the scroll,
+         and stop moving. No flicker, no looping animation.
+       - Significant moments earn CEREMONY: skill invocations, user
+         commands, victories, completions, errors, demon sightings,
+         and score reveals each get a one-shot entrance that feels
+         earned. The ceremony plays once, then the line is still.
+       - Six color families, one per meaning: parchment (neutral),
+         ink blue (system work), forge green (execution/success),
+         hearth gold (significance), agent purple (summoned
+         entities), blood red (alarm). Icons share family colors.
+       - The latest line is the ledger's living cursor: a gold
+         gradient side-bar with soft trailing dots. Everything
+         older is history; history does not move.
+       - Links are affordances. Color + underline + hover shift.
+         No glow, no shimmer, no flicker. They are hardcoded to
+         ignore any parent gradient-clip so they can never regress
+         into the old flicker behavior.
+       - prefers-reduced-motion freezes every ceremony and every
+         loop. The typewriter cursor remains because it carries
+         content. The reader always gets the full ledger text.
        ═══════════════════════════════════════════════ */
 
     /* ── Base line ── */
@@ -434,14 +444,223 @@ export function initActivityLog() {
     .log-line.typing { opacity: 1; }
 
     /* Fresh-ink settle: new lines land slightly brighter, fade to normal
-       over 1.4s. This is the only "glow" effect in the system and it's
-       one-shot, not cyclic. Feels like wet ink drying into parchment. */
+       over 1.4s. This is the baseline effect every line gets. Feels like
+       wet ink drying into parchment. One-shot, not cyclic. */
     .log-line.glow {
       animation: fadeInLine 0.4s ease-out forwards, inkWet 1.4s ease-out 1;
     }
     @keyframes inkWet {
       0%   { filter: brightness(1.22); }
       100% { filter: brightness(1); }
+    }
+
+    /* ═══════════════════════════════════════════════
+       HERO TIER CEREMONIES
+       Six categories earn a one-shot entrance ceremony. Each fires
+       exactly once when the line first appears, then the line is
+       still forever. The ceremony runs alongside fadeInLine+inkWet
+       via additional keyframes and pseudo-element halos.
+
+         skill     -> rune activation (gold bloom behind icon)
+         user      -> invocation (gold underline draws in)
+         complete  -> victory stamp (green shimmer sweep, scale pop)
+         fix       -> resolution (golden burst, icon spin)
+         error     -> alarm (red sidebar flash + text flicker)
+         demon     -> threat (red pulse, icon throb once)
+         score     -> tally (golden glow, bold weight)
+       ═══════════════════════════════════════════════ */
+
+    /* ── Skill: rune activation ──
+       Icon scales with a gold radial halo blooming behind it.
+       Text letter-spacing widens briefly as the rune "opens." */
+    .log-line.skill.glow .log-icon {
+      animation: iconBloom 900ms ease-out 1;
+    }
+    .log-line.skill.glow {
+      animation: fadeInLine 0.4s ease-out forwards,
+                 inkWet 1.4s ease-out 1,
+                 runeActivation 1s ease-out 1;
+    }
+    @keyframes iconBloom {
+      0%   { transform: scale(1); filter: brightness(1) drop-shadow(0 0 0 #d4af37); }
+      35%  { transform: scale(1.35); filter: brightness(1.5) drop-shadow(0 0 10px #d4af37); }
+      100% { transform: scale(1.08); filter: brightness(1.12) drop-shadow(0 0 0 #d4af37); }
+    }
+    @keyframes runeActivation {
+      0%   { letter-spacing: 0.015em; text-shadow: 0 0 0 rgba(212, 175, 55, 0); }
+      25%  { letter-spacing: 0.045em; text-shadow: 0 0 14px rgba(212, 175, 55, 0.55); }
+      100% { letter-spacing: 0.015em; text-shadow: 0 0 0 rgba(212, 175, 55, 0); }
+    }
+
+    /* ── User: invocation ──
+       A short gold underline draws in from the left and fades. Italic
+       and slightly wider letter-spacing communicate "your voice." */
+    .log-line.user {
+      font-style: italic;
+      letter-spacing: 0.02em;
+    }
+    .log-line.user.glow::after {
+      content: '';
+      position: absolute;
+      left: 9px;
+      right: 4px;
+      bottom: 2px;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(212, 175, 55, 0.7), rgba(212, 175, 55, 0));
+      transform-origin: left center;
+      animation: userUnderline 900ms ease-out 1 forwards;
+      pointer-events: none;
+    }
+    @keyframes userUnderline {
+      0%   { transform: scaleX(0); opacity: 0.85; }
+      60%  { transform: scaleX(1); opacity: 0.85; }
+      100% { transform: scaleX(1); opacity: 0; }
+    }
+
+    /* ── Complete: victory stamp ──
+       Scale pop + one-pass green shimmer across the text + icon burst.
+       The shimmer is a single sweep (not infinite) via a pseudo-element
+       overlay so the text underneath keeps its own color and stays
+       legible. Links are exempt per .log-link rules below. */
+    .log-line.complete.glow {
+      animation: fadeInLine 0.4s ease-out forwards,
+                 inkWet 1.4s ease-out 1,
+                 completePop 0.7s ease-out 1;
+    }
+    .log-line.complete.glow .log-icon {
+      animation: iconVictory 900ms ease-out 1;
+    }
+    .log-line.complete.glow::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -10%;
+      right: -10%;
+      bottom: 0;
+      background: linear-gradient(90deg,
+                  transparent 0%,
+                  rgba(159, 212, 168, 0) 30%,
+                  rgba(159, 212, 168, 0.35) 50%,
+                  rgba(159, 212, 168, 0) 70%,
+                  transparent 100%);
+      animation: victoryShimmer 1.1s ease-out 1 forwards;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+    @keyframes iconVictory {
+      0%   { transform: scale(1) rotate(0deg); filter: brightness(1) drop-shadow(0 0 0 #7fb890); }
+      40%  { transform: scale(1.5) rotate(8deg); filter: brightness(1.8) drop-shadow(0 0 14px #9fd4a8); }
+      100% { transform: scale(1.1) rotate(0deg); filter: brightness(1.15) drop-shadow(0 0 0 #7fb890); }
+    }
+    @keyframes victoryShimmer {
+      0%   { transform: translateX(-60%); opacity: 0; }
+      20%  { opacity: 1; }
+      100% { transform: translateX(60%); opacity: 0; }
+    }
+    @keyframes completePop {
+      0%   { transform: scale(1); }
+      30%  { transform: scale(1.035); }
+      100% { transform: scale(1); }
+    }
+
+    /* ── Fix: resolution ──
+       Golden burst on icon, brief gold text-shadow. A demon was vanquished
+       and a real code edit landed. This is a reward moment. */
+    .log-line.fix.glow .log-icon {
+      animation: iconBurst 800ms ease-out 1;
+    }
+    .log-line.fix.glow {
+      animation: fadeInLine 0.4s ease-out forwards,
+                 inkWet 1.4s ease-out 1,
+                 resolveGlow 1.1s ease-out 1;
+    }
+    @keyframes iconBurst {
+      0%   { transform: scale(1) rotate(0deg); filter: brightness(1) drop-shadow(0 0 0 #d4af37); }
+      45%  { transform: scale(1.4) rotate(30deg); filter: brightness(1.6) drop-shadow(0 0 12px #d4af37); }
+      100% { transform: scale(1.05) rotate(0deg); filter: brightness(1.1) drop-shadow(0 0 0 #d4af37); }
+    }
+    @keyframes resolveGlow {
+      0%   { text-shadow: 0 0 0 rgba(212, 175, 55, 0); }
+      30%  { text-shadow: 0 0 10px rgba(212, 175, 55, 0.5); }
+      100% { text-shadow: 0 0 0 rgba(212, 175, 55, 0); }
+    }
+
+    /* ── Error: alarm ──
+       A red sidebar flashes in from the left and fades, a brief red
+       background tint pulses, and the text momentarily dims once (like
+       a flicker of torchlight). Feels alarming without being annoying. */
+    .log-line.error:not(.latest).glow {
+      animation: fadeInLine 0.4s ease-out forwards,
+                 inkWet 1.4s ease-out 1,
+                 errorPulse 1.5s ease-out 1,
+                 errorFlicker 240ms ease-out 1;
+    }
+    .log-line.error.glow::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 2px;
+      bottom: 2px;
+      width: 3px;
+      background: #c85050;
+      border-radius: 1px;
+      animation: errorSidebar 700ms ease-out 1 forwards;
+      pointer-events: none;
+      box-shadow: 0 0 8px rgba(200, 80, 80, 0.55);
+    }
+    @keyframes errorPulse {
+      0%, 100% { background-color: transparent; }
+      20%      { background-color: rgba(200, 80, 80, 0.12); }
+      80%      { background-color: transparent; }
+    }
+    @keyframes errorFlicker {
+      0%, 100% { opacity: 1; }
+      40%      { opacity: 0.55; }
+      70%      { opacity: 0.9; }
+    }
+    @keyframes errorSidebar {
+      0%   { opacity: 0; transform: scaleY(0.3); }
+      20%  { opacity: 1; transform: scaleY(1); }
+      100% { opacity: 0; transform: scaleY(1); }
+    }
+
+    /* ── Demon: threat ──
+       Icon throbs once, text has a brief warm-red glow. A demon has
+       been sighted. Not as alarming as an error, but wants attention. */
+    .log-line.demon.glow .log-icon {
+      animation: iconThrobOnce 700ms ease-out 1;
+    }
+    .log-line.demon.glow {
+      animation: fadeInLine 0.4s ease-out forwards,
+                 inkWet 1.4s ease-out 1,
+                 demonEcho 1s ease-out 1;
+    }
+    @keyframes iconThrobOnce {
+      0%   { transform: scale(1); filter: brightness(1) drop-shadow(0 0 0 #c85050); }
+      50%  { transform: scale(1.22); filter: brightness(1.4) drop-shadow(0 0 10px #c85050); }
+      100% { transform: scale(1); filter: brightness(1.1) drop-shadow(0 0 0 #c85050); }
+    }
+    @keyframes demonEcho {
+      0%   { text-shadow: 0 0 0 rgba(200, 80, 80, 0); }
+      40%  { text-shadow: 0 0 8px rgba(200, 80, 80, 0.4); }
+      100% { text-shadow: 0 0 0 rgba(200, 80, 80, 0); }
+    }
+
+    /* ── Score: tally ──
+       Bold weight, brief gold glow. The verdict lands. */
+    .log-line.score {
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .log-line.score.glow {
+      animation: fadeInLine 0.4s ease-out forwards,
+                 inkWet 1.4s ease-out 1,
+                 scoreGlow 1.2s ease-out 1;
+    }
+    @keyframes scoreGlow {
+      0%   { text-shadow: 0 0 0 rgba(212, 175, 55, 0); }
+      30%  { text-shadow: 0 0 12px rgba(212, 175, 55, 0.55); }
+      100% { text-shadow: 0 0 0 rgba(212, 175, 55, 0); }
     }
 
     /* ── Icon base: single unified treatment. No per-category motion. ── */
@@ -558,13 +777,15 @@ export function initActivityLog() {
       top: 3px;
       bottom: 3px;
       width: 3px;
-      border-radius: 1px;
-      background: #d4af37;
-      opacity: 0.78;
+      border-radius: 1px 1px 1px 1px;
+      background: linear-gradient(180deg, #f0cc50 0%, #d4af37 40%, #a6892c 100%);
+      box-shadow: 0 0 6px rgba(212, 175, 55, 0.55),
+                  inset 0 0 2px rgba(255, 220, 120, 0.8);
+      opacity: 0.95;
     }
     .log-line.latest .log-icon {
       opacity: 1;
-      filter: brightness(1.12);
+      filter: brightness(1.18);
     }
 
     /* Trailing dot wave - very soft, just enough to say "still writing" */
@@ -614,42 +835,95 @@ export function initActivityLog() {
     }
 
     /* ═══════════════════════════════════════════════
-       SEPARATOR RUNES - static. A rhythmic pause, not an animation.
+       SEPARATOR RUNES - one-shot trace-in, then still.
+       The central rune appears first, then the outer runes fade in
+       from it. Once placed, the separator never moves again.
        ═══════════════════════════════════════════════ */
     .log-separator {
       text-align: center;
-      padding: 8px 0;
+      padding: 10px 0;
       opacity: 0;
       animation: fadeInLine 0.5s ease forwards;
+      position: relative;
     }
+    .log-separator::before,
+    .log-separator::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 28%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.22), transparent);
+      transform: translateY(-50%);
+    }
+    .log-separator::before { left: 8%; }
+    .log-separator::after  { right: 8%; }
     .sep-dot {
       display: inline-block;
-      color: #4a4438;
-      font-size: 10px;
-      margin: 0 10px;
-      opacity: 0.55;
+      color: #6a5a3a;
+      font-size: 11px;
+      margin: 0 12px;
+      opacity: 0;
+      animation: sepTrace 600ms ease-out 1 forwards;
     }
-    .sep-dot:nth-child(2) { color: #5a5340; opacity: 0.78; }
-    .sep-dot:nth-child(3) { color: #4a4438; opacity: 0.55; }
+    .sep-dot:nth-child(2) {
+      color: #d4af37;
+      animation-delay: 0s;
+      font-size: 13px;
+      text-shadow: 0 0 6px rgba(212, 175, 55, 0.4);
+    }
+    .sep-dot:nth-child(1) { animation-delay: 220ms; }
+    .sep-dot:nth-child(3) { animation-delay: 220ms; }
+    @keyframes sepTrace {
+      0%   { opacity: 0; transform: scale(0.6); }
+      60%  { opacity: 1; transform: scale(1.15); }
+      100% { opacity: 0.7; transform: scale(1); }
+    }
 
     /* ═══════════════════════════════════════════════
-       LOADING RUNE - meditative spinner, not frantic
+       LOADING RUNE - meditative spinner with gold halo.
+       The rune spins, a faint gold ring orbits counter-direction at
+       half the speed. Compound motion that reads as "conjuring," not
+       "loading spinner." Stays quiet until loading is active.
        ═══════════════════════════════════════════════ */
     .log-loading {
       opacity: 1;
       color: #8a8270;
       padding: 3px 0 3px 4px;
+      position: relative;
     }
     .loading-rune {
       display: inline-block;
-      color: #b89230;
+      position: relative;
+      color: #d4af37;
       animation: runeSpin 3s linear infinite;
       font-size: 14px;
-      opacity: 0.78;
+      opacity: 0.85;
+      text-shadow: 0 0 8px rgba(212, 175, 55, 0.35);
+    }
+    .loading-rune::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 26px;
+      height: 26px;
+      margin-left: -13px;
+      margin-top: -13px;
+      border-radius: 50%;
+      border: 1px solid rgba(212, 175, 55, 0.22);
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.18),
+                  inset 0 0 4px rgba(212, 175, 55, 0.12);
+      animation: runeHalo 6s linear infinite reverse;
     }
     @keyframes runeSpin {
       0%   { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
+    }
+    @keyframes runeHalo {
+      0%   { transform: rotate(0deg) scale(1); opacity: 0.35; }
+      50%  { transform: rotate(180deg) scale(1.08); opacity: 0.6; }
+      100% { transform: rotate(360deg) scale(1); opacity: 0.35; }
     }
     .loading-text {
       display: inline-block;
@@ -657,10 +931,12 @@ export function initActivityLog() {
       animation: loadingPulse 2.4s ease-in-out infinite;
       font-style: italic;
       color: #8a8270;
+      letter-spacing: 0.02em;
+      margin-left: 6px;
     }
     @keyframes loadingPulse {
       0%, 100% { opacity: 0.35; }
-      50%      { opacity: 0.7; }
+      50%      { opacity: 0.75; }
     }
 
     /* ═══════════════════════════════════════════════
@@ -704,36 +980,69 @@ export function initActivityLog() {
       -webkit-background-clip: initial;
     }
 
-    /* URL links - ink blue, subtle underline, clean hover */
+    /* URL links - ink blue with offset underline. Hover brightens the
+       text, thickens and extends the underline, adds a soft glow halo
+       behind the text. No flicker, no pulse - the motion is only on
+       hover, as a deliberate user-driven acknowledgement. */
     .log-link-url {
       color: #8ab6d2;
       text-decoration: underline;
       text-decoration-color: rgba(138, 182, 210, 0.42);
-      text-underline-offset: 2px;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
       font-weight: 500;
+      transition: color 180ms ease,
+                  text-decoration-color 180ms ease,
+                  text-decoration-thickness 180ms ease,
+                  text-shadow 180ms ease;
     }
     .log-link-url:hover {
-      color: #b6d4ea;
-      text-decoration-color: #b6d4ea;
+      color: #cfe6f5;
+      text-decoration-color: #cfe6f5;
+      text-decoration-thickness: 2px;
+      text-shadow: 0 0 10px rgba(138, 182, 210, 0.55);
+    }
+    .log-link-url:active {
+      color: #a8c4da;
     }
 
-    /* Code links (backticked paths/commands) - warm parchment pill */
+    /* Code links (backticked paths/commands) - warm parchment pill.
+       Hover lifts the pill slightly with a soft drop shadow and
+       brightens the text. Active presses the pill back down.
+       The combined hover + active feels tactile. */
     .log-link-code {
+      display: inline-block;
       color: #b8ac8a;
-      background: rgba(184, 172, 138, 0.08);
-      border: 1px solid rgba(184, 172, 138, 0.22);
+      background: linear-gradient(180deg, rgba(184, 172, 138, 0.08), rgba(184, 172, 138, 0.12));
+      border: 1px solid rgba(184, 172, 138, 0.25);
       border-radius: 3px;
-      padding: 0 5px;
+      padding: 1px 6px;
       margin: 0 1px;
       font-weight: 500;
+      transition: color 180ms ease,
+                  background 180ms ease,
+                  border-color 180ms ease,
+                  box-shadow 180ms ease,
+                  transform 180ms ease;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25),
+                  inset 0 1px 0 rgba(255, 240, 200, 0.04);
     }
     .log-link-code:hover {
-      color: #d8cca8;
-      background: rgba(184, 172, 138, 0.16);
-      border-color: rgba(184, 172, 138, 0.42);
+      color: #f0e6c8;
+      background: linear-gradient(180deg, rgba(212, 175, 55, 0.18), rgba(184, 140, 60, 0.22));
+      border-color: rgba(212, 175, 55, 0.55);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45),
+                  0 0 10px rgba(212, 175, 55, 0.25),
+                  inset 0 1px 0 rgba(255, 240, 200, 0.12);
+      transform: translateY(-1px);
     }
     .log-link-code:active {
-      background: rgba(184, 172, 138, 0.26);
+      background: rgba(212, 175, 55, 0.28);
+      border-color: rgba(212, 175, 55, 0.7);
+      box-shadow: 0 0 0 rgba(0, 0, 0, 0),
+                  inset 0 1px 3px rgba(0, 0, 0, 0.4);
+      transform: translateY(1px);
+      transition-duration: 60ms;
     }
 
     /* ═══════════════════════════════════════════════
@@ -760,32 +1069,68 @@ export function initActivityLog() {
     .log-copy-toast.fade { opacity: 0; }
 
     /* ═══════════════════════════════════════════════
+       HOVER ON HISTORICAL LINES - aid for re-reading
+       When the audit is long and the user scrolls back, hovering a
+       historical line subtly lifts it with a faint parchment
+       highlight. Makes it easier to track the line your eye is on
+       without creating any ambient motion.
+       ═══════════════════════════════════════════════ */
+    .log-line:not(.latest):not(.log-loading):hover {
+      background: rgba(212, 175, 55, 0.04);
+      transition: background 140ms ease;
+    }
+
+    /* ═══════════════════════════════════════════════
        REDUCED MOTION - respect the user's system preference.
-       Keeps the typewriter (it carries content) and freezes everything
-       decorative.
+       Keeps the typewriter cursor (carries content). Freezes every
+       ceremony, every halo, every orbit. The ledger is fully
+       readable, just static.
        ═══════════════════════════════════════════════ */
     @media (prefers-reduced-motion: reduce) {
-      .log-line {
+      .log-line,
+      .log-line.glow,
+      .log-line.skill.glow,
+      .log-line.complete.glow,
+      .log-line.fix.glow,
+      .log-line.error:not(.latest).glow,
+      .log-line.demon.glow,
+      .log-line.score.glow {
         animation: none !important;
         opacity: 1 !important;
         transform: none !important;
         filter: none !important;
+        text-shadow: none !important;
+        letter-spacing: 0.015em !important;
       }
-      .log-line.error:not(.latest),
-      .log-line.complete:not(.latest) {
+      .log-line.skill.glow .log-icon,
+      .log-line.complete.glow .log-icon,
+      .log-line.fix.glow .log-icon,
+      .log-line.demon.glow .log-icon {
         animation: none !important;
+        filter: none !important;
+        transform: none !important;
+      }
+      .log-line.complete.glow::before,
+      .log-line.error.glow::before,
+      .log-line.user.glow::after {
+        display: none !important;
       }
       .log-dots .dot {
         animation: none !important;
         opacity: 0.45 !important;
         transform: none !important;
       }
-      .loading-rune {
+      .loading-rune,
+      .loading-rune::before {
         animation: none !important;
       }
       .loading-text {
         animation: none !important;
         opacity: 0.6 !important;
+      }
+      .sep-dot {
+        animation: none !important;
+        opacity: 0.7 !important;
       }
     }
   `;
