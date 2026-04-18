@@ -26,36 +26,47 @@ const d = (name, label) => ({
 
 // ── TIER 5: CRITICAL - the archdemons ────────────────────────────────
 // Biggest sprites, most glorious. Rank-0 gets the worst issue.
+// Proper names + epithets. These are bosses in every sense; they earn
+// their own identity the way Dark-Souls bosses do: a short strange
+// name you will remember, then a title that communicates station.
 export const CRITICAL_POOL = [
-  d('big_demon', 'The Archdemon'),
-  d('ogre',      'The Ogre'),
+  d('big_demon', 'Gorreth, the Archdemon'),
+  d('ogre',      'Vrokk the Mountainborn'),
 ];
 
 // ── TIER 4: HIGH - major threats ─────────────────────────────────────
+// Named warriors and a titled revenant. The Risen Colossus keeps its
+// pure-title form because some horrors are too old to have a name.
 export const HIGH_POOL = [
-  d('orc_warrior', 'Orc Warrior'),
-  d('big_zombie',  'Risen Colossus'),
-  d('skelet',      'Skeleton Warrior'),
+  d('orc_warrior', 'Kharnos, Warborn'),
+  d('big_zombie',  'The Risen Colossus'),
+  d('skelet',      'Oskaryn the Ivory-Armed'),
 ];
 
 // ── TIER 3: MEDIUM - mid-tier ────────────────────────────────────────
+// Proper names with gothic epithets. Each is a distinct presence
+// rather than a category.
 export const MEDIUM_POOL = [
-  d('chort',        'Chort'),
-  d('masked_orc',   'Masked Orc'),
-  d('pumpkin_dude', 'Pumpkin Fiend'),
+  d('chort',        'Chirot the Laughing'),
+  d('masked_orc',   'The Thrice-Masked'),
+  d('pumpkin_dude', 'Halgrim the Rot-Crowned'),
 ];
 
 // ── TIER 2: LOW - lesser threats ─────────────────────────────────────
+// A mix of one proper name and two "type-as-identity" forms. Lesser
+// enemies in gothic fantasy are often known by what they do, not by
+// who they are.
 export const LOW_POOL = [
-  d('orc_shaman', 'Orc Shaman'),
-  d('imp',        'Imp'),
-  d('wogol',      'Wogol'),
+  d('orc_shaman', 'Ashkarn the Entrail-Reader'),
+  d('imp',        'Skittering Imp'),
+  d('wogol',      'Wogol of the Deep-Damp'),
 ];
 
 // ── TIER 1: INFO - the weakest pests ─────────────────────────────────
+// Type-named. These are not individuals; they are manifestations.
 export const INFO_POOL = [
-  d('goblin',      'Goblin'),
-  d('tiny_zombie', 'Tiny Zombie'),
+  d('goblin',      'Step-Skulker'),
+  d('tiny_zombie', 'Lesser Risen'),
 ];
 
 export const POOLS = {
@@ -92,74 +103,79 @@ export const POOLS = {
 // ═══════════════════════════════════════════════════════════════════════
 
 // SEO-category → demon-archetype mappings. First match wins.
-// Each theme lists preferred demon LABELS (matched via demon.label.includes).
+// Each theme lists preferred demons by ASSET NAME (the stable 0x72
+// sprite key like 'big_demon', 'orc_warrior'). Asset names never
+// change; display labels can, so matching by name here means future
+// label upgrades do not silently break thematic assignment.
 // Order inside `prefer` is the theme's own ranking - most-appropriate first.
 const THEME_HINTS = [
   // Schema / structured data → lawful enforcers
   { keywords: ['schema', 'structured data', 'json-ld', 'microdata', 'rich result', 'rich snippet', 'markup'],
-    prefer: ['Archdemon', 'Orc Warrior', 'Masked Orc'] },
+    prefer: ['big_demon', 'orc_warrior', 'masked_orc'] },
 
   // Security / HTTPS → heavy armored threats
   { keywords: ['security', 'https', 'ssl', 'tls', 'certificate', 'xss', 'mixed content', 'hsts'],
-    prefer: ['Ogre', 'Orc Warrior', 'Masked Orc', 'Imp'] },
+    prefer: ['ogre', 'orc_warrior', 'masked_orc', 'imp'] },
 
   // Broken / 404 / redirects → skeletal remnants
   { keywords: ['404', 'broken link', 'broken', 'redirect chain', 'dead link', 'soft 404', 'orphan page'],
-    prefer: ['Skeleton Warrior', 'Tiny Zombie', 'Risen Colossus'] },
+    prefer: ['skelet', 'tiny_zombie', 'big_zombie'] },
 
   // Stale / outdated → undead
   { keywords: ['stale', 'outdated', 'freshness', 'last updated', 'decay', 'old content', 'freshness signal'],
-    prefer: ['Risen Colossus', 'Skeleton Warrior', 'Tiny Zombie'] },
+    prefer: ['big_zombie', 'skelet', 'tiny_zombie'] },
 
   // Duplicate / canonical / thin → tricksters that mirror
   { keywords: ['duplicate', 'canonical', 'cannibalization', 'near-duplicate', 'thin page', 'redundant'],
-    prefer: ['Chort', 'Imp', 'Wogol'] },
+    prefer: ['chort', 'imp', 'wogol'] },
 
   // Performance / CWV → fast little nuisances
   { keywords: ['performance', 'core web vitals', 'cwv', 'speed', 'pagespeed', 'page speed', 'lcp', 'inp', 'cls', 'render-blocking', 'loading', 'slow'],
-    prefer: ['Imp', 'Chort', 'Goblin', 'Wogol'] },
+    prefer: ['imp', 'chort', 'goblin', 'wogol'] },
 
   // Mobile / responsive → small shifters
   { keywords: ['mobile', 'responsive', 'viewport', 'touch target', 'text too small', 'tap target'],
-    prefer: ['Wogol', 'Imp', 'Chort'] },
+    prefer: ['wogol', 'imp', 'chort'] },
 
   // Images / alt text → simple pests
   { keywords: ['image', 'alt text', 'alt attribute', 'image seo', 'webp', 'lazy load', 'compression'],
-    prefer: ['Goblin', 'Imp', 'Tiny Zombie'] },
+    prefer: ['goblin', 'imp', 'tiny_zombie'] },
 
   // Meta / titles / descriptions → named speakers (they have presence)
   { keywords: ['meta tag', 'title tag', 'meta description', 'og:', 'opengraph', 'twitter card', 'headings', 'h1'],
-    prefer: ['Archdemon', 'Ogre', 'Orc Warrior'] },
+    prefer: ['big_demon', 'ogre', 'orc_warrior'] },
 
   // Sitemap / crawlability / indexation → order-keepers
   { keywords: ['sitemap', 'robots.txt', 'crawl', 'indexation', 'indexing', 'noindex', 'disallow'],
-    prefer: ['Ogre', 'Orc Warrior', 'Archdemon'] },
+    prefer: ['ogre', 'orc_warrior', 'big_demon'] },
 
   // Internal linking → connectors / small scouts
   { keywords: ['internal link', 'anchor text', 'link structure', 'link graph', 'navigation'],
-    prefer: ['Goblin', 'Wogol', 'Imp'] },
+    prefer: ['goblin', 'wogol', 'imp'] },
 
   // Content quality / E-E-A-T → the most intimidating of the roster
   { keywords: ['e-e-a-t', 'eeat', 'thin content', 'low quality', 'content quality', 'author', 'expertise', 'authoritativeness', 'trustworthiness', 'trust signal'],
-    prefer: ['Archdemon', 'Ogre', 'Pumpkin Fiend'] },
+    prefer: ['big_demon', 'ogre', 'pumpkin_dude'] },
 
   // Local SEO / GBP → place-bound oddities
   { keywords: ['local seo', 'local', 'gbp', 'google business', 'nap', 'citation', 'map pack', 'gmb', 'google maps'],
-    prefer: ['Pumpkin Fiend', 'Masked Orc', 'Goblin'] },
+    prefer: ['pumpkin_dude', 'masked_orc', 'goblin'] },
 
   // Backlinks / authority → major bosses
   { keywords: ['backlink', 'toxic link', 'link profile', 'anchor', 'link velocity', 'domain authority'],
-    prefer: ['Archdemon', 'Ogre', 'Orc Warrior'] },
+    prefer: ['big_demon', 'ogre', 'orc_warrior'] },
 
   // AI / GEO / generative search → strange new horrors
   { keywords: ['ai overview', 'chatgpt', 'perplexity', 'geo', 'llm', 'ai search', 'generative', 'llms.txt'],
-    prefer: ['Pumpkin Fiend', 'Archdemon', 'Skeleton Warrior'] },
+    prefer: ['pumpkin_dude', 'big_demon', 'skelet'] },
 ];
 
 /**
  * Given a demon pool and an issue, return the subset of demons whose
- * labels match any of the preferred archetypes for the issue's theme.
- * Returns an empty array when no theme matches.
+ * asset names match any of the preferred archetypes for the issue's
+ * theme. Returns an empty array when no theme matches.
+ * Uses demon.name (the stable 0x72 asset key) so that display-label
+ * changes never break theme matching.
  */
 function findThematicDemons(pool, issue) {
   if (!issue) return [];
@@ -174,8 +190,8 @@ function findThematicDemons(pool, issue) {
     if (!hit) continue;
 
     const matches = [];
-    for (const preferLabel of theme.prefer) {
-      const found = pool.find((dd) => dd.label.includes(preferLabel));
+    for (const preferName of theme.prefer) {
+      const found = pool.find((dd) => dd.name === preferName);
       if (found && !matches.includes(found)) matches.push(found);
     }
     if (matches.length > 0) return matches;

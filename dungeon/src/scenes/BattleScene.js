@@ -374,8 +374,14 @@ export class BattleScene extends Phaser.Scene {
     dPanel.lineStyle(2, sevHex, 0.7);
     dPanel.strokeRoundedRect(dp.x, dp.y, dp.w, dp.h, 5);
 
-    // Demon name (from real issue data) + severity badge
-    const demonName = this.issue.severity.toUpperCase() + ' DEMON';
+    // Demon proper name (from the themed-assignment engine) with a
+    // small uppercase tier annotation separated by a hyphen. The name
+    // carries the personality; the tier annotation preserves severity
+    // signal without stealing attention from the name.
+    // Example: "CHIROT THE LAUGHING - MEDIUM"
+    const properName = (this.issue._demonName || 'Unknown').toUpperCase();
+    const tierWord = this.issue.severity.toUpperCase();
+    const demonName = `${properName} - ${tierWord}`;
     this.add.text(dp.x + 10, dp.y + 6, demonName, {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '11px',
@@ -436,7 +442,14 @@ export class BattleScene extends Phaser.Scene {
     const charNames = { 'opus': 'SEO WARRIOR', 'sonnet': 'SEO SAMURAI', 'haiku': 'SEO KNIGHT' };
     const charName = charNames[this.game.characterConfig?.model] || 'SEO WARRIOR';
     this.charName = charName;
-    this.add.text(kp.x + 10, kp.y + 6, charName, {
+    // Append the current domain after the class name as a reminder of
+    // what we are hunting. Lowercase because URLs are canonically
+    // lowercase and keeping the class uppercase preserves the visual
+    // hierarchy: class first (loud), domain second (quieter). Example:
+    //   "SEO WARRIOR - example.com"
+    const domain = (this.game.domain || '').toLowerCase();
+    const knightLabel = domain ? `${charName} - ${domain}` : charName;
+    this.add.text(kp.x + 10, kp.y + 6, knightLabel, {
       fontFamily: '"JetBrains Mono", monospace',
       fontSize: '11px',
       color: COLORS.cyan,
@@ -1694,12 +1707,18 @@ export class BattleScene extends Phaser.Scene {
   }
 
   _narrateAttack(rawLines, fallbackSummary) {
-    const demonName = this.issue.title;
+    // Use the demon's proper name from the roster (e.g. "Chirot the
+    // Laughing") as primary identity, with the issue title providing
+    // the concrete subject matter of the attack. Previously the
+    // narrator only knew the issue title, which flattened every
+    // demon into whatever SEO concept it was embodying.
+    const demonName = this.issue._demonName || this.issue.title;
+    const issueTitle = this.issue.title;
     const charName = this.charName;
     const severity = this.issue.severity;
     const condensed = rawLines.slice(-15).join('\n');
 
-    const prompt = `You are the narrator of a dark fantasy dungeon crawler. The warrior "${charName}" just attacked the demon "${demonName}" (severity: ${severity}). Below is what actually happened during the attack - technical SEO actions performed by Claude. Write 2-3 short, grim sentences narrating this as a battle action. Stay relevant to the actual work described. No humor, no corniness. Dark, terse, atmospheric. Like a Souls game narrator. Do NOT use markdown. Plain text only.
+    const prompt = `You are the narrator of a dark fantasy dungeon crawler. The warrior "${charName}" just attacked the demon ${demonName} - a being whose essence is the flaw "${issueTitle}" (severity: ${severity}). Below is what actually happened during the attack - technical SEO actions performed by Claude. Write 2-3 short, grim sentences narrating this as a battle action. Refer to the demon by name when natural. Stay relevant to the actual work described. No humor, no corniness. Dark, terse, atmospheric. Like a Souls game narrator. Do NOT use markdown. Plain text only.
 
 What happened:
 ${condensed}
