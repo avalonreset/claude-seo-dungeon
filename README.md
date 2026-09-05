@@ -1,15 +1,15 @@
-<p align="center">
-  <a href="assets/banner.webp"><img src="assets/banner.webp" alt="SEO Dungeon - Gamified SEO Audit Tool" width="100%"></a>
+<p align="left" id="banner">
+  <a href="https://cto-legends.com"><img src="assets/banner.webp" alt="seo-dungeon — seo audits as dungeon battles" width="100%"></a>
 </p>
 
-# SEO Dungeon - AI SEO Audits as Dungeon Battles
+# seo-dungeon
 
 [![CI](https://github.com/avalonreset/seo-dungeon/actions/workflows/ci.yml/badge.svg)](https://github.com/avalonreset/seo-dungeon/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Version](https://img.shields.io/badge/version-2.2-blue)](CHANGELOG.md)
 [![Runtime](https://img.shields.io/badge/runtime-Codex%20%7C%20Claude%20%7C%20Gemini-2ea44f)](dungeon/)
 
-SEO Dungeon turns SEO audits into a 16-bit dungeon crawler. Enter a domain,
+seo-dungeon turns SEO audits into a 16-bit dungeon crawler. Enter a domain,
 inspect the issues as demons, and use a local AI CLI to analyze or fix them
 inside your project. The packaged bridge selects Codex by default and also
 supports Claude Code and Gemini CLI when those local tools are installed.
@@ -18,16 +18,16 @@ supports Claude Code and Gemini CLI when those local tools are installed.
 
 <table>
 <tr>
-<td width="50%"><a href="screenshots/title-screen.webp"><img src="screenshots/title-screen.webp" alt="SEO Dungeon title screen with character and runtime selection"></a><br><em>Pick a CLI, pick a warrior, enter a domain</em></td>
+<td width="50%"><a href="screenshots/title-screen.webp"><img src="screenshots/title-screen.webp" alt="seo-dungeon title screen with character and runtime selection"></a><br><em>Pick a CLI, pick a warrior, enter a domain</em></td>
 <td width="50%"><a href="screenshots/gate-scene-full.webp"><img src="screenshots/gate-scene-full.webp" alt="Gate scene showing quest continuation options"></a><br><em>Continue a previous quest or begin a new one</em></td>
 </tr>
 <tr>
-<td width="50%"><a href="screenshots/summoning-scene.webp"><img src="screenshots/summoning-scene.webp" alt="SEO Dungeon audit loading hallway with the hero descending"></a><br><em>Run a fresh audit while the hero descends</em></td>
+<td width="50%"><a href="screenshots/summoning-scene.webp"><img src="screenshots/summoning-scene.webp" alt="seo-dungeon audit loading hallway with the hero descending"></a><br><em>Run a fresh audit while the hero descends</em></td>
 <td width="50%"><a href="screenshots/dungeon-hall.webp"><img src="screenshots/dungeon-hall.webp" alt="Dungeon hall showing SEO issue demons sorted by severity"></a><br><em>Browse SEO demons sorted by severity</em></td>
 </tr>
 <tr>
 <td width="50%"><a href="screenshots/battle-scene.webp"><img src="screenshots/battle-scene.webp" alt="Turn-based battle scene with real-time Guild Ledger"></a><br><em>Battle demons with agent-powered fixes</em></td>
-<td width="50%"><a href="assets/social-preview.png"><img src="assets/social-preview.png" alt="SEO Dungeon social preview key art"></a><br><em>Share-ready key art for the public repo</em></td>
+<td width="50%"><a href="assets/social-preview.png"><img src="assets/social-preview.png" alt="seo-dungeon social preview key art"></a><br><em>Share-ready key art for the public repo</em></td>
 </tr>
 </table>
 
@@ -62,7 +62,7 @@ The bundled v2.2 engine is synchronized with Daniel Agrici's public
 1 orchestrator + 1 framework integration + 2 extension mirrors), 18 portable
 sub-agents, 23 Codex agent profiles, and 50 Python execution scripts.
 
-Full audits are treated as multi-agent work by default. SEO Dungeon asks the
+Full audits are treated as multi-agent work by default. seo-dungeon asks the
 selected runtime to fan out specialist audit workers in parallel whenever that
 runtime supports it, and delegated workers inherit the selected strength profile:
 Warrior stays extra-high, Samurai stays high, and Knight stays medium.
@@ -168,7 +168,7 @@ This writes an MP4 at the current desktop resolution, early and late frames,
 browser screenshot, manifest, session log, ledger transcript, and CLI receipts
 under `dungeon/.logs/desktop-intents-proof/<timestamp>/`. The default
 fake-Codex mode is for recursive smoke testing. Release/demo proof should use
-`--real-codex --position-codex-window`, Codex visible on the left, SEO Dungeon
+`--real-codex --position-codex-window`, Codex visible on the left, seo-dungeon
 visible on the right, and no `--allow-foreground-mismatch`.
 
 Runtime environment:
@@ -202,7 +202,7 @@ configured default model.
 
 ### Project API Credentials
 
-SEO Dungeon treats the selected project folder as the credential source for
+seo-dungeon treats the selected project folder as the credential source for
 audit integrations. Add a `.env` or `.env.local` file at that project root when
 you want live data:
 
@@ -219,7 +219,7 @@ GA4_PROPERTY_ID=123456789
 The bridge forwards known SEO-related keys from the project `.env` into the
 selected local CLI. DataForSEO, Firecrawl, and Google workflows should use those
 credentials directly first. MCP servers are optional adapters: if you already
-have one configured, an agent may use it quietly, but SEO Dungeon does not
+have one configured, an agent may use it quietly, but seo-dungeon does not
 require MCP setup for audits.
 
 First audits can take 5-10 minutes because `/seo audit` fans out multiple
@@ -298,5 +298,5 @@ seo-dungeon/
 [MIT](LICENSE) - Copyright (c) 2026 Avalon Reset.
 
 SEO engine code is derived from Daniel Agrici's open-source SEO skill suite and
-used under the MIT license. SEO Dungeon is independent and runs through local
+used under the MIT license. seo-dungeon is independent and runs through local
 terminal-agent workflows selected in the app.
