@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.2.5] - 2026-09-06
 
 - Consolidate the public project at `avalonreset/legends-seo-dungeon`, with a
-  clean source history, canonical install/support links, and one release line.
+  reviewed source snapshot, canonical install/support links, and one release line.
+  Rename the original Avalon Reset repository to preserve its stars, issues,
+  and history; the current release archive contains only the reviewed source.
 
 - Align Dungeon package, plugin, citation, and README versions with the bundled
   public Claude SEO v2.2.5 release. Dungeon-only fixes use Git commit identifiers.
