@@ -1,0 +1,45 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in SEO Dungeon
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill in as much detail as possible.
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: e.g. macOS 14, Ubuntu 24.04, Windows 11
+    validations:
+      required: true
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js Version
+      description: Run `node --version`
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      description: e.g. Chrome 120, Firefox 121, Safari 17
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected to happen
+    validations:
+      required: true
+  - type: textarea
+    id: error-output
+    attributes:
+      label: Error output or screenshot
+      description: Copy any console errors or attach screenshots
+      render: shell
+    validations:
+      required: false

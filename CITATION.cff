@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+title: Legends SEO Dungeon
+message: >-
+  If you use this software, please cite it using the metadata from this file.
+type: software
+authors:
+  - alias: AvalonReset
+    given-names: Avalon
+    family-names: Reset
+    website: 'https://github.com/avalonreset'
+repository-code: 'https://github.com/avalonreset/legends-seo-dungeon'
+url: 'https://github.com/avalonreset/legends-seo-dungeon'
+license: MIT
+version: 2.2.5
+date-released: 2026-09-06
+keywords:
+  - seo
+  - codex
+  - ai-tools
+  - schema-markup
+  - e-e-a-t
+  - geo

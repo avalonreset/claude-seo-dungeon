@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  engine:
+    name: SEO engine tests
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+
+      - name: Check Python syntax
+        run: |
+          mapfile -t PYFILES < <(git ls-files 'scripts/*.py')
+          python3 -m py_compile "${PYFILES[@]}"
+          echo "All ${#PYFILES[@]} scripts passed syntax check"
+
+      - name: Install runtime + test deps
+        run: pip install -r requirements.txt pytest
+
+      - name: Run pytest
+        run: pytest tests/ -v
+
+  dungeon:
+    name: Dungeon build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dungeon/package-lock.json
+
+      - name: Install dungeon deps
+        run: npm ci
+        working-directory: dungeon
+
+      - name: Test ZIP startup and shutdown
+        run: npm run test:launcher
+        working-directory: dungeon
+
+      - name: Test CLI launcher
+        run: npm run test:cli
+        working-directory: dungeon
+
+      - name: Test text runtime adapters
+        run: npm run test:runtimes
+        working-directory: dungeon
+
+      - name: Test runtime policy
+        run: npm run test:policy
+        working-directory: dungeon
+
+      - name: Build dungeon
+        run: npm run build
+        working-directory: dungeon
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+
+      - name: Check release privacy and local artifacts
+        run: python scripts/release_privacy_check.py

@@ -1,0 +1,151 @@
+# Secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+oauth-token.json
+client_secret*.json
+service_account*.json
+
+# Generated output
+output/
+.planning/
+*.tmp
+*.bak
+*.swp
+*-audit/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+.codex/
+.codex-work/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Bridge and audit-failure logs (runtime-only)
+.logs/
+dungeon/.logs/
+.mypy_cache/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# Node
+node_modules/
+
+# Vite cache
+.vite/
+
+# Playwright test results
+test-results/
+playwright-report/
+
+# Logs
+*.log
+
+# Archives (don't commit zips)
+*.zip
+*.tar.gz
+
+# Screenshots (generated during analysis)
+screenshots/
+
+# Temporary analysis files
+*-AUDIT-REPORT.md
+*-ACTION-PLAN.md
+FULL-AUDIT-REPORT.md
+ACTION-PLAN.md
+GEO-ANALYSIS.md
+SCHEMA-REPORT.md
+SITEMAP-REPORT*.md
+VALIDATION-REPORT.md
+
+# Generated artifacts from audits
+charts/
+*.pdf
+report.html
+generated-schema.json
+capture_closeups.py
+capture_desktop.py
+generate_charts.py
+generate_pdf.py
+
+# Debug logs
+firebase-debug.log
+firebase-debug.*.log
+
+# Generated / site-specific scripts (not part of the generic tool)
+scripts/mobile_analysis.py
+
+# Audit reports with alternate naming conventions
+sitemap-validation-report.md
+*-validation-report.md
+
+# Temporary download directories
+claude-ads-main/
+claude-seo-main/
+
+# Root-level duplicate media files (originals live in screenshots/)
+Cover Image.jpeg
+seo audit demo.gif
+seo command demo.gif
+.github-audit/
+
+# Site-specific analysis outputs
+LOCAL-SEO-ANALYSIS-*.md
+LOCAL-SEO-ANALYSIS-*.html
+GEO-ANALYSIS-*.md
+MAPS-ANALYSIS-*.md
+RELEASE-*.md
+*-seo-images-review.html
+
+# Site-specific scripts
+indexnow-submit.sh
+
+# Generated site builds
+site/
+
+# Internal asset research / demon sourcing staging (v1.9.0 roster work)
+preview-candidates/
+assets/thumbnails/
+
+# Managed SEO engine state
+runtime-state.json
+.runtime-setup.lock
+ms-playwright/
+
+.venv.next-*/
+.venv.previous-*/
+
+.venv.previous/
+.setup.lock
+.runtime-state.next
+
+# Local agent integrations and generated audit/session evidence
+.gbrain/
+.claude/
+.gemini/
+.grok/
+*.jsonl
+*.har
+*.trace

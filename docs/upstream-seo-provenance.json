@@ -1,0 +1,1768 @@
+{
+  "checked_on": "2026-09-06",
+  "public_repository": "AgriciDaniel/claude-seo",
+  "public_commit": "a1480c7e590b16001bd9dc1627eacdcd44d580f9",
+  "release_tag": "v2.2.5",
+  "release_commit": "2384fdd9429696021d143006a722c7cf1aa76d43",
+  "core_blob_count": 293,
+  "engine_files": [
+    {
+      "path": "agents/seo-backlinks.md",
+      "public_git_blob": "cb44c4d7af87123a1c7e1cae50585ff04b257a8c",
+      "candidate_sha256_lf": "78ad8ff5be7ad583a5a36d175ca9680e8b47e337cb1bd6486eaa3f8fd1f25ac2",
+      "adapted": true
+    },
+    {
+      "path": "agents/seo-cluster.md",
+      "public_git_blob": "829bf4cf8ee1e58f9c77bda5149b1716460a25a1",
+      "candidate_sha256_lf": "1eca40e57c26be4c29fe081476234373c1c88aca2c58cb2a58fb3acb79e35c03",
+      "adapted": false
+    },
+    {
+      "path": "agents/seo-content.md",
+      "public_git_blob": "38cf18eb06df24b3eb5b744b9b7f0d62b6bc8cb9",
+      "candidate_sha256_lf": "bad15951113c31dcc8b50ae8acca411e78ace03e4ad6aecf73e92a4dd371227c",
+      "adapted": false
+    },
+    {
+      "path": "agents/seo-dataforseo.md",
+      "public_git_blob": "f03e6ba9ee31c26705c55e0d71e179ecf1be244b",
+      "candidate_sha256_lf": "29f8d85be6aa097436aaaf6b852360f85d55d5f7f6cf205fd962881a7cbe07cd",
+      "adapted": true
+    },
+    {
+      "path": "agents/seo-drift.md",
+      "public_git_blob": "431d6d57a305ba7cb03633f07675e116d81d97d0",
+      "candidate_sha256_lf": "685f8a74f667db27d1263f353daab105c98e4353e830b961272f5e6f4b117c5f",
+      "adapted": false
+    },
+    {
+      "path": "agents/seo-ecommerce.md",
+      "public_git_blob": "4b59afbb4a2b77e2cbad3e14b788730582889a85",
+      "candidate_sha256_lf": "6d9e6a0d9192f9d4061b5fc3d94936959dcdd929607418e3d66066213f1a9d9b",
+      "adapted": false
+    },
+    {
+      "path": "agents/seo-flow.md",
+      "public_git_blob": "b16decd43317a7a3f94a30c490cf5d00b697e9dd",
+      "candidate_sha256_lf": "c361472651c3b0a004301ab27f66a606137be0ff055c9340f1eb1da1e153e0ef",
+      "adapted": false
+    },
+    {
+      "path": "agents/seo-geo.md",
+      "public_git_blob": "4b87a99ed3ef09b0010eda804d9c4237f40b5abd",
+      "candidate_sha256_lf": "5cbd12c33e172ec34d37ac75bba7203430947ee918e4fe143d4e24efeeb7489b",
+      "adapted": true
+    },
+    {
+      "path": "agents/seo-google.md",
+      "public_git_blob": "38d9891df1a14656837123405afb248eef2adafe",
+      "candidate_sha256_lf": "fd1021a8bd3eb77a6c3388bbb65b58ee8f29b1719c3eed57c9a6e6b35692c696",
+      "adapted": false
+    },
+    {
+      "path": "agents/seo-image-gen.md",
+      "public_git_blob": "dc058850e7a9166449961069abd333d4e270b4fa",
+      "candidate_sha256_lf": "f2dd3bd7b61a0e699c1cb8382808b7dda773f2bb635a031bae04f2afc78a686a",
+      "adapted": false
+    },
+    {
+      "path": "agents/seo-local.md",
+      "public_git_blob": "5514a4d02a2f1f6396231089d58a6f31f1851cb6",
+      "candidate_sha256_lf": "9eb7d302defd3ee09f43271ea88994cf677d5d8736c845226483a7fea4958013",
+      "adapted": true
+    },
+    {
+      "path": "agents/seo-maps.md",
+      "public_git_blob": "e0372ce1cec041306320b4e19a6a1c5bca7b7de1",
+      "candidate_sha256_lf": "0b35a6ed159651ea8e49c535a2e077e6839469b03913eecdfe9f05b85716baf4",
+      "adapted": true
+    },
+    {
+      "path": "agents/seo-performance.md",
+      "public_git_blob": "82d729e42fa7535546b0367e80096933e8d39b55",
+      "candidate_sha256_lf": "086aac4d4d67f5a25a0628a900a18a3abaa75bd4dc4af19e103173173e1dbe03",
+      "adapted": false
+    },
+    {
+      "path": "agents/seo-schema.md",
+      "public_git_blob": "3bf55518c7415556d2ffae0026d244e663bfe01d",
+      "candidate_sha256_lf": "ea760873ac74add7bd2bb88911609fea36dce3b778391794b4ce16a96c1b2ed5",
+      "adapted": false
+    },
+    {
+      "path": "agents/seo-sitemap.md",
+      "public_git_blob": "7f43d0f8365a27639c1b7d1949cf12f0da30c02a",
+      "candidate_sha256_lf": "1841c81cdf203ec5bb19343353831c8addbbc31d92d065b235f7ce1467593fbd",
+      "adapted": false
+    },
+    {
+      "path": "agents/seo-sxo.md",
+      "public_git_blob": "2fb30cc5404b6116157c0e07dcb2c54edbdf009e",
+      "candidate_sha256_lf": "aefcd86204e2d74d2b39882b8229a2dfb9723ca6a2341147ee3ae5208262c91c",
+      "adapted": false
+    },
+    {
+      "path": "agents/seo-technical.md",
+      "public_git_blob": "29cfe13b03de27e9689bd5b03f0c2dafee4b98f8",
+      "candidate_sha256_lf": "6ca2e1185857f31f3659c0492e7c9e35f747dfae4b434e4c779b98f0551b2178",
+      "adapted": false
+    },
+    {
+      "path": "agents/seo-visual.md",
+      "public_git_blob": "4996f2e419df009172ecc1702f637ec204a49958",
+      "candidate_sha256_lf": "472d9f1c3e518d6816aaa9cb23dbe140f31c2aa693038a8e004015c52b04f589",
+      "adapted": false
+    },
+    {
+      "path": "data/google-updates.json",
+      "public_git_blob": "e2caedeec83029091c9c3b5f7e778950228c3f85",
+      "candidate_sha256_lf": "5ef4ce529cc60d1a22e78000b9090343547307e651294056a5d7cd187c139580",
+      "adapted": false
+    },
+    {
+      "path": "extensions/ahrefs/docs/AHREFS-SETUP.md",
+      "public_git_blob": "a620a5b24b1c2260f21674ec7eaaef551f5b0ea2",
+      "candidate_sha256_lf": "15db4b2ace38478846cc76ba5a81c69f5fd26f96c30df95ffe55f2b229d7f17f",
+      "adapted": false
+    },
+    {
+      "path": "extensions/ahrefs/install.ps1",
+      "public_git_blob": "fee98f4acbf12cf00ae8b083901ec9fcb83346c5",
+      "candidate_sha256_lf": "d6ad6c7ce3488e6ead99c91d5024fa6beba346a5b1b5446ba42c9b985fcb73be",
+      "adapted": true
+    },
+    {
+      "path": "extensions/ahrefs/install.sh",
+      "public_git_blob": "56ba7bfa31d92eafb03dcbe65dd6d996c697dcce",
+      "candidate_sha256_lf": "f62f16d1b56d2ff77c436e5357515be4c96886b09c6b1a20fccb67bfc6c0b69e",
+      "adapted": true
+    },
+    {
+      "path": "extensions/ahrefs/skills/seo-ahrefs/SKILL.md",
+      "public_git_blob": "443e0c145ed8b789148a3ad42fd7ab003b905563",
+      "candidate_sha256_lf": "ea83a54d8499da0f4cfa418f7d05878432c094f2a3242a860d2b1df95d16daf8",
+      "adapted": false
+    },
+    {
+      "path": "extensions/ahrefs/uninstall.sh",
+      "public_git_blob": "72a40084dc30cbfa7475752b7c754af0cf6c2d59",
+      "candidate_sha256_lf": "ba9fdc5d1711c7ca06db4fff97b1eb03d6cb7a6e6ded62378b300ffa699c8f80",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/README.md",
+      "public_git_blob": "c4b377c0f057f791748cb5626a1a911b5c68a428",
+      "candidate_sha256_lf": "9be4459b1db84d955fb6e7ae295d5429cbcfcb113ab122b7140f3daf2367b9ae",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/agents/seo-image-gen.md",
+      "public_git_blob": "3a7e89738a398f431f266aef71ff438f95c2349d",
+      "candidate_sha256_lf": "0d6e969dec89df706799015cedf0cb4c8bd7c8982796397a1dbdb9c8df546394",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/docs/BANANA-SETUP.md",
+      "public_git_blob": "28618008151b40c3f7c96e566822ed70ca996f6a",
+      "candidate_sha256_lf": "407d585b61832c82d059b206d503afaeb81231ca33441b1713b65331fd6d12e0",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/install.sh",
+      "public_git_blob": "a36bd8ee3c8a0e8bcf6a694580a920f049a32c0f",
+      "candidate_sha256_lf": "e46a9ae7dad2b64dbdad61f3c97007785eed5761ab26b7100d2c0f7e9e5a48a5",
+      "adapted": true
+    },
+    {
+      "path": "extensions/banana/references/cost-tracking.md",
+      "public_git_blob": "3d507df6bcceb9af4254bd7451f600610eaa8c7b",
+      "candidate_sha256_lf": "c86d39096a802044968f3810cda9427bf00e7abc680bba86cc1f296996405cf8",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/references/gemini-models.md",
+      "public_git_blob": "78fccf58e42d54e6d2b33a834dae3f9f2a6dd533",
+      "candidate_sha256_lf": "7e4fa2a30a0dc4169b918eb86ccf635038434a708b54b3710d4f275a8173f6be",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/references/mcp-tools.md",
+      "public_git_blob": "e9612830bce02a368574e21d2f8803f7459139f7",
+      "candidate_sha256_lf": "d1b6aca6bbc9fa6f2265c26a519e0ac656ecf366be5f6d4b56bb5e5a9d577343",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/references/post-processing.md",
+      "public_git_blob": "0b4d07da7af6737d17a6c018f1ee3982adad1016",
+      "candidate_sha256_lf": "73f0ad0fff971ad1ec3abf2710d18eaa1c273ca298342b99af09afbecafa9609",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/references/presets.md",
+      "public_git_blob": "2b6df0bb65dd59bf74b267879b84c608685e91d1",
+      "candidate_sha256_lf": "074b2a54deae13cf9f1a79915cdad6ecd655658222b53dc10d2d312c637c9693",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/references/prompt-engineering.md",
+      "public_git_blob": "d56ee79ed5df03bb47b20f141d0e18c63b5d3df7",
+      "candidate_sha256_lf": "574bf83eeffd083e851957f052dfc9d0ef7fe754015773750b9aff13417d4477",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/references/seo-image-presets.md",
+      "public_git_blob": "ce4880c4e21b1e2402086c73393c62fd7fef7142",
+      "candidate_sha256_lf": "56b11ec4e0c4c1fd531b15abae49e223ebf9fdca921e4ccb4bfd6c060355b0a1",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/scripts/batch.py",
+      "public_git_blob": "4ef7b0575a8c3d66ad5e302e92131f887c5c2bd1",
+      "candidate_sha256_lf": "658ef4c496e4ffd3d55ad34b2725291bcc9b2ecc4f72392eb7af42d4109d068e",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/scripts/cost_tracker.py",
+      "public_git_blob": "e1e958af44bba2abb6e943590214197f23deaf6d",
+      "candidate_sha256_lf": "e4f0deda2c54d580f6beb8c63a65cce25c937ffa722a70b1b405cd3439a03464",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/scripts/edit.py",
+      "public_git_blob": "dfc0edcc80975ce438ff23ee082b9ad5f216ad92",
+      "candidate_sha256_lf": "93b3d880d8d40cab8a9f66cbe86d37bbcc8cb3c1b5943585c4346c29eb8a81ee",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/scripts/generate.py",
+      "public_git_blob": "82c5107ebf0f3b315fc241e929c55d521dd861f1",
+      "candidate_sha256_lf": "f241298d2e473b301097c06ccb0334361f43c7a86bb44331b9df98d61a6e65c9",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/scripts/presets.py",
+      "public_git_blob": "27510afb1b036dd2040f243e5d89516bdca8e1f1",
+      "candidate_sha256_lf": "5f5a063fa4b8d340fdb1e3657d40226f30a6a847fc79a55217a02fb5b2657a99",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/scripts/setup_mcp.py",
+      "public_git_blob": "e214233bfff2aeaf929558600d1b146275b4fb9c",
+      "candidate_sha256_lf": "9bb3045cdb6c7453222a635065b50420e1619f73355b270304e8c4e297f49b2c",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/scripts/validate_setup.py",
+      "public_git_blob": "24860cf65a616427039f11395e3cbbbd982985dc",
+      "candidate_sha256_lf": "a18263f0c05407126608c85f42b26b7d769e631f35dee8f1ea6f7361a45ecf44",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/skills/seo-image-gen/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/skills/seo-image-gen/SKILL.md",
+      "public_git_blob": "93ed287eb71b587a70860aa79331e3a7e158248c",
+      "candidate_sha256_lf": "d7eebd6282c4348077c2949c4f7a144e5e1b0afcb06e976d4a235b58276d45b8",
+      "adapted": false
+    },
+    {
+      "path": "extensions/banana/uninstall.sh",
+      "public_git_blob": "3b6b192181c076c8c6ae0ce4a0149b3ffe689c6c",
+      "candidate_sha256_lf": "0951f4235ebd9e37d3aa5c81aabf1d8095cbdb0c537123bbd227873c6ec59619",
+      "adapted": false
+    },
+    {
+      "path": "extensions/bing-webmaster/docs/BING-WEBMASTER-SETUP.md",
+      "public_git_blob": "0c4c67a452c7435fb62634b5a6b97cebd0c54561",
+      "candidate_sha256_lf": "4115e515fe9e05dd08b764ca7a17af8525d87f46bfa70dd4c3cd6697958b2a79",
+      "adapted": false
+    },
+    {
+      "path": "extensions/bing-webmaster/install.ps1",
+      "public_git_blob": "cb7a3f46eeafa2a365b907f6f904e55a92755001",
+      "candidate_sha256_lf": "094afd13b565574f236b3201eb9ca9a54181df970d467433022d11887d770c3c",
+      "adapted": false
+    },
+    {
+      "path": "extensions/bing-webmaster/install.sh",
+      "public_git_blob": "ed6b9368028860002689f9edb64260ae97e454bc",
+      "candidate_sha256_lf": "249fa995d2adccfa7c2c04de9ab7a103037790b87f9e594b11c1ff095170d79f",
+      "adapted": false
+    },
+    {
+      "path": "extensions/bing-webmaster/skills/seo-bing/SKILL.md",
+      "public_git_blob": "1d3742feb635751d9a9daed407116ff3d69919fa",
+      "candidate_sha256_lf": "acc66bbab32ad8506dab6ee7806a9b140f8d86dc7da29f9e93717191508be5ef",
+      "adapted": false
+    },
+    {
+      "path": "extensions/bing-webmaster/uninstall.sh",
+      "public_git_blob": "f9ca245e12c98887f2e52e824e415e18f881b225",
+      "candidate_sha256_lf": "37d43a92a072e3645e335298caaa5d393635534a00ba35dadaa2c01e7fb7f2c9",
+      "adapted": false
+    },
+    {
+      "path": "extensions/dataforseo/README.md",
+      "public_git_blob": "f10951953d6d650cf34360950d6eb79ef7179670",
+      "candidate_sha256_lf": "b5c2ebb698a3baa12adbf71eddbd853debceac9c200f3bb9ebb0c14a88e561a6",
+      "adapted": true
+    },
+    {
+      "path": "extensions/dataforseo/agents/seo-dataforseo.md",
+      "public_git_blob": "700cd8507e01f82da42e639b32355e0ce6df28bb",
+      "candidate_sha256_lf": "9e3876e3f593a888d9b296c3f020d604f876eaee870f18ffd64eb06ae70b5483",
+      "adapted": true
+    },
+    {
+      "path": "extensions/dataforseo/docs/DATAFORSEO-SETUP.md",
+      "public_git_blob": "64986a81a38b49eceebe00605e0a1dcdad377005",
+      "candidate_sha256_lf": "b22c2fde503d8391e8ac3e2ca474838247e76f9b4580b964e711d3253debd3a3",
+      "adapted": true
+    },
+    {
+      "path": "extensions/dataforseo/field-config.json",
+      "public_git_blob": "335d7d0a3f3d546bce2367665505568c0878a0a8",
+      "candidate_sha256_lf": "d55349f2f7a349cd6336f3b4d8a22b203377c8b4448e7b6967f50e2391ad952b",
+      "adapted": false
+    },
+    {
+      "path": "extensions/dataforseo/install.ps1",
+      "public_git_blob": "78db9b89413c24aff608bf6143a21c86312d7495",
+      "candidate_sha256_lf": "13c8f7eeafaace68b13cb2bba39b1e2d1af8164f424366a39d9a0460cf1d683d",
+      "adapted": true
+    },
+    {
+      "path": "extensions/dataforseo/install.sh",
+      "public_git_blob": "0e93e8820029c3dfca140b1651fbf143d525118a",
+      "candidate_sha256_lf": "309523331ba59bde644dc6a7b68b5e31619b439d54390d82efe3549cd9e62ed9",
+      "adapted": true
+    },
+    {
+      "path": "extensions/dataforseo/skills/seo-dataforseo/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "extensions/dataforseo/skills/seo-dataforseo/SKILL.md",
+      "public_git_blob": "f385adfb1af6b58ebb2323e6b10dace0aa58a986",
+      "candidate_sha256_lf": "d13168061be9b02002cae55a9eacef4d78f5591c8802f28b044dd4a0a412e992",
+      "adapted": true
+    },
+    {
+      "path": "extensions/dataforseo/skills/seo-dataforseo/references/cost-tiers.md",
+      "public_git_blob": "1734a28d5e86050c8af3bd2bee3633b242eb76ff",
+      "candidate_sha256_lf": "e104b2c465f32a82ffac069dccd53c55119a74528e6337096d93002d73bc62c1",
+      "adapted": false
+    },
+    {
+      "path": "extensions/dataforseo/skills/seo-dataforseo/references/tool-catalog.md",
+      "public_git_blob": "59650071eeae84d2d59258b5d0486e4937ded7c6",
+      "candidate_sha256_lf": "1fc02f7ea2d09fe5f40a9392dc17106f23385b02659ab06ee6bce3d718bf33da",
+      "adapted": false
+    },
+    {
+      "path": "extensions/dataforseo/uninstall.ps1",
+      "public_git_blob": "a4c3c8b347d2ec8d7db604e5876b58de5dc932ff",
+      "candidate_sha256_lf": "f043b7e0a91b111cbef49f8654422c2b95428d4e494d32f1ec70e6080d4b53fe",
+      "adapted": false
+    },
+    {
+      "path": "extensions/dataforseo/uninstall.sh",
+      "public_git_blob": "0086a93511dbb112f0ff064ccca98efa5e679087",
+      "candidate_sha256_lf": "dd738cd891155aabc20142d6f2796342b182fc67108e11e07acdbce4188213a7",
+      "adapted": false
+    },
+    {
+      "path": "extensions/firecrawl/README.md",
+      "public_git_blob": "8a5c4da31732d95bbfc9d537deda74914e146d86",
+      "candidate_sha256_lf": "a16a7fce23ccdb75941ae3bef5576b63523379a42891a0e2fa40a612db210f4a",
+      "adapted": true
+    },
+    {
+      "path": "extensions/firecrawl/docs/FIRECRAWL-SETUP.md",
+      "public_git_blob": "0c19cb855a067fcbaff4b7c68365d8adc5d55841",
+      "candidate_sha256_lf": "eddd0d6d6ef93cf02a7ce873cd1bde1b76f7cac7f61f01c97610f414d2330557",
+      "adapted": true
+    },
+    {
+      "path": "extensions/firecrawl/install.ps1",
+      "public_git_blob": "09f46c421b6431f997b2a167e3c525bb64733ed3",
+      "candidate_sha256_lf": "2cd44b58914dd73afa0e3272a3a56c460e9b253ec49114ea44c87ed4d349c229",
+      "adapted": true
+    },
+    {
+      "path": "extensions/firecrawl/install.sh",
+      "public_git_blob": "de94c635028bbcb0fa9a87d6c66173f11ff46d92",
+      "candidate_sha256_lf": "3624deb8214127cd4bdb1aba461aec0ce89f15cae65544b550b4fe4356849a43",
+      "adapted": true
+    },
+    {
+      "path": "extensions/firecrawl/skills/seo-firecrawl/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "extensions/firecrawl/skills/seo-firecrawl/SKILL.md",
+      "public_git_blob": "14b457636431924efee698e2c3a5273a50725b3c",
+      "candidate_sha256_lf": "71735cc04370f558b7415fb559a98d67f981cf1c2e5ed6332cef0ca78f76df19",
+      "adapted": true
+    },
+    {
+      "path": "extensions/firecrawl/uninstall.ps1",
+      "public_git_blob": "4b565153cb6f33590bf1b647cb83c7dc3a466eec",
+      "candidate_sha256_lf": "216aef92323420604b453f951aa37c4916eb2b1bf60a262032d6959130a34fe1",
+      "adapted": false
+    },
+    {
+      "path": "extensions/firecrawl/uninstall.sh",
+      "public_git_blob": "a3af81b15be81e16f61bcf6ad4087a58cb1015bc",
+      "candidate_sha256_lf": "8ef7e8e47b5473fc448bfdbc9988c82b40b343ebc65cf4aae9c2a382e458ee19",
+      "adapted": false
+    },
+    {
+      "path": "extensions/profound/docs/PROFOUND-SETUP.md",
+      "public_git_blob": "2955efdcb868ba47c2dcc64ba6ebec9f2e679b29",
+      "candidate_sha256_lf": "b049a1a06aa8ba699cc7c512606d634a682eb0e698d2eb3e3c9103e1fda720e3",
+      "adapted": false
+    },
+    {
+      "path": "extensions/profound/install.ps1",
+      "public_git_blob": "3574a1d946428fe9f404e7a489c5a3cfec03d736",
+      "candidate_sha256_lf": "6dacee1baef9fb5b9f1fd668644dca2d5765518f701d3ebfe4260195589da33f",
+      "adapted": false
+    },
+    {
+      "path": "extensions/profound/install.sh",
+      "public_git_blob": "e61418edf65f5172f3db695d307b09545d8ab757",
+      "candidate_sha256_lf": "3f6952b9bb5dbd9571bca92ef1a23d7e68cbe66d11cbe4796c50ff1f52916e77",
+      "adapted": false
+    },
+    {
+      "path": "extensions/profound/skills/seo-profound/SKILL.md",
+      "public_git_blob": "dcd8144ed0c83073c58380aa1b7dd5a14b48d38c",
+      "candidate_sha256_lf": "a62553829be2129135b54df11650bea34fbb5c5101a462047c63e2624b71c48e",
+      "adapted": false
+    },
+    {
+      "path": "extensions/profound/uninstall.sh",
+      "public_git_blob": "ec62ef7979c2de7b1da328c8775d876ff48499e9",
+      "candidate_sha256_lf": "82c9e745599d3bb4364c67035450e1822b57b23c78bcdfb6e6981b93b79974df",
+      "adapted": false
+    },
+    {
+      "path": "extensions/seranking/docs/SERANKING-SETUP.md",
+      "public_git_blob": "acdec630b51e93aaed79d4c69ac8b29c0c541634",
+      "candidate_sha256_lf": "2c77464ab39704acecbfcaf833dc1750679b137f9ecc0db2c215731b9efaf49c",
+      "adapted": false
+    },
+    {
+      "path": "extensions/seranking/install.ps1",
+      "public_git_blob": "45c647faaf3322b736b553eb6c9f435df2b9cf49",
+      "candidate_sha256_lf": "929d13b7b7372e1eedeccd35a1fad38139a2f3befe0e30c607605aed32ad42db",
+      "adapted": true
+    },
+    {
+      "path": "extensions/seranking/install.sh",
+      "public_git_blob": "55860be72013591c7cdacffde7df63650a652153",
+      "candidate_sha256_lf": "2cb87aad030b14c5f711bb61c0458664acb701735436fb046912908c1331e1e8",
+      "adapted": true
+    },
+    {
+      "path": "extensions/seranking/skills/seo-seranking/SKILL.md",
+      "public_git_blob": "0365df41d6d9ac4a9527d004f880ced87624b8c8",
+      "candidate_sha256_lf": "4184935435017d183cc5b95562387a749696cdf12f918a9ae3d0405b602d8054",
+      "adapted": false
+    },
+    {
+      "path": "extensions/seranking/uninstall.sh",
+      "public_git_blob": "9acf340bcba0119f3240573563387a51cdd89ffa",
+      "candidate_sha256_lf": "270e0b5a8f812c3c233c20fa1d175bbc75f65fbd89057028ed6e8eb02006210e",
+      "adapted": false
+    },
+    {
+      "path": "extensions/unlighthouse/docs/UNLIGHTHOUSE-SETUP.md",
+      "public_git_blob": "10410676d698b33f7d3365694cd38b76ebdcb993",
+      "candidate_sha256_lf": "6bb8f8dbb45b608efba9b043cad08e480d11aec87a41c9a86f65132134e409ab",
+      "adapted": false
+    },
+    {
+      "path": "extensions/unlighthouse/install.ps1",
+      "public_git_blob": "7964322f4307fae5ec96f080ef716a7ad17ccb37",
+      "candidate_sha256_lf": "85cea5fc48d4faddda4358b405a1e26e59e7fdbfffbc7ddafa66385ed066e4fa",
+      "adapted": false
+    },
+    {
+      "path": "extensions/unlighthouse/install.sh",
+      "public_git_blob": "71b3bce729bf5caf464561c836d934345a5f6912",
+      "candidate_sha256_lf": "7bb7f238584ee16297e19c79f49d951abba82798b8be77d5db2adb70ce0e462f",
+      "adapted": false
+    },
+    {
+      "path": "extensions/unlighthouse/skills/seo-unlighthouse/SKILL.md",
+      "public_git_blob": "69cbe291f1eefddc4a9aa320ab8ef61b286cddd2",
+      "candidate_sha256_lf": "17144819c75c0766b0f44d86f23868869c8fb4bcfb2ecc095cf2446010173052",
+      "adapted": false
+    },
+    {
+      "path": "extensions/unlighthouse/uninstall.sh",
+      "public_git_blob": "934481d9a2d602c9659788688d3776e059d4fedb",
+      "candidate_sha256_lf": "1b70b8370418e999081718a9ba133b65623c87424576b1a293e66fbd1351b9ea",
+      "adapted": false
+    },
+    {
+      "path": "schema/templates.json",
+      "public_git_blob": "5b831fee55e30539037fd6a9a93c54838b90225f",
+      "candidate_sha256_lf": "4bb417070cd51d0a5d91d54cda1af52bd88742bd868adfe2654e088d07fdda13",
+      "adapted": false
+    },
+    {
+      "path": "scripts/agent_ux_check.py",
+      "public_git_blob": "b9794f29f54bf326d3e4698340f88e04105e9761",
+      "candidate_sha256_lf": "5ec4d47b28106502f07d9b813ccc84b46ec69adedad02a14ac88b9f3b6331f77",
+      "adapted": false
+    },
+    {
+      "path": "scripts/analyze_visual.py",
+      "public_git_blob": "547607667473e71616fe2272ac66e4eae5be9868",
+      "candidate_sha256_lf": "7c1f8482f9410f48ed275d31c4d80dc8c0c26998853ca32f5c2c955869813d99",
+      "adapted": false
+    },
+    {
+      "path": "scripts/backlinks_auth.py",
+      "public_git_blob": "82df06ecbc7883be2e632b60ed5f2843d1342022",
+      "candidate_sha256_lf": "bad4b0665f6aadd4870b2a42c906097474c01c2e1b702613151c051de749642c",
+      "adapted": false
+    },
+    {
+      "path": "scripts/bing_webmaster.py",
+      "public_git_blob": "847ab33952300f00266680957dc9eef1f564e80e",
+      "candidate_sha256_lf": "12209b5abbead26fe9d15f122d87296ca1c8055d17ced204bf554d2e49ee1a0f",
+      "adapted": false
+    },
+    {
+      "path": "scripts/capture_screenshot.py",
+      "public_git_blob": "3bed54717194fe66b5eb588f3be423b0d7af2e2b",
+      "candidate_sha256_lf": "0a3ad4c22bf2b9116d43d9c88fcf59857cca45cfef6ee89f36d17c814254efe4",
+      "adapted": false
+    },
+    {
+      "path": "scripts/commoncrawl_graph.py",
+      "public_git_blob": "460129c2b1da7ccfd41f42a880078cc1e936e74a",
+      "candidate_sha256_lf": "e54e72c6ab16277da1bc55024ea99de8c64b48da717488f2143d42933bb6a4e1",
+      "adapted": false
+    },
+    {
+      "path": "scripts/consistency_check.py",
+      "public_git_blob": "8f7fbb3199f5639526f39806ab85d8a616eccc40",
+      "candidate_sha256_lf": "0192530b90cbdded50a494f53cd10fed8a5bf89366caf492f6165821aea5f883",
+      "adapted": true
+    },
+    {
+      "path": "scripts/content_humanize.py",
+      "public_git_blob": "0a67b598af1a361391c51f285fa02d2d3211e5f6",
+      "candidate_sha256_lf": "5a2e6e146ec8725453db0c4e46608cfc9c0a2087d279e07638a6f1a80929028c",
+      "adapted": false
+    },
+    {
+      "path": "scripts/content_quality.py",
+      "public_git_blob": "5efabbb7096dd202e818ab9620b5dbf86e103377",
+      "candidate_sha256_lf": "c035d80b18aea12bab27f52152860533f4e342d5868ef71157dd787b96240fca",
+      "adapted": false
+    },
+    {
+      "path": "scripts/content_verify.py",
+      "public_git_blob": "c55693faf366a72200aa88dcec5e83dccd9a22fe",
+      "candidate_sha256_lf": "ce13c7683fb29952411f520695d81879c43baef3d89797b58c2cd356bb0e5a6c",
+      "adapted": false
+    },
+    {
+      "path": "scripts/crux_history.py",
+      "public_git_blob": "2dfab2a5e0dda0ae7de158d0630d1f4c5888f787",
+      "candidate_sha256_lf": "3a6e0bdaea0d9e39bff410672f262eb66ca4a7ac0aee2eb08afd2328d51099c6",
+      "adapted": false
+    },
+    {
+      "path": "scripts/dataforseo_costs.py",
+      "public_git_blob": "84033faa21aadb9334926e37360c1c3933f2db84",
+      "candidate_sha256_lf": "acd2ec18c5a17ab79baa89843723c458bd746438de6543bee6041fa80a60c371",
+      "adapted": false
+    },
+    {
+      "path": "scripts/dataforseo_merchant.py",
+      "public_git_blob": "2783addeb1fe60855fda206c1e757c849265d87f",
+      "candidate_sha256_lf": "461ad8329668720cfd6d90c2aac5d195db35ae5ec758537a8fef10797bd9d2c1",
+      "adapted": false
+    },
+    {
+      "path": "scripts/dataforseo_normalize.py",
+      "public_git_blob": "7c5b485193e78bda0cb27e67504bcc35bd64dfff",
+      "candidate_sha256_lf": "588d87b6efb0dfef3b4ba9206655959b2218208d7cbb0d39c953ac12e0859974",
+      "adapted": false
+    },
+    {
+      "path": "scripts/domain_history.py",
+      "public_git_blob": "f2712949baa19bc6b897979d6a665bb0de02d99d",
+      "candidate_sha256_lf": "39ad5f0e3406ca19fb64f7a91c068887c44cd32c3980760712cf9622b67c9383",
+      "adapted": false
+    },
+    {
+      "path": "scripts/drift_baseline.py",
+      "public_git_blob": "cd5dd2699eb614cb997d57613f87c57a113abb55",
+      "candidate_sha256_lf": "988a18f802bcada05b1c75351ddf6bfc92f94bfab9c5a5efb624e21f2837ceb5",
+      "adapted": false
+    },
+    {
+      "path": "scripts/drift_compare.py",
+      "public_git_blob": "43b5e3b5b7db4d7eea9dae21dc366fbc54cd6b33",
+      "candidate_sha256_lf": "2e493900b27b540126650a433f9509ef59adc82e69e961a7eb7b3eb47315e739",
+      "adapted": false
+    },
+    {
+      "path": "scripts/drift_history.py",
+      "public_git_blob": "50f622a49d75315939f15cc9fce89abbcf2a0f33",
+      "candidate_sha256_lf": "d31e35b1cc86748535411b2bb39f5d66a909c7b1ddac97f26aa3acc8187b27a1",
+      "adapted": false
+    },
+    {
+      "path": "scripts/drift_report.py",
+      "public_git_blob": "2b168cc4551c0850131cd062e21a45a9d08cc432",
+      "candidate_sha256_lf": "d1b522100ef9a3d4b4572e6966a376fabd47faf4d769acd47de6985486d3f540",
+      "adapted": false
+    },
+    {
+      "path": "scripts/fetch_page.py",
+      "public_git_blob": "fb8826f1b8b25710ee60af076670404acfd66cae",
+      "candidate_sha256_lf": "918d592579b166275aa054c3307029ef46bce01ca4f59c1c96c4c0f1173c6097",
+      "adapted": false
+    },
+    {
+      "path": "scripts/ga4_report.py",
+      "public_git_blob": "0c3688708ced4bf660321f6019e03ca7fa117031",
+      "candidate_sha256_lf": "0cf748ece7580043066ef462183a7d0c30c0a9b787905971fbb3861cd0ddc773",
+      "adapted": false
+    },
+    {
+      "path": "scripts/gbp_deprecation_lint.py",
+      "public_git_blob": "5ea871078c256bf2b54b8a0bc93f8d7f1a2fba65",
+      "candidate_sha256_lf": "57d6bb08bee197bb3335607bc17cac86cb69ed64bf7e3dee2c08902d0170dc6e",
+      "adapted": false
+    },
+    {
+      "path": "scripts/google_auth.py",
+      "public_git_blob": "48db68d87d9c88ae199d6980f54f51d51100429f",
+      "candidate_sha256_lf": "8d3c88578517dff804304614d3b8e7403b3bc8ed5a34a3319c56919404fb5953",
+      "adapted": false
+    },
+    {
+      "path": "scripts/google_report.py",
+      "public_git_blob": "113114ce4e77ea3d9a64848a125759d697885f6c",
+      "candidate_sha256_lf": "a8eb0cea35005354ba6e45baaced38709aa33788af04dbc8eebd8539ba80ebdf",
+      "adapted": false
+    },
+    {
+      "path": "scripts/gsc_inspect.py",
+      "public_git_blob": "7c624b1eb95566fbbb4f8d83c31d8c2286b3b3eb",
+      "candidate_sha256_lf": "bb5bf14b84c65dcbf221345d49bd93bf956454c6154dfe1e4957c65e54fee63a",
+      "adapted": false
+    },
+    {
+      "path": "scripts/gsc_query.py",
+      "public_git_blob": "4112b0b9b81ad6df07c00ec3de86aca4c2099fda",
+      "candidate_sha256_lf": "b0c6ac1513319b3e5361ccfe4f76bf750e5d512830dc28914fb86284676a14af",
+      "adapted": false
+    },
+    {
+      "path": "scripts/indexing_notify.py",
+      "public_git_blob": "72953467392c78cad6f66ef8599442830f17077b",
+      "candidate_sha256_lf": "4199d17fbd5c4c74dd38d994edbc7784b7b44097fcac22e0476ec9407bf7f44d",
+      "adapted": false
+    },
+    {
+      "path": "scripts/indexnow_submit.py",
+      "public_git_blob": "749cfd446f22315505b05043e1b5cd6bab590594",
+      "candidate_sha256_lf": "c192c1d5042397b707fa69982f14611c275e723b467f4cd9fe67fa254290823d",
+      "adapted": false
+    },
+    {
+      "path": "scripts/iptc_ai_label.py",
+      "public_git_blob": "e58f7add3562873d0fb7e20e489c0791c5af3191",
+      "candidate_sha256_lf": "49277f6c651bbeaa579939ac9dc705861c6351644c2b8e7d915403c67a7b89a8",
+      "adapted": false
+    },
+    {
+      "path": "scripts/keyword_planner.py",
+      "public_git_blob": "848e77fc42f5a9a5c7dd4a83910c73377c4733cb",
+      "candidate_sha256_lf": "498a808a62f27abba04aba92568e85a309ffc0da6a93a290411dae56c20c0528",
+      "adapted": false
+    },
+    {
+      "path": "scripts/lcp_subparts.py",
+      "public_git_blob": "50ab221ced608367f1134ca53fc5f2c17649506c",
+      "candidate_sha256_lf": "d0af463d520455b98f9740d0701e8702ea6971e15b78b1ab74c405fd08895d68",
+      "adapted": false
+    },
+    {
+      "path": "scripts/moz_api.py",
+      "public_git_blob": "5480c50086498b4a8b9e21aa86cafdbac29d87e8",
+      "candidate_sha256_lf": "7f98e7b530c0e61f5e0f2b12042a87e338ee92de03ed38f539c029b33d6e3840",
+      "adapted": false
+    },
+    {
+      "path": "scripts/nlp_analyze.py",
+      "public_git_blob": "e8d5ca7869a6de6c6a60dbfa216418b8b7a7b2e5",
+      "candidate_sha256_lf": "ab57c8267f54e9432304c4576371fedff079fd3c2415213d99d18d528870425d",
+      "adapted": false
+    },
+    {
+      "path": "scripts/pagespeed_check.py",
+      "public_git_blob": "4ba0381a39ed5a223d74e33e088b1c3112803e5c",
+      "candidate_sha256_lf": "fe5043c2336a4754fc7602e5f087b9e5916f7f3c28da224ba325d9165ace69f0",
+      "adapted": false
+    },
+    {
+      "path": "scripts/parasite_risk.py",
+      "public_git_blob": "dd55eebede7426e95a48608ccbee1256bf91a486",
+      "candidate_sha256_lf": "eb93d1f000d4c701a137a00e12e2469272333283e8547c34b7efe0939752f22b",
+      "adapted": false
+    },
+    {
+      "path": "scripts/parse_html.py",
+      "public_git_blob": "3674e4bd71e2eecd5075c694263fcc17566523af",
+      "candidate_sha256_lf": "3bc54524424a5ea0c1cc29f635e967e41037658342955f74819e30504c49bdd2",
+      "adapted": false
+    },
+    {
+      "path": "scripts/portability_check.py",
+      "public_git_blob": "4d6f1036fb5d38fd85d3ea827529ad57d2c9c59f",
+      "candidate_sha256_lf": "40d4330474f7c48f24a256bcafb78f1e2383ec601280987e8a52c8c756ba12f2",
+      "adapted": false
+    },
+    {
+      "path": "scripts/preload_check.py",
+      "public_git_blob": "5989c3c02cf0c9ebd4aab516d4579dcc4c6e8628",
+      "candidate_sha256_lf": "3f5490fde0dc47c48a0a44e09de5ec85bcc92cdaf9592e736a357e864f64073e",
+      "adapted": false
+    },
+    {
+      "path": "scripts/release_sign.py",
+      "public_git_blob": "6e36a64ff2380c82d4b686f8beb55bfd620039d8",
+      "candidate_sha256_lf": "27b1bd22c1a5f79a15cf4c1974c8151e97b9c5e9b6bbf2b30956ec4e87f130dc",
+      "adapted": true
+    },
+    {
+      "path": "scripts/render_page.py",
+      "public_git_blob": "8869d30cbd34ecb104411163f50d7589906be18c",
+      "candidate_sha256_lf": "fdd22b7540efdb0b3e9968ebf8a68e0b369c4468350ecbb3638b4ea95e28f9de",
+      "adapted": false
+    },
+    {
+      "path": "scripts/runtime.py",
+      "public_git_blob": "0809d061b1c661ef2752fa3847073fe294ed42ff",
+      "candidate_sha256_lf": "da02e5915e1d56668c201d45034466637d9ff1cdc119c5cf305fce401f8a340f",
+      "adapted": true
+    },
+    {
+      "path": "scripts/schema_ecommerce_validate.py",
+      "public_git_blob": "b085f9507b4c93887b10728c99d363cd0642e3de",
+      "candidate_sha256_lf": "88fe0919e60b0c92936f13cf3d94604a82f88a265cd12feeee191e0f8a4d0d0b",
+      "adapted": false
+    },
+    {
+      "path": "scripts/schema_generate.py",
+      "public_git_blob": "47118a586d88ce1b7b6625833361ae5c0e9410ba",
+      "candidate_sha256_lf": "f8bb9d03776b46b1239f066ba65bf87c0927ec4e65447d0c2d66802971b4c0b2",
+      "adapted": false
+    },
+    {
+      "path": "scripts/seo_updates.py",
+      "public_git_blob": "556f147d34f9b4e14a6bbe11a5f5740e6fc7e871",
+      "candidate_sha256_lf": "a967dd043e945e75d64e224d759dc183e94f84f81fad337e3f0c234688740e58",
+      "adapted": false
+    },
+    {
+      "path": "scripts/sitemap_discovery.py",
+      "public_git_blob": "47b237b650acf93188a7f3c3692cafa6de62ab06",
+      "candidate_sha256_lf": "6fc8a9f869b498f435f6554c83cc8ea7c3fcc91e22e2011bef47a2b8a4947e7f",
+      "adapted": false
+    },
+    {
+      "path": "scripts/sync_flow.py",
+      "public_git_blob": "f970d5200f0f2dfd4e35027bd489ed33bd094b45",
+      "candidate_sha256_lf": "9759792787b5f05990d77df0a79cc99c2454d9d7fcf5e256d987698a4c929adf",
+      "adapted": false
+    },
+    {
+      "path": "scripts/ucp_check.py",
+      "public_git_blob": "241cf26c3ce9369aed74622749c37cb18c396b5d",
+      "candidate_sha256_lf": "152c2f9fd826ba1f484540b15d160bffc3157d140e95f374e48c0bb705132940",
+      "adapted": false
+    },
+    {
+      "path": "scripts/unlighthouse_run.py",
+      "public_git_blob": "7241a45dac5e34f341eef994da6172950372cb37",
+      "candidate_sha256_lf": "5674aec0104893f32ca6f30698745c39c5efc0b30c9e4f78a15c080aae647781",
+      "adapted": false
+    },
+    {
+      "path": "scripts/url_safety.py",
+      "public_git_blob": "7336bebc00c6f42d3da2a4dcc2f7159837c73042",
+      "candidate_sha256_lf": "9d8825875776757b36f7dc3b78b82d0498e24c1c4d4289f5b2905071f603481d",
+      "adapted": false
+    },
+    {
+      "path": "scripts/validate_backlink_report.py",
+      "public_git_blob": "f0cafb54664fb1b415f7261efe88ef0e84c9dcf5",
+      "candidate_sha256_lf": "3c32f7927e53ec1f63ee99353443ae366c2c01bc79cf3a3ad05f413eae9f1cfc",
+      "adapted": false
+    },
+    {
+      "path": "scripts/verify_backlinks.py",
+      "public_git_blob": "fd8e199edff084a0c52c5ded5210fb30a8524914",
+      "candidate_sha256_lf": "17579e1a0969bdd378dd0588eae02190730ab1c75279339b15aa55cddcd267bd",
+      "adapted": false
+    },
+    {
+      "path": "scripts/verify_release.py",
+      "public_git_blob": "1082a19a518d205ecae87160a4d72c83a405cad4",
+      "candidate_sha256_lf": "7868e3e6bf0dcec87a36ce3ec30ca197a4ef940dae8bb25897ec6a9a74e5d02f",
+      "adapted": false
+    },
+    {
+      "path": "scripts/youtube_search.py",
+      "public_git_blob": "635970c56f87110b6dd4c021b9a7f224650b0cad",
+      "candidate_sha256_lf": "f34e6a4ffdda436e42d457a09f3f26d4f907d440d50ba780e7102aeebda0e670",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-audit/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-audit/SKILL.md",
+      "public_git_blob": "678c4b11e75ef5657425371aa6a884eb80ca000a",
+      "candidate_sha256_lf": "0b2225b9ae04e540e569bc820bfae1a6fb807e0a215f5ff2d0d6bafe709138d5",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-backlinks/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-backlinks/SKILL.md",
+      "public_git_blob": "d5e1dd9dba04875b2ad984e9b88871a6b5ed553f",
+      "candidate_sha256_lf": "95f395f5a3c48ce87db739d0bfc2029d2b2c6f648c05f3b191f0d9a461ff84d2",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-cluster/SKILL.md",
+      "public_git_blob": "5dbddbbd6fe4c1d55fba42a21dd24b51e14cc574",
+      "candidate_sha256_lf": "e418337d324d35af7103edfe2cc361e9514eb26ea7f2db47f99d37815d767892",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-cluster/references/execution-workflow.md",
+      "public_git_blob": "c98382fce3d11735fdff6cabf7c65850baeeecb9",
+      "candidate_sha256_lf": "7e5e067689a2ebe82d0a949a4b9b9c6568fc283e31a6b6e928fbb7677438f0db",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-cluster/references/hub-spoke-architecture.md",
+      "public_git_blob": "adb07664f7eca7c60a837fce3cd2da1c450c656e",
+      "candidate_sha256_lf": "5553d9fd80145362073fde96c0c615df4ed9a000bf6f928a71641ec52e85c39b",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-cluster/references/serp-overlap-methodology.md",
+      "public_git_blob": "1c023225a6bafbd4ab68e64ea56bf0e3ebc0f6c7",
+      "candidate_sha256_lf": "a0c02dcd394a0cfe4636c02ce03da4ff58dc68b6f55ee0b3b9e36e10f20f7662",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-cluster/templates/cluster-map.html",
+      "public_git_blob": "c657ddef12c57b475c02942176d59360d385afd2",
+      "candidate_sha256_lf": "73ebee6b29a24857b783fd1e72a834b5a5c2ef8c61f9d1b815b86c6941f2df3f",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-competitor-pages/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-competitor-pages/SKILL.md",
+      "public_git_blob": "98a6e7309550df6301596b97d0a141f0759c0528",
+      "candidate_sha256_lf": "0b12117db8320f3307f9f3769d5038179eea41b5142da8c400e3b1d4ae4fb1ab",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-content-brief/LICENSE.txt",
+      "public_git_blob": "caa05229439bdb6871543cbad7651a438c4ab9f6",
+      "candidate_sha256_lf": "25bc881ab74d06a365261e004f44c445a78a5241ee322cdeeb4ba7d7669be9b1",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-content-brief/SKILL.md",
+      "public_git_blob": "d3e2abac5923b051065104982fd387d546049f47",
+      "candidate_sha256_lf": "7963bf1cd06bb30f7e5aec0de7d57e2d4ccfb8cc7c01dc86e7a3c6bb9ee580b4",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-content-brief/references/excluded-domains.md",
+      "public_git_blob": "1a120ef736ddaa9c62134cf847a2e679b21c8795",
+      "candidate_sha256_lf": "17b3fb0c9f0cd979c949d54a3e88eb7b39b5d3514baaaa0560022b16c3ed32b8",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-content-brief/references/keyword-density.md",
+      "public_git_blob": "b3537db28eb9595c414d050d45ef9600330ffccc",
+      "candidate_sha256_lf": "5f66b7516fda29ca43b4db64874ad445390a3eacfe3c6e99bee2f45b3c7ab348",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-content-brief/references/page-type-templates.md",
+      "public_git_blob": "ca7b9d5f498a9994f0ffbd4477c80c46c09bfb4c",
+      "candidate_sha256_lf": "ac638c16ee6ef871d07d8d8172e23a491e11e5e9734f5a5f9ac070631156fd6d",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-content/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-content/SKILL.md",
+      "public_git_blob": "197bd27324e7953867bf5f4b76cf4c35576e43ab",
+      "candidate_sha256_lf": "8876bcb347d65a5ec7456a8042516f8c5ed5275d0d0ceea951edcbded51d129b",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-dataforseo/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-dataforseo/SKILL.md",
+      "public_git_blob": "3613ffdb0f70cd1237f000a8c0ec48d7c75d71ae",
+      "candidate_sha256_lf": "f240a57d9294bb5c8e698d2a8d1372df779a6471764e9b95f557540998732e94",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-dataforseo/references/cost-tiers.md",
+      "public_git_blob": "1734a28d5e86050c8af3bd2bee3633b242eb76ff",
+      "candidate_sha256_lf": "4b12cb9c721f050b00ef8ac26739d45637e2ebc2108fcff90cac2d6447c25c7f",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-dataforseo/references/tool-catalog.md",
+      "public_git_blob": "59650071eeae84d2d59258b5d0486e4937ded7c6",
+      "candidate_sha256_lf": "1fc02f7ea2d09fe5f40a9392dc17106f23385b02659ab06ee6bce3d718bf33da",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-drift/SKILL.md",
+      "public_git_blob": "a18467da2416c0de8f255aa48c478ffd13ee6c17",
+      "candidate_sha256_lf": "1780f507af735e333b87790ce7310abd9e3b21b3a8b29f0a6ea022f9562e130e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-drift/references/comparison-rules.md",
+      "public_git_blob": "a3349d7ab21fe06e8f1a0378b4f856b5be8a7ef5",
+      "candidate_sha256_lf": "45b806d8cfbc3d3fa03f2095562c84b26bcbad1359d7c45bba7304849f04fc20",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-ecommerce/SKILL.md",
+      "public_git_blob": "7902df191427191730a18dc8c260d1f4480a601f",
+      "candidate_sha256_lf": "d627c0e3988b85c85c5a474381695022a10fe455da2215938fb41e4255ad636d",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-ecommerce/references/marketplace-endpoints.md",
+      "public_git_blob": "ef28c803ce14da929225e317d367f4402190646a",
+      "candidate_sha256_lf": "78ee4a50f4b35183ec890878299835363dfcc1af4267d5103344a422cb112bf6",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-ecommerce/references/ucp-universal-commerce-protocol.md",
+      "public_git_blob": "2de4d13b2fb14fa8acaa88147d67290e1427e27c",
+      "candidate_sha256_lf": "f3941a34fb95c091275cfb85a0a7d80c4701bc3b2ea00652ebdc792153f74364",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/SKILL.md",
+      "public_git_blob": "aaf129f5297241e468288483aaaa3c9726866c2d",
+      "candidate_sha256_lf": "51f9c1b56d16705c17fff4c6668a7b7ba3ade7747ff430f28cfbaa8b33b5a3d2",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/bibliography.md",
+      "public_git_blob": "2e3033131c9a0c70ab96e72c8f3b4e0de0bbd892",
+      "candidate_sha256_lf": "1f7e5d60194c252a6b38ba1eb78970cdf5bea2f096563c508bfad36f7e445f75",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/flow-framework.md",
+      "public_git_blob": "bef94e416dfd4bf522d7908633ba649973088ba0",
+      "candidate_sha256_lf": "029c009e0fd5fc77763a530af24a83bf8cf21eb703158317bde8518446af0887",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/flow-prompts.lock",
+      "public_git_blob": "7d29c24a9cf5d13a16fcfe323769fe75cf149488",
+      "candidate_sha256_lf": "d71316f8f2542e65990ce3df82f63ac9acd5da74b42325825d8fdb2de8e33030",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/README.md",
+      "public_git_blob": "eb14341c3df93c49014b335604217aece33c1706",
+      "candidate_sha256_lf": "26e434454595c47c63e3ef5c4c5d975a8a8208ca01887e51ab09a45eb679085a",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/find/content-planning-for-topical-relevance-prompt.md",
+      "public_git_blob": "0dce88fe75cdefdbdcd0fe8bbbf0e3180751f966",
+      "candidate_sha256_lf": "0bab3257ca8c588ffe6e96adc97d2201fc1fb4cfd5a8674cfeb97a640ab78ce1",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/find/content-prioritization-prompt.md",
+      "public_git_blob": "4928e2d65da9823048d29f1cd087d74d9738ab88",
+      "candidate_sha256_lf": "e8d12ec0b02de03de7b0066a1b29b4e5523f49413bb276c3d936ca068f1645b0",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/find/keyword-research-prompt.md",
+      "public_git_blob": "97bc8aab9c063a7402c3f78a101da31f2b7f0759",
+      "candidate_sha256_lf": "3bd3c230f682c65c328324d37dada59a76ca85326bfe97fbf3acf6849e36525d",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/find/keyword-variations-for-topical-relevance-prompt.md",
+      "public_git_blob": "94fde2b8965d5145070f61f640fca792df8596da",
+      "candidate_sha256_lf": "18b92580c0de1d0df6a8353efc0fd98864ed9e7090318cd4564cae84f79e2bd1",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/find/prompt-audience-avatar.md",
+      "public_git_blob": "13e92f69764194399f390d47b06f31241df18454",
+      "candidate_sha256_lf": "450d58afe2499f7644f947725fcaaf9463931e09d8fdcb93765d25c6e0750d22",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/leverage/backlink-competition-prompt.md",
+      "public_git_blob": "d637b0b1049b26fb7332b8e33c5931933b6817ae",
+      "candidate_sha256_lf": "88b5a6aca87c0f5ad12ed0a9cec601c23e944db2ff1014502fe7218064249be4",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/local/ai-homepage-rewrite-prompt.md",
+      "public_git_blob": "1e45d535458cf2a9c3f57258eb9f45e5ec0354e9",
+      "candidate_sha256_lf": "d33e8918c05d99136baf476165a57a94b7cc0c93bf3585d49bb7212d93bb0455",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/local/claude-deep-research-prompt.md",
+      "public_git_blob": "eadb90698b96f795961363bd0e3eb428dae56f0d",
+      "candidate_sha256_lf": "65a9876a959b4aba089e4aac9bb078eb2c487726285f0828535b9178f7410dcb",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/local/gbp-categories-prompt.md",
+      "public_git_blob": "bd8fb8e38ff57969ec4cce4605fae2634e872474",
+      "candidate_sha256_lf": "f365d29c9bc3be0aa692a4b0f38515a0d75061ace60603285dbd2aed4a180ec8",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/local/gbp-description-claude-prompt-1.md",
+      "public_git_blob": "be043701ac89cb241397be87ebff77ad1b024788",
+      "candidate_sha256_lf": "80c73c39f7240ba87bdefd19babdde7f15e6dfe0cdebfa490d62dad2c3dc8702",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/local/gbp-description-claude-prompt-2.md",
+      "public_git_blob": "e1d4b6a24c33e7d0806355953cd6263ff664e3c0",
+      "candidate_sha256_lf": "d3ee5d748597d85cbd15b31a0e72a9d67a6f91d65f0f8a750ff7bd5ad0398f00",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/local/gbp-description-claude-prompt-3.md",
+      "public_git_blob": "e53e6244b6261b84c9d9673ec359e87c0cd2390e",
+      "candidate_sha256_lf": "3c1eaca3250b854b025729aee39df6593518595eb6d2ec1f9cc24bc927ae3845",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/local/gbp-services-prompt.md",
+      "public_git_blob": "120706adedea0bcfdb5340d47fbc32bd30403dee",
+      "candidate_sha256_lf": "a82eebb02b5b5b9d2e02fd21f364dae9641aae69e9a8c2ddfd1ddd975d5ea0aa",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/local/prompt-generating-a-meta-description.md",
+      "public_git_blob": "e071e725a8a70f38778fcd50c2f90420381db8fa",
+      "candidate_sha256_lf": "82f9d16c7158978c50c7f2ee783d636e6e54c27bde4ae56aa4df0a729710fe6e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/local/prompt-generating-a-title-tag.md",
+      "public_git_blob": "b0a7ce2efebd750b4b966c42522a6f12c87d0f97",
+      "candidate_sha256_lf": "5db99be445c3d72fdaabf75ca92133981b586d6e48221e8df1bec06233ff62f7",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/local/prompt-rewriting-existing-homepage.md",
+      "public_git_blob": "84a3d8cd2f396ceb6b8c58bb2f80d8b4523122c9",
+      "candidate_sha256_lf": "b0000ade4e79a06e65d568e17a06ec98ababae5b33d16f61f1e101dd3f0b5720",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/local/prompt-rewriting-existing-service-page.md",
+      "public_git_blob": "e50b960c9b6cabce128b2902823ec842c3fa2e3f",
+      "candidate_sha256_lf": "6e24da4f82b486b614e9ca2b4ae4cd8554865aedd6043218334d9dfe245afed3",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/ai-detector-test-follow-up-prompt.md",
+      "public_git_blob": "9dc0c6cfcd880637c8630c242a9e8c552f6e392a",
+      "candidate_sha256_lf": "23b75608644f51981e8421e307a1f9c51497587fe01a846828b9142525830fd0",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/ai-supporting-pages-rewrite-prompt.md",
+      "public_git_blob": "c13466aace580e4a51f1a97ea37dd9e74e2c2d49",
+      "candidate_sha256_lf": "92e0f8e7fded7438ed86ac58fa9f0c66122308e36903eb064125b0a2e8a10f87",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/basic-prompt.md",
+      "public_git_blob": "fa1302d589bb5de38ef9ffd46de867d9447b57f7",
+      "candidate_sha256_lf": "5f8ddce6655b91e3bd23ff0174d0890d46db4c86b2074230793a834c51f87d34",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/blog-post-outline-prompt.md",
+      "public_git_blob": "cf93d697f9a0b69bff59f6057ae2bbe19c5494cf",
+      "candidate_sha256_lf": "4427a6ffbe45fbfa397cc3e7bb8ff2cc2d1e4652f2b2ddfff2e3ccd299ae79cc",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/blog-post-writing-prompt.md",
+      "public_git_blob": "3ff13932dd3eeddf004063b1c571bd666221b75f",
+      "candidate_sha256_lf": "e88b8781e6a1f69cc7043fbdd0b79365d87691daa1d0b910957fe61aa8a9964c",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/claude-prompt-1.md",
+      "public_git_blob": "efbfa455c4f78d48bceee8d85a1100ba497f0b7f",
+      "candidate_sha256_lf": "ae0f7460bf85ac666af355d4b3960f31a07beb2a009154c2c3c336de45b8afe9",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/claude-prompt-2.md",
+      "public_git_blob": "f90cab2116ab7d5dbaa3704a902eca86b038d8f1",
+      "candidate_sha256_lf": "881278d4c5872b2d2f03eef8df21fb1dbee499acab565d039531f96d455528c3",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/ctr-audit-prompt.md",
+      "public_git_blob": "9d7e8db4924cc9b16f5f0211fd1bb4c6f3d5661c",
+      "candidate_sha256_lf": "cfe26d1f07bd98f5a98a3e6a825d0127cf7b003519fdfb595c4761393ac143ea",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/follow-up-prompt-1.md",
+      "public_git_blob": "cccb5e703cfa410de38a3ec636f38e8ef09c21cd",
+      "candidate_sha256_lf": "d35a7f848aab67df85391acf5f6208bdcea6f51bf454a4e87129446bc928f3f0",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/follow-up-prompt-2.md",
+      "public_git_blob": "f7d32e77597ec06bb51664a36469ac03d55422d9",
+      "candidate_sha256_lf": "e8e55404737510c63080c93401a00097058eee7ef40f56f77659cccda29cc984",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/follow-up-prompt.md",
+      "public_git_blob": "3e931d13e27765ee910919c0d0c005d354c27162",
+      "candidate_sha256_lf": "454d9b9f684f2dfa54530819e2505361b165d54e3d1fa92a1be61367ac5da072",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/paa-question-rewording-prompt.md",
+      "public_git_blob": "42f77e38ac439acf2fd3b6deaf7144fcee8c79db",
+      "candidate_sha256_lf": "770b5ba49150b2a48753a7c51d60d3b93c3091fb5aedc24a7c8f41c463517e55",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/prompt-core-30-content-audit.md",
+      "public_git_blob": "0e310a2cb9ab02e73860bb8f45aad8ca00232845",
+      "candidate_sha256_lf": "b58c751c5552592b5e7f0e176c21fb0c509924a7a98bc635e32e1b93e8dff3fd",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/property-content-with-authority-audit-prompt.md",
+      "public_git_blob": "b6aafafa19102f2f5a8a51f6a60a6e746e8897b8",
+      "candidate_sha256_lf": "4e7a894b86b03a20c4b9b06239fe97f224f680c6ab8d68d942a4e546182b7077",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/reddit-claude-prompt.md",
+      "public_git_blob": "77bec3254527e793a379612013f301286fbc59a8",
+      "candidate_sha256_lf": "be767e88a2b3b6c9a4bbbc4f2f2611e1606babdf9b18163cab8b5050966048ab",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/schema-prompt-1.md",
+      "public_git_blob": "76d47e31755f3b6273eb9eb169b2f2d73e881d1d",
+      "candidate_sha256_lf": "a7b3f4fe17f7e0b5257b2cb940a00b005c44e21bfdb13de0d889b4a5cbd6fa09",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/step-1-the-chatgpt-discovery-prompt.md",
+      "public_git_blob": "c6a3c33d19568120a97f1617b795d6851d86191c",
+      "candidate_sha256_lf": "45112ea78038130ff3d29d6e965401d234a4a2a540883e6c625a877defa46e24",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/step-2-the-follow-up-qualifying-prompt.md",
+      "public_git_blob": "108bee0a8f10573914e8d319bed699346cc2a926",
+      "candidate_sha256_lf": "f08df22ed90c0ba1b7b7f529331309161a886fd2e12bf4ff3ec955bb10fd22ee",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/technical-audit-prompt.md",
+      "public_git_blob": "d6591eac24a15a7a62ba817f9b2bad0416d6a079",
+      "candidate_sha256_lf": "51274ab6e21a62892171c53397f935242f55c3726f3d2a11850985839b047ff4",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/visibility-follow-up-prompt.md",
+      "public_git_blob": "e85b9e4e00402bd9d851ee76083f9d1326f5f9a3",
+      "candidate_sha256_lf": "0a76f9075c783957d45ab58cec04f4701f01e235a65e9d97ab7b52f7c10f3201",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/optimize/visiblity-prompt.md",
+      "public_git_blob": "c86fca171b6698cf448ca635716a62887ce96c62",
+      "candidate_sha256_lf": "769684b2895051491a7eed1eb1ff0e0065d2472cc395fee04fc99eed85df83de",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/win/bofu-page-brief-generator.md",
+      "public_git_blob": "c95ae8ab87c0613d6545f8f4303fad26435af5fa",
+      "candidate_sha256_lf": "dbbe1d51ef93bdc1918bfab1b0948a0d87500410ea8d6727f088e5e4f937dadf",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/win/conversion-audit-prompt.md",
+      "public_git_blob": "6303eea678d6bd7a0c82b23ca527fbb487a1e078",
+      "candidate_sha256_lf": "1fb96a2a2c0dcb096389992d14fc12738523c94e2559ebd71a46b8264f2049d7",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-flow/references/prompts/win/dual-surface-content-scorecard.md",
+      "public_git_blob": "17b95d4073d6b363c64646a89509b7f575c41081",
+      "candidate_sha256_lf": "9521283c3578d613a9a25f985d609995d92d284f982d0377160a646563fa7c18",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-geo/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-geo/SKILL.md",
+      "public_git_blob": "c6c6b3820e183094b7bff5182ed429374e103cb8",
+      "candidate_sha256_lf": "8cfa8cfab0ec2ba41c29f1301c3f075b0624c99edd1a3f2eba2a1910c3114287",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-geo/references/google-ai-optimization-guide.md",
+      "public_git_blob": "4b57383a2f289f94eb8f4181370a02474d401197",
+      "candidate_sha256_lf": "7b69676f939485d60d168db38f72b404551d54f4a03849472b3e615a28bf9a8d",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-geo/references/llmstxt-evidence.md",
+      "public_git_blob": "4acd89b508951c7271188205174ceea7f2890324",
+      "candidate_sha256_lf": "b2b4dfaf2a00c850ea98962b19d32afdd1be08b8028a3f8abd96eed3384f2d7b",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/SKILL.md",
+      "public_git_blob": "4cca80d683c7989f360ac1feb8a2b99f3bb17135",
+      "candidate_sha256_lf": "829c57cf8510bb5de2bfb742e82ec8ea0d0a8b9998d9de9c3f08400b115a0062",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-google/assets/templates/cwv-audit-report.md",
+      "public_git_blob": "0e978893893238602e8632c43895b8876a05e526",
+      "candidate_sha256_lf": "94e81dd051757c8fe588756206eb83cc2d1c3907a76610862f01a1bcd1c2ac5d",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/assets/templates/gsc-performance-report.md",
+      "public_git_blob": "40cf32a71be9ad5cc6fb9b18852c70cc1639f4e2",
+      "candidate_sha256_lf": "7ee71ba1e753f4d0befccbb090ce5ac6665224e5c26663513ceb080d957638a6",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/assets/templates/indexation-status-report.md",
+      "public_git_blob": "c7d2ec09fcc29777293c89b64dacd502fe3211e7",
+      "candidate_sha256_lf": "afc337905d82f83659a229382432876edba9bd9af6e589b3e4de4786974f13b3",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/references/auth-setup.md",
+      "public_git_blob": "5f36214074f69735325d80bc26755e19fe274c6f",
+      "candidate_sha256_lf": "135f440a0712a082d8e9b74bcd01ca2b543d42a3ebd3252138838d8739cf0bb9",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/references/dma-consent-mode-v2.md",
+      "public_git_blob": "404a3dea9b26cbc41fd09e8f0a72ce4330be72dc",
+      "candidate_sha256_lf": "04fb9390e77fefa3eee3b2f907d261f7faca3d70ddec100597e1ce9f2c2a5b68",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/references/ga4-data-api.md",
+      "public_git_blob": "870a9afd4eb395dedc3e3ef7d0ef7e302bb3a23c",
+      "candidate_sha256_lf": "b6c29f9d830df1a406339c5776a7aebd648c5d2fd33eb7a2689106c5b3c7bbb9",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/references/indexing-api.md",
+      "public_git_blob": "f88ac407ab8a57e691e572b1485268ca0c29e944",
+      "candidate_sha256_lf": "5d2a4d4dc588ec94f37d42a49887e2769d177b6d179429cd1e54759ab9b12577",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/references/keyword-planner-api.md",
+      "public_git_blob": "bd065aa7e93702000c0057c7d7ccb38cc280f4d0",
+      "candidate_sha256_lf": "5581b74899f9515481e861e5c42fef642b782ad65cc4990c6d4db9f66a3625cd",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/references/nlp-api.md",
+      "public_git_blob": "58a25b8fe64c5768efef2a6b750163f3fa07028e",
+      "candidate_sha256_lf": "c21c9a1233d36659f5a3fa5f629917b434ce015f98d794ad8dddfbad8a752e18",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/references/pagespeed-crux-api.md",
+      "public_git_blob": "e0c3912e537b2c7ee41f370fc562551614e1ee37",
+      "candidate_sha256_lf": "fc9717957b1e2dcfcbd34fbe44d1b83d7fc7d934dee0b4c2623c0feb217b2751",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/references/rate-limits-quotas.md",
+      "public_git_blob": "dc6b6da416a45087aa812fc6d4d55ade3b98f26f",
+      "candidate_sha256_lf": "ad1f7d096e229526c8fe9026a98124a05221f53636eb6023f362dfd5fd3c2f96",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/references/search-console-api.md",
+      "public_git_blob": "73e7a2d51425a72aaebca62af36b6cc8864f61c7",
+      "candidate_sha256_lf": "fc033c79c121f60370521d41c217e1b7889897717fec6ee40ff235b27684b400",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/references/supplementary-apis.md",
+      "public_git_blob": "2662f4b3b9f866df3fab9a0cd21c8661553e0b09",
+      "candidate_sha256_lf": "b8937fb31fa09b2c2a09ad2573191183cad219cebafc09136a88eac133cddbc1",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-google/references/youtube-api.md",
+      "public_git_blob": "20381d8ecccc66104c72862d5cd074c63765927c",
+      "candidate_sha256_lf": "9db7a517b3f9b3e5191465ebe6168ac3f7b2ce0edd8f605817e2abd65f295d13",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-hreflang/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-hreflang/SKILL.md",
+      "public_git_blob": "36ce86816bb38ec2bf676cc41064ab561692f850",
+      "candidate_sha256_lf": "1948752d7c8fdffc932f229b4baaf803ac1ffd194ca79f3a478438421ae4da31",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-hreflang/references/content-parity.md",
+      "public_git_blob": "e2bea02c03494febe13dd71367e83b60eb5f4581",
+      "candidate_sha256_lf": "3420bffb9eec6c5fcb7cb025ed9c35884f61786eea8f49664e15c627807c2009",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-hreflang/references/cultural-profiles.md",
+      "public_git_blob": "361e4809c1ba38974c37fb4dc5d48fc3c4903d2d",
+      "candidate_sha256_lf": "b9719c15c897af247aa1601dc59b7ef856efd0f5226112f741145091e67166eb",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-hreflang/references/locale-formats.md",
+      "public_git_blob": "6bfb511aeb150945743a91217020eaff08c2248f",
+      "candidate_sha256_lf": "f9278680533041a72e3fe7fc29244453a7bf9542e9f25f16da9a5c1590f7b310",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-hreflang/references/machine-translation-qa.md",
+      "public_git_blob": "7384e7caf0f73ed12c23a9c35f895bfe719590d9",
+      "candidate_sha256_lf": "df932df0448e284ee1cd05f2b39ad257bdf663a814b41014b60b3af633a530c8",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-image-gen/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-image-gen/SKILL.md",
+      "public_git_blob": "a8df5f17c10ce1330d4edc0d37c235ce238deccf",
+      "candidate_sha256_lf": "fbfe38171737d063abe5669928e801ea27df623ce02041b187fee8533ea2beae",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-image-gen/references/cost-tracking.md",
+      "public_git_blob": "442429eea72df55238b71977aa8a0963f65c053d",
+      "candidate_sha256_lf": "1ea18dfe825e29cba902ecf05e6fad103888ea8ee7135fbc8757fab9a5b09dd8",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-image-gen/references/gemini-models.md",
+      "public_git_blob": "2ccd7ab71df1a3baa4d5da092a01e9eb54c104de",
+      "candidate_sha256_lf": "cad45ff9b8f1a2b333db8c50694f683673aea46d21cb10d4d71b83ee84045c3c",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-image-gen/references/mcp-tools.md",
+      "public_git_blob": "647b06ed7654ad6d6edc0f73821fe3b4e5621d15",
+      "candidate_sha256_lf": "410635e1f55a3d1549e4a1aab78fcefe5076da5c4a5bdd9cb3c83250a3665390",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-image-gen/references/post-processing.md",
+      "public_git_blob": "0b4d07da7af6737d17a6c018f1ee3982adad1016",
+      "candidate_sha256_lf": "73f0ad0fff971ad1ec3abf2710d18eaa1c273ca298342b99af09afbecafa9609",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-image-gen/references/presets.md",
+      "public_git_blob": "2b6df0bb65dd59bf74b267879b84c608685e91d1",
+      "candidate_sha256_lf": "074b2a54deae13cf9f1a79915cdad6ecd655658222b53dc10d2d312c637c9693",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-image-gen/references/prompt-engineering.md",
+      "public_git_blob": "ec4e46c9ece0d03c3e28aa11b7f4e93406d12c5a",
+      "candidate_sha256_lf": "0b8568d59ed7af61a97c877f6931145bd44a1b946f4579b9d9b1f83baf94bb00",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-image-gen/references/seo-image-presets.md",
+      "public_git_blob": "69b9fc690436729d5f25363526fda5c9962b17be",
+      "candidate_sha256_lf": "7c806dd2bfdbc683b6b48bbcc5f7e109ab31a26209f308bccfd4b2ae668088a5",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-images/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-images/SKILL.md",
+      "public_git_blob": "e12651f06abe20a6a84df4899daaac56fe48b064",
+      "candidate_sha256_lf": "95e82cfc9f3bb7cf82f69cb2fdd531497063a947b2134e096e4790086a8cdb20",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-local/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-local/SKILL.md",
+      "public_git_blob": "bb162d25bc1573ef21e1ded5b17ba9948131ecc9",
+      "candidate_sha256_lf": "32f6afcf86dcd4b4edde63bc72ddae216d216a014779682aa50eff85405a9e64",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-maps/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-maps/SKILL.md",
+      "public_git_blob": "e6eb77ef10327a8e33e24c44849f5cf37ad353ef",
+      "candidate_sha256_lf": "0f4b13b8acf35793a817062fc1c12689b02125a06fad902c74c60f74076a324b",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-page/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-page/SKILL.md",
+      "public_git_blob": "0d9c8298aba1ca389f640d7bcf6f0c9eb9169a59",
+      "candidate_sha256_lf": "a2477af7547c0918029e6c00f203effec709bb21180bda7d9191bf975b6a3e82",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-plan/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-plan/SKILL.md",
+      "public_git_blob": "16fe20986a80c2f156459c2f1f14892e34864663",
+      "candidate_sha256_lf": "9a4477b4de93665d5635479419aa61bc91315363eece86018c0f16909177cbbf",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-plan/assets/agency.md",
+      "public_git_blob": "6d236edc76213dc8d2a41e5e4841de2761d92253",
+      "candidate_sha256_lf": "63f159b62a81c91b0570a67eba779c7c9961f0222b15accb8dc4115455d60016",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-plan/assets/ecommerce.md",
+      "public_git_blob": "fbcf00114f8c0e44c410cb375bafe0c543a2cab4",
+      "candidate_sha256_lf": "f25619c871f85542cd1d656598607023b63805ed0f7f030b50d1b09f98563f16",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-plan/assets/generic.md",
+      "public_git_blob": "8ca27708830eee7b26e16be8c9e9373339e8e213",
+      "candidate_sha256_lf": "f6ae9d03d98361ce032d6bf1af60f6d5e124aa46babeb34e24028fb32c7a45f9",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-plan/assets/local-service.md",
+      "public_git_blob": "80b315ec94977a212793dbd63f79d8fa7b1fdb42",
+      "candidate_sha256_lf": "d279b604bd511b353ae13c3bc95ae68254a548aad49779098f613ecff6eabbe6",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-plan/assets/publisher.md",
+      "public_git_blob": "55d75e4129efbbf5cb68dd098fb23020a4e27ee4",
+      "candidate_sha256_lf": "52d3ebbe0db1ad7ff2ed41b088cf85e052aaa1078c9608476493752916883a44",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-plan/assets/saas.md",
+      "public_git_blob": "a7572f8c181c2f93af703c8a0e508a55f8b4fd2d",
+      "candidate_sha256_lf": "cec7c2e52f65c6e13460793758ae9ae169d861c7507f735f3dd5cb0975a51b1b",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-programmatic/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-programmatic/SKILL.md",
+      "public_git_blob": "fdb05b96d25cfbcab9e1e716eada602167de463f",
+      "candidate_sha256_lf": "42ac4f8ef13e91982dc467622686c3fcce8ed5932747c3a0ad607847b2095f39",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-schema/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-schema/SKILL.md",
+      "public_git_blob": "bb508e547f9847f31a661e78a1b17b5fe1451820",
+      "candidate_sha256_lf": "2902c722dc8e5c947d39f415e6fe0706ee98e814bfc85ce027411779afd42d42",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-schema/references/deprecated-types-2024-2026.md",
+      "public_git_blob": "4faa69ce7b0b67870807b5418a3009fbd252cc2c",
+      "candidate_sha256_lf": "b17be3fd8f238ab917eb68e7faf083608cff2569ecd64e3f18e6a2c11dbb84ec",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-sitemap/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-sitemap/SKILL.md",
+      "public_git_blob": "79fe5cd6d3ad25533e3d41102fb71b3b10717608",
+      "candidate_sha256_lf": "c03197c08e05233200c1db655b9f15ed617eb285085c3c30ebb79e51001efa33",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-sxo/SKILL.md",
+      "public_git_blob": "337a3ce85e953a52b6302fae5cc6cbe98143b7d7",
+      "candidate_sha256_lf": "8e4561b5f209e28d38e0ce6a3409d2d3f53eccbfefc8651bafde729e2fd7c86e",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-sxo/references/page-type-taxonomy.md",
+      "public_git_blob": "5838255199fba6df0fb08d76b83c7d7ea112560d",
+      "candidate_sha256_lf": "489c6bdf108e519b482b1ea7ee295f438c0d31d292d7bf904a7371ca48643dae",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-sxo/references/persona-scoring.md",
+      "public_git_blob": "90f352ee9bd1affac3eef0b0150d127009c6cbda",
+      "candidate_sha256_lf": "487955f23af4a089b65b3f89a2df68782e7b8af0c8f14a6b21a6cc3360ee8b34",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-sxo/references/user-story-framework.md",
+      "public_git_blob": "a7c0b63b2dbb662f788b313e5d3dbe7d4bf3610a",
+      "candidate_sha256_lf": "329ecef0cf1194c3f012f314419bef784c8ef2d08a9f0d2fe0616b5f46c68ae8",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-sxo/references/wireframe-templates.md",
+      "public_git_blob": "ed05a936ca889fe7cd440268de4a56e7f1597356",
+      "candidate_sha256_lf": "e567827e095a63c24297cc714fd09660fa98663c8afce99eb2c5684afcf9e6b1",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-technical/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo-technical/SKILL.md",
+      "public_git_blob": "ab1f8ba48585a11516119e545bd33d93da0e14f6",
+      "candidate_sha256_lf": "b4e6031cd35ed8479f713fdd8ea1e8d16e894bf4b65e8daa32cdd5a07604c2fa",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo-technical/references/agent-friendly-pages.md",
+      "public_git_blob": "1054928e35b6b7bdad1b3bb9c12120660591bc8f",
+      "candidate_sha256_lf": "d070798a8593255f06ff7a5242e96a904070eb9f73cad585eaa7b4996a34ca06",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/LICENSE.txt",
+      "public_git_blob": "7b87d4d489c81a2b7378ffcb177d209770cfb66e",
+      "candidate_sha256_lf": "5c617ae0aa59b995e19b3e774fcc2f2ba91b864e0b4c3e18475b139526a2da1e",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/SKILL.md",
+      "public_git_blob": "92e22e9e8b6e6f9480cbe549ef88217e0930f1d0",
+      "candidate_sha256_lf": "5ddd50111a3d1ec0a7412daf7544370905256592d15b8c91ce11517554e44a25",
+      "adapted": true
+    },
+    {
+      "path": "skills/seo/references/backlink-quality.md",
+      "public_git_blob": "d5fdb070673f8e28b75a47714bbdfccb56730cfe",
+      "candidate_sha256_lf": "86a39d009b19f4f17a3dc4461afe209111dc2e8df56b6bd3eecedf5b4a03f742",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/references/cwv-thresholds.md",
+      "public_git_blob": "44f60bde0f7ff275c27763aef2c5055d8909d715",
+      "candidate_sha256_lf": "56bc3c18b1ea7353356a2da5019f70a90f48931e7eb9931dd9a3676607757d08",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/references/eeat-framework.md",
+      "public_git_blob": "be943ffa5490aa4470e162f020646049d0a3b8a8",
+      "candidate_sha256_lf": "6550ca35ca94180686c32e907baf3bb544832cc3c612a7df0b0afef0d0e279be",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/references/free-backlink-sources.md",
+      "public_git_blob": "55aa2f7c07db50444e9b85669d0be623467c7a9a",
+      "candidate_sha256_lf": "073d7e53fc42b39557421aefb752e1194d346ac8d3e9793046607ba25f75360f",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/references/local-schema-types.md",
+      "public_git_blob": "6ad8f2d5888de1327bbcdffee6c2a052d7cefa16",
+      "candidate_sha256_lf": "f3541c86511199abaf2237cea7a1aa70bca8c94c82c243517b0a7656f96ee5c1",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/references/local-seo-signals.md",
+      "public_git_blob": "32044151324fb90565b85d0bd519cd8ebcea39ef",
+      "candidate_sha256_lf": "0e40f049ff024b7ab411654c35904047c32672125e8d26cd593c465582bf167d",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/references/maps-api-endpoints.md",
+      "public_git_blob": "3e6be5ec426ece260f69e028a2710d3d84e49af4",
+      "candidate_sha256_lf": "a5a4cdc9b66edddfd3e823b09a6489dc638023abb4e7c0c94207be9ced0618be",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/references/maps-free-apis.md",
+      "public_git_blob": "e58f81d37af5ef02a8695adfd6083a4ab223573e",
+      "candidate_sha256_lf": "18323486ddd52eaa8e86f7f22930fc065f7c9b529352eadda8c27dca44299b91",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/references/maps-gbp-checklist.md",
+      "public_git_blob": "96cf6e48999de7b38e1ea84ee42d7821f1d414b3",
+      "candidate_sha256_lf": "61eead0eac4717d4d7fa8f6186d43f98e2af9850ed483726138b28e28ce0d3a7",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/references/maps-geo-grid.md",
+      "public_git_blob": "da18d33e1c1d7c10b8009c8693f3c54d15c9f1d6",
+      "candidate_sha256_lf": "76e08cd3fefb4d0367e0647895c482e1914a932dc86de4a82dc2d03b987855e4",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/references/quality-gates.md",
+      "public_git_blob": "0086529001c29dde2f0c6f04eec6ac75a8340c8d",
+      "candidate_sha256_lf": "5dec0bf50a443546cf4f222259cdcdfe2a891fcf97dd2278df59264c7738d36f",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/references/schema-types.md",
+      "public_git_blob": "2cb3ea508416568c5b57d8773f756994be3ec8e5",
+      "candidate_sha256_lf": "e9857819f924fd11c2a49f1320e315f7f2a067cbcb68b53582aa7ea667278896",
+      "adapted": false
+    },
+    {
+      "path": "skills/seo/references/thinking-framework.md",
+      "public_git_blob": "f56bf05e9ec8f038cc62d0d80bbda74711d53fe3",
+      "candidate_sha256_lf": "2ba4baa5206acb6d42360b3f8103420bd52f96c6e3609e00802bee4ab5731fa5",
+      "adapted": false
+    }
+  ]
+}
